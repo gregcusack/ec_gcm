@@ -10,8 +10,8 @@
 #include "types/types.h"
 //#include "Manager.h"
 //
-class manager;
-struct container_id;
+//class Manager;
+//struct container_id;
 //struct Manager::ContainerId;
 //struct ContainerId;
 
