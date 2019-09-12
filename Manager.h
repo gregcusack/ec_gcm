@@ -8,7 +8,8 @@
 #include <cstdint>
 #include <iostream>
 #include <unordered_map>
-#include "container.h"
+#include "SubContainer.h"
+#include "om.h"
 
 class container;
 
@@ -17,11 +18,12 @@ namespace ec {
      * @class manager
      * @brief handles all connections and allocations for a single elastic container
      */
-    class manager {
+    class Manager {
     public:
-        manager(uint32_t _ec_id);
+        Manager(uint32_t _ec_id);
 
-        uint32_t accept_new_cgroup();       //probably want to return a FD for that new container thread
+        uint32_t accept_new_cgroup();       //probably want to return a FD for that new SubContainer thread
+        void allocate_new_cgroup(uint32_t cgroup_id, uint32_t server_ip);
         void allocate_new_cgroup(uint32_t cgroup_id, std::string server_ip);
 
         //cpu
@@ -36,7 +38,7 @@ namespace ec {
 
         uint32_t takeback_memory();
 
-        uint32_t handle(uint32_t cgroup_id, std::string server_ip);
+        uint32_t handle(uint32_t cgroup_id, uint32_t server_ip);
 
         //getters
         uint32_t get_ec_id() { return ec_id; };
@@ -44,7 +46,7 @@ namespace ec {
 
     private:
         uint32_t ec_id;
-        std::unordered_map<ec::container::container_id, ec::container *> containers;
+        std::unordered_map<ec::SubContainer::ContainerId, ec::SubContainer *> containers;
 
 
         //cpu
