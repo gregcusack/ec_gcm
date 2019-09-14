@@ -9,16 +9,37 @@
 #define MANAGER_ID      23
 #define CONTAINER_ID    1
 #define SERVER_IP       2130706433      //127.0.0.1
+#define GCM_PORT        8888             //Not sure if we need a port here tbh
+#define MANAGER_PORT    4444
 
 int main() {
 
 
-    auto *gcm = new ec::GlobalCloudManager("127.0.0.1", 4444);
+    auto *gcm = new ec::GlobalCloudManager("128.138.244.104", GCM_PORT);
 
 
-    uint32_t ec_id = gcm->create_new_manager();
-    ec::Manager m = gcm->get_manager(ec_id);
-    std::cout << m.get_ec_id() << std::endl;
+    uint32_t ec_id = gcm->create_ec();
+    std::cout << "ec_id: " << ec_id << std::endl;
+
+    ec::ElasticContainer *ec = gcm->get_ec(ec_id);
+    std::cout << "ec_id from ec: " << ec->get_ec_id() << std::endl;
+
+    ec->create_manager(MANAGER_PORT);
+
+    ec::Manager *m = ec->get_manager();
+    std::cout << "(ec_id: " << m->get_ec_id() << ", ip: " << m->get_ip() << ", port: " << m->get_port() << ")" <<std::endl;
+
+    ec::Manager::Server s = m->get_server();
+    std::cout << s.get_test_var() << std::endl;
+    std::cout << s.manager()->get_ip() << std::endl;
+
+    s.serve();
+
+//    ec::Manager =
+
+
+//    ec::Manager m = gcm->get_manager(ec_id);
+//    std::cout << m.get_ec_id() << std::endl;
 
 //    ec::Manager k = gcm->get_manager(2);
 //    std::cout << m.get_ec_id() << std::endl;

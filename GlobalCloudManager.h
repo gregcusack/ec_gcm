@@ -8,30 +8,32 @@
 #include <iostream>
 #include <cstdint>
 #include <unordered_map>
+#include "ElasticContainer.h"
 #include "Manager.h"
 #include "om.h"
 
 namespace ec {
     class GlobalCloudManager {
         using manager_map = std::unordered_map<uint32_t, ec::Manager*>;
+        using ec_map = std::unordered_map<uint32_t, ec::ElasticContainer*>;
     public:
         GlobalCloudManager();
         GlobalCloudManager(std::string ip_addr, uint16_t port);
 
-        uint32_t create_new_manager();
+        uint32_t create_ec();
 
-        const manager_map& get_managers() {return managers;}
-        Manager& get_manager(uint32_t ec_id);
+        const ec_map& get_ecs() {return ecs;}
+        ElasticContainer* get_ec(uint32_t ec_id);
 
 
 
 
     private:
-        om::net::ip4_addr   gcm_ip;
-        uint16_t            gcm_port;
+        ip4_addr        gcm_ip;
+        uint16_t        gcm_port;           //unknown if needed
 
-        manager_map managers;
-        uint32_t manager_counter;
+        ec_map          ecs;
+        uint32_t        ec_counter;
 
 
     };

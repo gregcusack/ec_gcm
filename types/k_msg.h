@@ -14,7 +14,7 @@ namespace ec {
                 : client_ip(client_ip), cgroup_id(cgroup_id), is_mem(is_mem), rsrc_amnt(rscr_amnt), request(request){
         }
         uint32_t            client_ip;      //ip SubContainer sending message is on
-        uint32_t            cgroup_id;      //id of SubContainer on that server
+        uint32_t            cgroup_id;      //id of SubContainer on that Server
         uint8_t                is_mem;         //1: mem, 0: cpu
         uint64_t            rsrc_amnt;      //amount of resources (cpu/mem)
         uint8_t                request;        //1: mem, 0: cpu

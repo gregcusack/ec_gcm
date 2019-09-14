@@ -5,33 +5,29 @@
 #include "GlobalCloudManager.h"
 
 ec::GlobalCloudManager::GlobalCloudManager()
-    : gcm_ip(ec::ip4_addr::from_string("127.0.0.1")), gcm_port(4444), manager_counter(1) {}
+    : gcm_ip(ec::ip4_addr::from_string("127.0.0.1")), gcm_port(4444), ec_counter(1) {}
 
 ec::GlobalCloudManager::GlobalCloudManager(std::string ip_addr, uint16_t port)
-    : gcm_ip(ec::ip4_addr::from_string(std::move(ip_addr))), gcm_port(port), manager_counter(1) {}
+    : gcm_ip(ec::ip4_addr::from_string(std::move(ip_addr))), gcm_port(port), ec_counter(1) {}
 
-uint32_t ec::GlobalCloudManager::create_new_manager() {
-    if(managers.find(manager_counter) != managers.end()) {
+uint32_t ec::GlobalCloudManager::create_ec() {
+    if(ecs.find(ec_counter) != ecs.end()) {
         std::cout << "ERROR: Error allocating new Manager. Manager IDs not correct" << std::endl;
         return 0;
     }
-    auto *m = new ec::Manager(manager_counter);
-    managers.insert({manager_counter, m});
-    manager_counter++;
-    return m->get_ec_id();
+
+    auto *ec = new ec::ElasticContainer(ec_counter, gcm_ip);
+    ecs.insert({ec_counter, ec});
+
+    ec_counter++;
+    return ec->get_ec_id();
 }
 
-ec::Manager &ec::GlobalCloudManager::get_manager(uint32_t ec_id) {
-    auto itr = managers.find(ec_id);
-    if(itr == managers.end()) {
+ec::ElasticContainer *ec::GlobalCloudManager::get_ec(uint32_t ec_id) {
+    auto itr = ecs.find(ec_id);
+    if(itr == ecs.end()) {
         std::cout << "ERROR: No EC with ec_id: " << ec_id << ". Exiting...." << std::endl;
         std::exit(EXIT_FAILURE);
     }
-    return *itr->second;
-
-//    return *managers.at(ec_id);
-//    if(managers.find(ec_id) == managers.end()) {
-//        return nullptr_t;
-//    }
-//    return
+    return itr->second;
 }

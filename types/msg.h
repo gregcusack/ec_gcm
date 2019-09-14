@@ -22,7 +22,7 @@ namespace ec {
 
         om::net::ip4_addr   client_ip;      //ip SubContainer sending message is on
 //        uint32_t            client_ip;      //ip SubContainer sending message is on
-        uint32_t            cgroup_id;      //id of SubContainer on that server
+        uint32_t            cgroup_id;      //id of SubContainer on that Server
         uint8_t                is_mem;         //1: mem, 0: cpu
         uint64_t            rsrc_amnt;      //amount of resources (cpu/mem)
         uint8_t                request;        //1: mem, 0: cpu
