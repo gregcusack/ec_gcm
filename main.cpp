@@ -10,7 +10,7 @@
 #define CONTAINER_ID    1
 #define SERVER_IP       2130706433      //127.0.0.1
 #define GCM_PORT        8888             //Not sure if we need a port here tbh
-#define MANAGER_PORT    4444
+#define SERVER_PORT    4444
 
 int main() {
 
@@ -24,16 +24,30 @@ int main() {
     ec::ElasticContainer *ec = gcm->get_ec(ec_id);
     std::cout << "ec_id from ec: " << ec->get_ec_id() << std::endl;
 
-    ec->create_manager(MANAGER_PORT);
+    ec->build_ec_handler(SERVER_PORT);
 
     ec::Manager *m = ec->get_manager();
-    std::cout << "(ec_id: " << m->get_ec_id() << ", ip: " << m->get_ip() << ", port: " << m->get_port() << ")" <<std::endl;
+    ec::Server *s = m->get_server();
 
-    ec::Manager::Server s = m->get_server();
-    std::cout << s.get_test_var() << std::endl;
-    std::cout << s.manager()->get_ip() << std::endl;
+    std::cout <<  "(ec_id: " << m->get_ec_id() << ", ip: " << s->get_ip() << ", port: " << s->get_port() << ")" <<std::endl;
 
-    s.serve();
+    s->initialize_server();
+    s->serve();
+
+//    ec->create_manager();
+//    ec->create_server(SERVER_PORT);
+////    ec->set
+
+//    ec::Manager *m = ec->get_manager();
+//    std::cout << "(ec_id: " << m->get_ec_id() << ", ip: " << m->get_ip() << ", port: " << m->get_port() << ")" <<std::endl;
+
+
+
+//    ec::Manager::Server s = m->get_server();
+//    std::cout << s.get_test_var() << std::endl;
+//    std::cout << s.manager()->get_ip() << std::endl;
+//
+//    s.serve();
 
 //    ec::Manager =
 

@@ -14,6 +14,6 @@ add_executable(ec_gcm main.cpp
         #Server.cpp                     Server.h
 
         types/msg.h                     types/msg.cpp
-        types/types.h                   types/k_msg.h )
+        types/types.h                   types/k_msg.h Server.cpp Server.h)
 
 target_link_libraries(ec_gcm ${PTHREAD_LIB})

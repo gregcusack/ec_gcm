@@ -16,11 +16,9 @@
 #include "types/k_msg.h"
 #include "SubContainer.h"
 #include "om.h"
+//#include "Server.h"
 
-#define __MAX_CLIENT__ 30
-#define __BUFFSIZE__ 16
-#define __FAILED__ -1
-#define __QUOTA__ 50000
+
 
 class container;
 
@@ -29,10 +27,11 @@ namespace ec {
      * @class manager
      * @brief handles all connections and allocations for a single elastic container
      */
+    struct Server;
     class Manager {
     using container_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
     public:
-        Manager(uint32_t _ec_id, ip4_addr ip_address, uint16_t port);
+        Manager(uint32_t _ec_id);
 
         uint32_t accept_container();       //probably want to return a FD for that new SubContainer thread
         void allocate_container(uint32_t cgroup_id, uint32_t server_ip);
@@ -43,49 +42,28 @@ namespace ec {
         uint32_t handle(uint32_t cgroup_id, uint32_t server_ip);
 //        void set_server(Server *_server) {server = _server;};
 
-        class Server {
-        public:
-                explicit Server(Manager *_m);
-                Manager* manager() { return m; }
-                int32_t get_test_var() { return test; }
-                void serve();
-                void *handle_client_reqs(void* clifd);
-                static void *handle_client_helper(void* clifd);
-                int64_t handle_req(char* buffer);
-                int64_t handle_cpu_req(msg_t *req);
-                int64_t handle_mem_req(msg_t *req);
-
-                struct server_t {
-                    int32_t sock_fd;
-                    struct sockaddr_in addr;
-                };
-        private:
-            struct server_t server_socket;
-            Manager *m;
-            int32_t test;
-            uint32_t mem_reqs;
-            uint64_t cpu_limit;     //TODO: delete this. idk what this is supposed to be
-            uint64_t memory_limit;
-        };
-
 
         //getters
         uint32_t get_ec_id() { return ec_id; }
-        ip4_addr get_ip() { return ip_address; }
-        uint16_t get_port() { return port; }
         const container_map& get_containers() {return containers;}
         SubContainer* get_container(SubContainer::ContainerId &container_id);
-        Server& get_server() { return *server; }
+
+        void set_server(Server *serv) { s = serv; }
+        Server *get_server() { return s; }
+
 
 
 
     private:
         uint32_t ec_id;
-        ip4_addr ip_address;
-        uint16_t port;
-//        Server *server;
+//        ip4_addr ip_address;
+//        uint16_t port;
         container_map containers;
-        Server *server;
+        Server *s;
+
+        //cpu
+//        uint64_t runtime_remaining;
+
 
     };
 

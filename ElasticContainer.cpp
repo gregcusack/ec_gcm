@@ -12,8 +12,17 @@ ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, ip4_addr _ip_address)
     _cpu = cpu();
 }
 
-void ec::ElasticContainer::create_manager(uint16_t port) {
-    manager = new Manager(ec_id, ip_address, port);       //pass in gcm_ip for now
+void ec::ElasticContainer::create_manager() {
+    manager = new Manager(ec_id);       //pass in gcm_ip for now
+}
+
+void ec::ElasticContainer::create_server(uint16_t _port) {
+    server = new Server(ip_address, _port);
+}
+
+void ec::ElasticContainer::connect_server_and_manager() {
+    manager->set_server(server);
+    server->set_manager(manager);
 }
 
 ec::Manager *ec::ElasticContainer::get_manager() {
@@ -23,6 +32,14 @@ ec::Manager *ec::ElasticContainer::get_manager() {
     }
     return manager;
 }
+
+void ec::ElasticContainer::build_ec_handler(uint16_t _port) {
+    create_manager();
+    create_server(_port);
+    connect_server_and_manager();
+}
+
+
 
 //void ec::ElasticContainer::set_period(int64_t _period) {
 //    _cpu.period = _period;

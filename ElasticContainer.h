@@ -5,6 +5,7 @@
 #ifndef EC_GCM_ELASTICCONTAINER_H
 #define EC_GCM_ELASTICCONTAINER_H
 #include "Manager.h"
+#include "Server.h"
 #include "SubContainer.h"
 #include "om.h"
 
@@ -13,7 +14,9 @@ namespace ec {
     public:
         ElasticContainer(uint32_t _ec_id, ip4_addr _ip_address);
 
-        void create_manager(uint16_t port);
+        //creates manager and server and connects them
+        void build_ec_handler(uint16_t _port);
+
         Manager* get_manager();
         struct memory {
             memory(int64_t _max_mem) : max_mem(_max_mem) {};
@@ -49,9 +52,17 @@ namespace ec {
 
 
     private:
+        //setup functions
+        void create_manager();
+        void create_server(uint16_t port);
+        void connect_server_and_manager();
+
+
         uint32_t ec_id;
         ip4_addr ip_address;
         Manager *manager;
+        Server *server;
+
 
         memory _mem;
         cpu _cpu;
