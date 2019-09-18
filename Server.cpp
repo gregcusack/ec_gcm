@@ -7,7 +7,7 @@
 ec::Server::Server(ip4_addr _ip_address, uint16_t _port)
         : ip_address(_ip_address), port(_port), m(nullptr),
         mem_reqs(0), cpu_limit(500000), memory_limit(30000),
-        server_initialized(0), test(23) {}
+        server_initialized(false), test(23) {}
 
 void ec::Server::initialize_server() {
     if(m == nullptr) {
@@ -129,8 +129,13 @@ void ec::Server::handle_client_reqs(void *clifd) {
 
 int64_t ec::Server::handle_req(char *buffer) {
     auto *req = (k_msg_t*)buffer;
+    std::cout << "req: " << *req << std::endl;
+
     msg_t msg(*req);
+
+    std::cout << "msg: " << msg << std::endl;
     int64_t ret = __FAILED__;
+    std::cout << "req->is_mem: " << req->is_mem << std::endl;
 
     switch(req -> is_mem) {
         case true:
