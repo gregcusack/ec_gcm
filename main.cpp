@@ -15,8 +15,8 @@
 int main() {
 
 
-    auto *gcm = new ec::GlobalCloudManager("128.138.244.104", GCM_PORT);
-
+//    auto *gcm = new ec::GlobalCloudManager("128.138.244.104", GCM_PORT);
+    auto *gcm = new ec::GlobalCloudManager("127.0.0.1", GCM_PORT);
 
     uint32_t ec_id = gcm->create_ec();
     std::cout << "ec_id: " << ec_id << std::endl;

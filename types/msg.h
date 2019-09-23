@@ -13,11 +13,11 @@
 
 namespace ec {
     struct msg_t {
-        msg_t()                         = default;
-        msg_t(const msg_t&)             = default;
-        msg_t& operator=(const msg_t&)  = default;
-        msg_t(msg_t&&)                  = default;
-        msg_t& operator=(msg_t&&)       = default;
+        msg_t()                                     = default;
+        msg_t(const msg_t&)                         = default;
+        msg_t& operator=(const msg_t&)              = default;
+        msg_t(msg_t&&)                              = default;
+        msg_t& operator=(msg_t&&)                   = default;
         explicit msg_t(const ec::k_msg_t& k_msg);
 
         om::net::ip4_addr   client_ip;      //ip SubContainer sending message is on
@@ -35,6 +35,9 @@ namespace ec {
                         << k.is_mem << ","
                         << k.rsrc_amnt << ","
                         << k.request;
+        }
+        void from_net() {
+            client_ip = om::net::ip4_addr::reverse_byte_order(client_ip);
         }
 
 

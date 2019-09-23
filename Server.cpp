@@ -58,7 +58,6 @@ void ec::Server::serve() {
     fd_set readfds;
     int32_t max_sd, sd, cliaddr_len, clifd, select_rv;
     int32_t num_of_cli = 0;
-//    pthread_t threads[__MAX_CLIENT__];
     std::thread threads[__MAX_CLIENT__];
     FD_ZERO(&readfds);
 
@@ -128,23 +127,24 @@ void ec::Server::handle_client_reqs(void *clifd) {
 //}
 
 int64_t ec::Server::handle_req(char *buffer) {
-    auto *req = (k_msg_t*)buffer;
-    std::cout << "req: " << *req << std::endl;
+//    auto *req = (k_msg_t*)buffer;
+//    msg_t msg(*req);
+    auto *msg = reinterpret_cast<msg_t*>(buffer);
+    msg->from_net();
 
-    msg_t msg(*req);
-
-    std::cout << "msg: " << msg << std::endl;
+;
+    std::cout << "msg: " << *msg << std::endl;
     int64_t ret = __FAILED__;
-    std::cout << "req->is_mem: " << req->is_mem << std::endl;
+    std::cout << "req->is_mem: " << msg->is_mem << std::endl;
 
-    switch(req -> is_mem) {
+    switch(msg -> is_mem) {
         case true:
             std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling Mem request" << std::endl;
-            ret = handle_mem_req(&msg);
+            ret = handle_mem_req(msg);
             break;
         case false:
             std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling CPU request" << std::endl;
-            ret = handle_cpu_req(&msg);
+            ret = handle_cpu_req(msg);
             std::cout << "[dbg] EC Server id: " << m->get_ec_id() << ". Return CPU Request: " << ret << std::endl;
             break;
         default:

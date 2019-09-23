@@ -23,7 +23,7 @@ namespace ec {
 
         friend std::ostream& operator<<(std::ostream& os_, const k_msg_t& k) {
             return os_  << "k_msg_t: "
-                        << om::net::ip4_addr::from_net(k.client_ip) << ","
+                        << om::net::ip4_addr::from_host(k.client_ip) << ","
                         << k.cgroup_id << ","
                         << k.is_mem << ","
                         << k.rsrc_amnt << ","

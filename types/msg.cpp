@@ -13,7 +13,3 @@ ec::msg_t::msg_t(const ec::k_msg_t &k_msg) {
     request = k_msg.request;
 
 }
-
-
-
-
