@@ -81,6 +81,7 @@ void ec::Server::serve() {
                 args = new serv_thread_args();
                 args->clifd = clifd;
                 args->cliaddr = &server_socket.addr;
+                std::cout << "server rx connection from clifd: " << clifd << std::endl;
                 threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)args);
 //                threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)&clifd);
             }
@@ -101,20 +102,16 @@ void ec::Server::handle_client_reqs(void *args) {
     auto *arguments = reinterpret_cast<serv_thread_args*>(args);
     int client_fd = arguments->clifd;
 
-
-//    int32_t client_fd = *((int32_t*) clifd);
-
     std::cout << "[SUCCESS] Server id: " << m->get_ec_id() << ". Server thread! New connection created. "
                                                               "new socket fd: " << client_fd << std::endl;
 
     bzero(buffer, __BUFFSIZE__);
     while((num_bytes = read(client_fd, buffer, __BUFFSIZE__)) > 0 ) {
-
         ret = 0;
         std::cout << "[dbg] Number of bytes read: " << num_bytes << std::endl;
         ret = handle_req(buffer, arguments);
-        std::cout << "ret from handle_req(): " << ret << std::endl;
         if(ret > 0) {
+//            std::cout << "server returning to client_fd: " << client_fd << std::endl;
             if(write(client_fd, (const char*) &ret, sizeof(ret)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Failed writing to socket" << std::endl;
                 break;
