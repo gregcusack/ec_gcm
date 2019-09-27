@@ -21,7 +21,7 @@ namespace ec {
         struct memory {
             memory(int64_t _max_mem) : max_mem(_max_mem) {};
             memory() = default;
-            int64_t max_mem        =   -1;                   //-1 no limit, (in mbytes or pages tbd)
+            uint64_t max_mem        =   -1;                   //-1 no limit, (in mbytes or pages tbd)
             friend std::ostream& operator<<(std::ostream& os, const memory& rhs) {
                 os << "max_mem: " << rhs.max_mem;
                 return os;
@@ -32,8 +32,8 @@ namespace ec {
             cpu(uint64_t _period, int64_t _quota, uint64_t _slice_size)
                 : period(_period), quota(_quota), slice_size(_slice_size) {};
             cpu() = default;
-            int64_t period              =   100000000;      //100 ms
-            int64_t quota               =   -1;             //-1: no limit, in ms
+            uint64_t period             =   100000000;      //100 ms
+            int64_t quota               =   period;             //-1: no limit, in ms
             uint64_t slice_size         =   10000000;       //10 ms
             friend std::ostream& operator<<(std::ostream& os, const cpu& rhs) {
                 os  << "period: " << rhs.period << ", "

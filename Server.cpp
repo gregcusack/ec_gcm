@@ -56,9 +56,11 @@ void ec::Server::serve() {
 
     //test if server_socket struct valid here somehow
     fd_set readfds;
+    //struct sockaddr_in cliaddr; -- this is server_socket.adder
     int32_t max_sd, sd, cliaddr_len, clifd, select_rv;
     int32_t num_of_cli = 0;
     std::thread threads[__MAX_CLIENT__];
+    serv_thread_args *args;
     FD_ZERO(&readfds);
 
     max_sd = server_socket.sock_fd + 1;
@@ -76,7 +78,11 @@ void ec::Server::serve() {
         if(FD_ISSET(server_socket.sock_fd, &readfds)) {
             if((clifd = accept(server_socket.sock_fd, (struct sockaddr *)&server_socket.addr, (socklen_t*)&cliaddr_len)) > 0) {
                 std::cout << "[dgb]: Container tried to request a connection. EC Server id: " << m->get_ec_id() << std::endl;
-                threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)&clifd);
+                args = new serv_thread_args();
+                args->clifd = clifd;
+                args->cliaddr = &server_socket.addr;
+                threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)args);
+//                threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)&clifd);
             }
             else {
                 std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Unable to accept connection. "
@@ -88,11 +94,15 @@ void ec::Server::serve() {
 
 }
 
-void ec::Server::handle_client_reqs(void *clifd) {
+void ec::Server::handle_client_reqs(void *args) {
     ssize_t num_bytes;
-    int64_t ret;
+    uint64_t ret;
     char buffer[__BUFFSIZE__];
-    int32_t client_fd = *((int*) clifd);
+    auto *arguments = reinterpret_cast<serv_thread_args*>(args);
+    int client_fd = arguments->clifd;
+
+
+//    int32_t client_fd = *((int32_t*) clifd);
 
     std::cout << "[SUCCESS] Server id: " << m->get_ec_id() << ". Server thread! New connection created. "
                                                               "new socket fd: " << client_fd << std::endl;
@@ -102,16 +112,17 @@ void ec::Server::handle_client_reqs(void *clifd) {
 
         ret = 0;
         std::cout << "[dbg] Number of bytes read: " << num_bytes << std::endl;
-        ret = handle_req(buffer);
+        ret = handle_req(buffer, arguments);
+        std::cout << "ret from handle_req(): " << ret << std::endl;
         if(ret > 0) {
-            if(write(client_fd, (const char*) &ret, sizeof(uint32_t)) < 0) {
+            if(write(client_fd, (const char*) &ret, sizeof(ret)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Failed writing to socket" << std::endl;
                 break;
             }
         }
         else {
             std::cout << "[FAILED]: EC Server id: " << m->get_ec_id() << ". Server thread: " << mem_reqs++ << std::endl;
-            if(write(client_fd, (const char*) &ret, sizeof(uint32_t)) < 0) {
+            if(write(client_fd, (const char*) &ret, sizeof(ret)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Failed writing to socket. Part 2" << std::endl;
                 break;
             }
@@ -122,30 +133,31 @@ void ec::Server::handle_client_reqs(void *clifd) {
     pthread_exit(nullptr);
 }
 
-//void *ec::Server::handle_client_helper(void *clifd) {
-//    return ((Server *)clifd)->handle_client_reqs(clifd);
-//}
-
-int64_t ec::Server::handle_req(char *buffer) {
+uint64_t ec::Server::handle_req(char *buffer, serv_thread_args* args) {
 //    auto *req = (k_msg_t*)buffer;
 //    msg_t msg(*req);
     auto *msg = reinterpret_cast<msg_t*>(buffer);
-    msg->from_net();
+    msg->set_ip(args->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
+//    msg->from_net();
 
 ;
     std::cout << "msg: " << *msg << std::endl;
-    int64_t ret = __FAILED__;
-    std::cout << "req->is_mem: " << msg->is_mem << std::endl;
+    uint64_t ret = __FAILED__;
+    std::cout << "req->req_type: " << msg->req_type << std::endl;
 
-    switch(msg -> is_mem) {
-        case true:
+    switch(msg -> req_type) {
+        case _MEM_:
             std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling Mem request" << std::endl;
-            ret = handle_mem_req(msg);
+            ret = handle_mem_req(msg, args);
             break;
-        case false:
+        case _CPU_:
             std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling CPU request" << std::endl;
-            ret = handle_cpu_req(msg);
+            ret = serve_cpu_req(msg, args);
             std::cout << "[dbg] EC Server id: " << m->get_ec_id() << ". Return CPU Request: " << ret << std::endl;
+            break;
+        case _INIT_:
+            std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling INIT request" << std::endl;
+            ret = add_cgroup_id_to_ec(msg, args);
             break;
         default:
             std::cout << "[Error]: EC Server id: " << m->get_ec_id() << ". Handling memory/cpu request failed!" << std::endl;
@@ -154,30 +166,34 @@ int64_t ec::Server::handle_req(char *buffer) {
 
 }
 
-int64_t ec::Server::handle_cpu_req(msg_t *req) {
-    int64_t ret = 0;
-    int64_t fail = 1;
-    pthread_mutex_t cpulock = PTHREAD_MUTEX_INITIALIZER;
+uint64_t ec::Server::add_cgroup_id_to_ec(ec::msg_t *req, serv_thread_args* args) {
+    mtx.lock();
 
-    if(req->is_mem) { return __FAILED__; }
-    if(cpu_limit > 0) {
-        pthread_mutex_lock(&cpulock);
-        ret = cpu_limit > __QUOTA__ ? __QUOTA__ : cpu_limit;
-        cpu_limit -= ret;
-        pthread_mutex_unlock(&cpulock);
-        return req->rsrc_amnt + ret;
+    auto *sc = new SubContainer(req->cgroup_id, args->cliaddr->sin_addr.s_addr, m->get_ec_id());
+    int ret = m->insert_sc(*sc);
 
+    std::cout << "[dbg]: Init. Added cgroup to ec. cgroup id: " << *sc->get_id() << std::endl;
+
+    mtx.unlock();
+    return ret;
+}
+
+//Logic in Manager
+uint64_t ec::Server::serve_cpu_req(msg_t *req, serv_thread_args* args) {
+    uint64_t bandwidth = m->handle_bandwidth(req);
+    if(!bandwidth) {
+        return __ALLOC_FAILED__;
     }
     else {
-        return fail;
+        return bandwidth;
     }
 }
 
-int64_t ec::Server::handle_mem_req(msg_t *req) {
+uint64_t ec::Server::handle_mem_req(msg_t *req, serv_thread_args* args) {
     int64_t ret = 0;
     int64_t fail = 1;
     pthread_mutex_t memlock = PTHREAD_MUTEX_INITIALIZER;
-    if(!req->is_mem) { return __FAILED__; }
+    if(!req->req_type) { return __FAILED__; }
 
     if(memory_limit > 0) {
         pthread_mutex_lock(&memlock);
@@ -190,6 +206,8 @@ int64_t ec::Server::handle_mem_req(msg_t *req) {
         return fail;
     }
 }
+
+
 
 
 

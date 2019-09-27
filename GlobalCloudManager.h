@@ -12,6 +12,8 @@
 #include "Manager.h"
 #include "om.h"
 
+//std::mutex eclock;
+
 namespace ec {
     class GlobalCloudManager {
         using manager_map = std::unordered_map<uint32_t, ec::Manager*>;

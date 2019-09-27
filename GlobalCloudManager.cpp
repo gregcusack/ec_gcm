@@ -19,7 +19,9 @@ uint32_t ec::GlobalCloudManager::create_ec() {
     auto *ec = new ec::ElasticContainer(ec_counter, gcm_ip);
     ecs.insert({ec_counter, ec});
 
+//    eclock.lock();
     ec_counter++;
+//    eclock.unlock();
     return ec->get_ec_id();
 }
 

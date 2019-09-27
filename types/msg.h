@@ -23,22 +23,27 @@ namespace ec {
         om::net::ip4_addr   client_ip;      //ip SubContainer sending message is on
 //        uint32_t            client_ip;      //ip SubContainer sending message is on
         uint32_t            cgroup_id;      //id of SubContainer on that Server
-        uint32_t                is_mem;         //1: mem, 0: cpu
+        uint32_t                req_type;         //1: mem, 0: cpu
         uint64_t            rsrc_amnt;      //amount of resources (cpu/mem)
         uint32_t                request;        //1: mem, 0: cpu
 
 
         friend std::ostream& operator<<(std::ostream& os_, const msg_t& k) {
-            return os_  << "msg_t: "
-                        << k.client_ip << ","
-                        << k.cgroup_id << ","
-                        << k.is_mem << ","
-                        << k.rsrc_amnt << ","
-                        << k.request;
+            return os_ << "msg_t: "
+                       << k.client_ip << ","
+                       << k.cgroup_id << ","
+                       << k.req_type << ","
+                       << k.rsrc_amnt << ","
+                       << k.request;
         }
         void from_net() {
             client_ip = om::net::ip4_addr::reverse_byte_order(client_ip);
         }
+
+        void set_ip(uint32_t ip) { //this will not be needed later
+            client_ip = om::net::ip4_addr::from_net(ip);
+
+        };
 
 
     };

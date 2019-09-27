@@ -19,7 +19,7 @@ ec::SubContainer::SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t manager
 }
 
 ec::SubContainer::SubContainer(uint32_t cgroup_id, uint32_t ip, uint32_t manager_id) {
-    _id = ContainerId(cgroup_id, ip4_addr::from_host(ip), manager_id);
+    _id = ContainerId(cgroup_id, ip4_addr::from_net(ip), manager_id);
     runtime_received = 0;
     mem_limit = 0;
 }

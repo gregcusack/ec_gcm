@@ -17,7 +17,11 @@
 #define __MAX_CLIENT__ 30
 #define __BUFFSIZE__ 1024
 #define __FAILED__ -1
+//#define __ALLOC_FAILED__ 0
 #define __QUOTA__ 50000
+
+
+
 
 namespace ec {
 //    struct Manager;
@@ -32,6 +36,11 @@ namespace ec {
             int32_t sock_fd;
             struct sockaddr_in addr;
         };
+        struct serv_thread_args {
+            serv_thread_args()              = default;
+            int clifd                       = 0;
+            struct sockaddr_in *cliaddr     = nullptr;
+        };
 
 
         Manager *manager() { return m; }
@@ -41,19 +50,22 @@ namespace ec {
 
         void handle_client_reqs(void *clifd);
 
-        static void *handle_client_helper(void *clifd);
+        uint64_t handle_req(char *buffer, serv_thread_args* args);
 
-        int64_t handle_req(char *buffer);
+        uint64_t add_cgroup_id_to_ec(msg_t *req, serv_thread_args* args);
 
-        int64_t handle_cpu_req(msg_t *req);
+        uint64_t serve_cpu_req(msg_t *req, serv_thread_args* args);
 
-        int64_t handle_mem_req(msg_t *req);
+        uint64_t handle_mem_req(msg_t *req, serv_thread_args* args);
 
 
 
         ip4_addr get_ip() { return ip_address; }
         uint16_t get_port() { return port; }
         int32_t get_test_var() { return test; }
+        std::mutex mtx;
+
+
 
 
     private:
