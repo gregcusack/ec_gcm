@@ -18,7 +18,7 @@
 #include "om.h"
 //#include "Server.h"
 
-#define __ALLOC_FAILED__ 0
+#define __ALLOC_FAILED__ -2
 #define _CPU_ 0
 #define _MEM_ 1
 #define _INIT_ 2
@@ -64,7 +64,7 @@ namespace ec {
         inline uint64_t decr_rt_remaining(uint64_t slice);
         inline uint64_t incr_rt_remaining(uint64_t give_back);
         void reset_rt_remaining() { runtime_remaining = quota; }
-        uint64_t handle_bandwidth(msg_t *req);
+        uint64_t handle_bandwidth(msg_t *req, msg_t *res);
 
         uint64_t refill_runtime();
 

@@ -14,7 +14,7 @@
 namespace ec {
     struct msg_t {
         msg_t()                                     = default;
-        msg_t(const msg_t&)                         = default;
+        msg_t(const msg_t &msg_req);
         msg_t& operator=(const msg_t&)              = default;
         msg_t(msg_t&&)                              = default;
         msg_t& operator=(msg_t&&)                   = default;
@@ -23,9 +23,9 @@ namespace ec {
         om::net::ip4_addr   client_ip;      //ip SubContainer sending message is on
 //        uint32_t            client_ip;      //ip SubContainer sending message is on
         uint32_t            cgroup_id;      //id of SubContainer on that Server
-        uint32_t                req_type;         //1: mem, 0: cpu
+        uint32_t                req_type;         //1: mem, 0: cpu, 2: init
         uint64_t            rsrc_amnt;      //amount of resources (cpu/mem)
-        uint32_t                request;        //1: mem, 0: cpu
+        uint32_t                request;        //1: request, 0: give back
 
 
         friend std::ostream& operator<<(std::ostream& os_, const msg_t& k) {

@@ -109,17 +109,24 @@ void ec::Server::handle_client_reqs(void *args) {
     while((num_bytes = read(client_fd, buffer, __BUFFSIZE__)) > 0 ) {
         ret = 0;
         std::cout << "[dbg] Number of bytes read: " << num_bytes << std::endl;
-        ret = handle_req(buffer, arguments);
+
+        //moved up from handle_req
+        auto *req = reinterpret_cast<msg_t*>(*buffer);
+        req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
+        auto *res = new msg_t(*req);
+
+        ret = handle_req(req, res, arguments);
         if(ret > 0) {
 //            std::cout << "server returning to client_fd: " << client_fd << std::endl;
-            if(write(client_fd, (const char*) &ret, sizeof(ret)) < 0) {
+            if(write(client_fd, (const char*) &res, sizeof(res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Failed writing to socket" << std::endl;
                 break;
             }
         }
         else {
-            std::cout << "[FAILED]: EC Server id: " << m->get_ec_id() << ". Server thread: " << mem_reqs++ << std::endl;
-            if(write(client_fd, (const char*) &ret, sizeof(ret)) < 0) {
+            std::cout << "[FAILED] Error code: [" << ret << "]: EC Server id: " << m->get_ec_id() << ". Server thread: " << mem_reqs++ << std::endl;
+
+            if(write(client_fd, (const char*) &res, sizeof(res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Failed writing to socket. Part 2" << std::endl;
                 break;
             }
@@ -130,31 +137,29 @@ void ec::Server::handle_client_reqs(void *args) {
     pthread_exit(nullptr);
 }
 
-uint64_t ec::Server::handle_req(char *buffer, serv_thread_args* args) {
-//    auto *req = (k_msg_t*)buffer;
-//    msg_t msg(*req);
-    auto *msg = reinterpret_cast<msg_t*>(buffer);
-    msg->set_ip(args->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
-//    msg->from_net();
+int ec::Server::handle_req(const msg_t *req, msg_t *res, serv_thread_args* args) {
+    if(req == nullptr || res == nullptr) {
+        std::cout << "req or res == null in handle_req()" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
-;
-    std::cout << "msg: " << *msg << std::endl;
+    std::cout << "req: " << *req << std::endl;
     uint64_t ret = __FAILED__;
-    std::cout << "req->req_type: " << msg->req_type << std::endl;
+    std::cout << "req->req_type: " << req->req_type << std::endl;
 
-    switch(msg -> req_type) {
+    switch(req -> req_type) {
         case _MEM_:
             std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling Mem request" << std::endl;
-            ret = handle_mem_req(msg, args);
+            ret = handle_mem_req(req, res,args);
             break;
         case _CPU_:
             std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling CPU request" << std::endl;
-            ret = serve_cpu_req(msg, args);
+            ret = serve_cpu_req(req, res, args);
             std::cout << "[dbg] EC Server id: " << m->get_ec_id() << ". Return CPU Request: " << ret << std::endl;
             break;
         case _INIT_:
             std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling INIT request" << std::endl;
-            ret = add_cgroup_id_to_ec(msg, args);
+            ret = add_cgroup_id_to_ec(req, args);
             break;
         default:
             std::cout << "[Error]: EC Server id: " << m->get_ec_id() << ". Handling memory/cpu request failed!" << std::endl;
@@ -163,7 +168,7 @@ uint64_t ec::Server::handle_req(char *buffer, serv_thread_args* args) {
 
 }
 
-uint64_t ec::Server::add_cgroup_id_to_ec(ec::msg_t *req, serv_thread_args* args) {
+int ec::Server::add_cgroup_id_to_ec(const ec::msg_t *req, serv_thread_args* args) {
     mtx.lock();
 
     auto *sc = new SubContainer(req->cgroup_id, args->cliaddr->sin_addr.s_addr, m->get_ec_id());
@@ -176,7 +181,12 @@ uint64_t ec::Server::add_cgroup_id_to_ec(ec::msg_t *req, serv_thread_args* args)
 }
 
 //Logic in Manager
-uint64_t ec::Server::serve_cpu_req(msg_t *req, serv_thread_args* args) {
+int ec::Server::serve_cpu_req(const msg_t *req, msg_t *res, serv_thread_args* args) {
+    if(req == nullptr || res == nullptr) {
+        std::cout << "req or res == null in serve_cpu_req()" << std::endl;
+        return __FAILED__;
+//        exit(EXIT_FAILURE);
+    }
     uint64_t bandwidth = m->handle_bandwidth(req);
     if(!bandwidth) {
         return __ALLOC_FAILED__;
@@ -186,7 +196,11 @@ uint64_t ec::Server::serve_cpu_req(msg_t *req, serv_thread_args* args) {
     }
 }
 
-uint64_t ec::Server::handle_mem_req(msg_t *req, serv_thread_args* args) {
+uint64_t ec::Server::handle_mem_req(const msg_t *req, msg_t *res, serv_thread_args* args) {
+    if(req == nullptr || res == nullptr) {
+        std::cout << "req or res == null in serve_mem_req()" << std::endl;
+        exit(EXIT_FAILURE);
+    }
     int64_t ret = 0;
     int64_t fail = 1;
     pthread_mutex_t memlock = PTHREAD_MUTEX_INITIALIZER;
