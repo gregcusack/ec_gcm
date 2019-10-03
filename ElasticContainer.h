@@ -19,11 +19,13 @@ namespace ec {
 
         Manager* get_manager();
         struct memory {
-            memory(int64_t _max_mem) : max_mem(_max_mem) {};
+            memory(int64_t _max_mem) : memory_limit(_max_mem) {};
             memory() = default;
-            uint64_t max_mem        =   -1;                   //-1 no limit, (in mbytes or pages tbd)
+            //init to 30000 pages (that's what maziyar has it as)
+            uint64_t memory_limit           =   30000;                   //-1 no limit, (in mbytes or pages tbd)
+            uint64_t slice_size             =   5000; //pages
             friend std::ostream& operator<<(std::ostream& os, const memory& rhs) {
-                os << "max_mem: " << rhs.max_mem;
+                os << "memory_limit: " << rhs.memory_limit;
                 return os;
             }
         };
@@ -45,7 +47,7 @@ namespace ec {
 
         uint32_t get_ec_id() { return ec_id; };
 
-        void set_max_mem(int64_t _max_mem) { _mem.max_mem = _max_mem; }
+        void set_max_mem(int64_t _max_mem) { _mem.memory_limit = _max_mem; }
         void set_period(int64_t _period)  { _cpu.period = _period; }   //will need to update maanger too
         void set_quota(int64_t _quota) { _cpu.quota = _quota; }
         void set_slice_size(uint64_t _slice_size) { _cpu.slice_size = _slice_size; }

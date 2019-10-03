@@ -7,10 +7,12 @@
 
 ec::Manager::Manager(uint32_t _ec_id) : ec_id(_ec_id), s(nullptr) {}
 
-ec::Manager::Manager(uint32_t _ec_id, int64_t _quota, uint64_t _slice_size)
+ec::Manager::Manager(uint32_t _ec_id, int64_t _quota, uint64_t _slice_size,
+        uint64_t _mem_limit, uint64_t _mem_slice_size)
     : ec_id(_ec_id), s(nullptr), quota(_quota), slice(_slice_size),
-    runtime_remaining(_quota) {
+      runtime_remaining(_quota), memory_available(_mem_limit), mem_slice(_mem_slice_size) {
     std::cout << "runtime_remaining on init: " << runtime_remaining << std::endl;
+    std::cout << "memory_available on init: " << memory_available << std::endl;
 
 }
 
@@ -56,7 +58,7 @@ ec::SubContainer *ec::Manager::get_container(ec::SubContainer::ContainerId &cont
 
 int ec::Manager::insert_sc(ec::SubContainer &_sc) {
     containers.insert({*(_sc.get_id()), &_sc});
-    return 1; //not sure what exactly to return here
+    return __ALLOC_SUCCESS__; //not sure what exactly to return here
 }
 
 uint64_t ec::Manager::decr_rt_remaining(uint64_t _slice) {
@@ -69,7 +71,13 @@ uint64_t ec::Manager::incr_rt_remaining(uint64_t give_back) {
     return runtime_remaining;
 }
 
-uint64_t ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
+uint64_t ec::Manager::refill_runtime() {
+    std::cout << "refilling runtime_remaining" << std::endl;
+    runtime_remaining = quota;
+    return runtime_remaining;
+}
+
+int ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
     if(req == nullptr || res == nullptr) {
         std::cout << "req or res == null in handle_bandwidth()" << std::endl;
         exit(EXIT_FAILURE);
@@ -81,17 +89,18 @@ uint64_t ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
     if(runtime_remaining > 0) {
         ret = slice > runtime_remaining ? runtime_remaining : slice;
         runtime_remaining -= ret;
-        cpulock.unlock();
         std::cout << "Server sending back " << ret << "ns in runtime" << std::endl;
         //TODO: THIS SHOULDN'T BE HERE. BUT USING IT FOR TESTING
         if(runtime_remaining <= 0) {
             refill_runtime();
         }
+        cpulock.unlock();
         res->rsrc_amnt = ret;   //set bw we're returning
         res->request = 0;       //set to give back
-        return ret;
+        return __ALLOC_SUCCESS__;
     }
     else {
+        cpulock.unlock();
         //TODO: Throttle here
         res->rsrc_amnt = 0;
         res->request = 0;
@@ -100,16 +109,31 @@ uint64_t ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
 
 }
 
-uint64_t ec::Manager::refill_runtime() {
-    std::cout << "refilling runtime_remaining" << std::endl;
-    runtime_remaining = quota;
-    return runtime_remaining;
-}
-
-uint64_t ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res) {
+int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res) {
     if(req == nullptr || res == nullptr) {
         std::cout << "req or res == null in handle_mem_req()" << std::endl;
         exit(EXIT_FAILURE);
     }
-}
+    uint64_t ret = 0;
+    std::mutex memlock;
+    if(!req->req_type) { return __ALLOC_FAILED__; }
+    memlock.lock();
+    if(memory_available > 0) {          //TODO: integrate give back here
+        std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
+        ret = memory_available > mem_slice ? mem_slice : memory_available;
 
+        memory_available -= ret;
+
+        std::cout << "successfully decrease remaining mem to: " << memory_available << std::endl;
+        memlock.unlock();
+
+        res->rsrc_amnt = ret;   //give back "ret" pages
+        res->request = 0;       //give back
+        return __ALLOC_SUCCESS__;
+    }
+    else {
+        memlock.unlock();
+        std::cout << "no memory available" << std::endl;
+        return __ALLOC_FAILED__;
+    }
+}

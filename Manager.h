@@ -19,9 +19,11 @@
 //#include "Server.h"
 
 #define __ALLOC_FAILED__ -2
+#define __ALLOC_SUCCESS__ 1
 #define _CPU_ 0
 #define _MEM_ 1
 #define _INIT_ 2
+#define __MEM_SLICE__
 
 
 
@@ -37,16 +39,14 @@ namespace ec {
     using container_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
     public:
         Manager(uint32_t _ec_id);
-        Manager(uint32_t _ec_id, int64_t _quota, uint64_t _slice_size);
+        Manager(uint32_t _ec_id, int64_t _quota, uint64_t _slice_size,
+                uint64_t _mem_limit, uint64_t _mem_slice_size);
 
         uint32_t accept_container();       //probably want to return a FD for that new SubContainer thread
         void allocate_container(uint32_t cgroup_id, uint32_t server_ip);
         void allocate_container(uint32_t cgroup_id, std::string server_ip);
 
-//        void serve(Manager *m);
-
         uint32_t handle(uint32_t cgroup_id, uint32_t server_ip);
-//        void set_server(Server *_server) {server = _server;};
 
 
         //getters
@@ -64,8 +64,8 @@ namespace ec {
         inline uint64_t decr_rt_remaining(uint64_t slice);
         inline uint64_t incr_rt_remaining(uint64_t give_back);
         void reset_rt_remaining() { runtime_remaining = quota; }
-        uint64_t handle_bandwidth(const msg_t *req, msg_t *res);
-        uint64_t handle_mem_req(const msg_t *req, msg_t *res);
+        int handle_bandwidth(const msg_t *req, msg_t *res);
+        int handle_mem_req(const msg_t *req, msg_t *res);
 
         uint64_t refill_runtime();
 
@@ -85,6 +85,9 @@ namespace ec {
         int64_t quota;
         //TODO: need file/struct of macros - like slice, failed, etc
         uint64_t slice;
+        //mem
+        uint64_t memory_available;
+        uint64_t mem_slice;
 
         //cpu
 //        uint64_t runtime_remaining;

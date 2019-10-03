@@ -14,7 +14,8 @@ int main() {
     msg_req->rsrc_amnt = 10000000;
     msg_req->request = 1;
 
-    auto *msg_res = new ec::msg_t();
+//    auto *msg_res = new ec::msg_t();
+    auto msg_res = ec::msg_t();
 
     std::cout << "msg_req: " << *msg_req << std::endl;
     //std::cout << "msg_res: " << *msg_res << std::endl;
@@ -43,8 +44,8 @@ int main() {
         return -1;
     }
     send(sock , (char*)&*msg_req , sizeof(*msg_req) , 0 );
-    valread = read( sock , (char*)msg_res, sizeof(*msg_res));
-    std::cout << *msg_res << std::endl;
+    valread = read( sock , (char*)&msg_res, sizeof(msg_res));
+    std::cout << msg_res << std::endl;
     return 0;
 
 

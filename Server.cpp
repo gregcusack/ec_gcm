@@ -116,7 +116,7 @@ void ec::Server::handle_client_reqs(void *args) {
         auto *res = new msg_t(*req);
 
         ret = handle_req(req, res, arguments);
-        if(ret > 0) {
+        if(ret == __ALLOC_SUCCESS__) {
             //for testing
             //res->rsrc_amnt -= 99999;
             std::cout << "sending back: " << *res << std::endl;
@@ -187,39 +187,24 @@ int ec::Server::serve_cpu_req(const msg_t *req, msg_t *res, serv_thread_args* ar
     if(req == nullptr || res == nullptr) {
         std::cout << "req or res == null in serve_cpu_req()" << std::endl;
         return __FAILED__;
-//        exit(EXIT_FAILURE);
     }
-    uint64_t bandwidth = m->handle_bandwidth(req, res);
-    if(!bandwidth) {
+    int ret = m->handle_bandwidth(req, res);
+    if(ret != __ALLOC_SUCCESS__) {
         return __ALLOC_FAILED__;
     }
-    else {
-        return bandwidth;
-    }
+    return __ALLOC_SUCCESS__;
 }
 
-uint64_t ec::Server::serve_mem_req(const msg_t *req, msg_t *res, serv_thread_args* args) {
-    if(req == nullptr || res == nullptr) {
+int ec::Server::serve_mem_req(const msg_t *req, msg_t *res, serv_thread_args* args) {
+    if (req == nullptr || res == nullptr) {
         std::cout << "req or res == null in serve_mem_req()" << std::endl;
-        exit(EXIT_FAILURE);
+        return __FAILED__;
     }
-    uint64_t mem = m->handle_mem_req(req, res);
-
-    int64_t ret = 0;
-    int64_t fail = 1;
-    pthread_mutex_t memlock = PTHREAD_MUTEX_INITIALIZER;
-    if(!req->req_type) { return __FAILED__; }
-
-    if(memory_limit > 0) {
-        pthread_mutex_lock(&memlock);
-        ret = memory_limit > __QUOTA__ ? __QUOTA__ : memory_limit;
-        memory_limit -= ret;
-        pthread_mutex_lock(&memlock);
-        return req->rsrc_amnt + ret;
+    int ret = m->handle_mem_req(req, res);
+    if (ret != __ALLOC_SUCCESS__) {
+        return __ALLOC_FAILED__;
     }
-    else {
-        return fail;
-    }
+    return __ALLOC_SUCCESS__;
 }
 
 
