@@ -57,7 +57,7 @@ namespace ec {
 
         int serve_cpu_req(const msg_t *req, msg_t *res, serv_thread_args* args);
 
-        uint64_t handle_mem_req(const msg_t *req, msg_t *res, serv_thread_args* args);
+        uint64_t serve_mem_req(const msg_t *req, msg_t *res, serv_thread_args* args);
 
 
 

@@ -106,3 +106,10 @@ uint64_t ec::Manager::refill_runtime() {
     return runtime_remaining;
 }
 
+uint64_t ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res) {
+    if(req == nullptr || res == nullptr) {
+        std::cout << "req or res == null in handle_mem_req()" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+}
+

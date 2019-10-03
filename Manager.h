@@ -65,6 +65,7 @@ namespace ec {
         inline uint64_t incr_rt_remaining(uint64_t give_back);
         void reset_rt_remaining() { runtime_remaining = quota; }
         uint64_t handle_bandwidth(const msg_t *req, msg_t *res);
+        uint64_t handle_mem_req(const msg_t *req, msg_t *res);
 
         uint64_t refill_runtime();
 

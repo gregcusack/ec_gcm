@@ -152,7 +152,7 @@ int ec::Server::handle_req(const msg_t *req, msg_t *res, serv_thread_args* args)
     switch(req -> req_type) {
         case _MEM_:
             std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling Mem request" << std::endl;
-            ret = handle_mem_req(req, res,args);
+            ret = serve_mem_req(req, res,args);
             break;
         case _CPU_:
             std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling CPU request" << std::endl;
@@ -198,11 +198,13 @@ int ec::Server::serve_cpu_req(const msg_t *req, msg_t *res, serv_thread_args* ar
     }
 }
 
-uint64_t ec::Server::handle_mem_req(const msg_t *req, msg_t *res, serv_thread_args* args) {
+uint64_t ec::Server::serve_mem_req(const msg_t *req, msg_t *res, serv_thread_args* args) {
     if(req == nullptr || res == nullptr) {
         std::cout << "req or res == null in serve_mem_req()" << std::endl;
         exit(EXIT_FAILURE);
     }
+    uint64_t mem = m->handle_mem_req(req, res);
+
     int64_t ret = 0;
     int64_t fail = 1;
     pthread_mutex_t memlock = PTHREAD_MUTEX_INITIALIZER;
