@@ -16,4 +16,9 @@ add_executable(ec_gcm main.cpp
         types/msg.h                     types/msg.cpp
         types/types.h                   types/k_msg.h Server.cpp Server.h)
 
+add_executable(tester tests/run_test.cpp
+        types/msg.cpp                   types/msg.h
+        om.h
+        )
+
 target_link_libraries(ec_gcm ${PTHREAD_LIB})

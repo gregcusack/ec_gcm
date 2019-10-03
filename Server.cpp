@@ -21,7 +21,7 @@ void ec::Server::initialize_server() {
     }
     std::cout << "[dgb]: Server socket fd: " << server_socket.sock_fd << std::endl;
 
-    if(setsockopt(server_socket.sock_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, (char*)&opt, sizeof(opt))) {
+    if(setsockopt(server_socket.sock_fd, SOL_SOCKET, SO_REUSEPORT, (char*)&opt, sizeof(opt))) {
         std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Setting socket options failed!" << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -111,14 +111,15 @@ void ec::Server::handle_client_reqs(void *args) {
         std::cout << "[dbg] Number of bytes read: " << num_bytes << std::endl;
 
         //moved up from handle_req
-        auto *req = reinterpret_cast<msg_t*>(*buffer);
+        auto *req = reinterpret_cast<msg_t*>(buffer);
         req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
         auto *res = new msg_t(*req);
 
         ret = handle_req(req, res, arguments);
         if(ret > 0) {
-//            std::cout << "server returning to client_fd: " << client_fd << std::endl;
-            if(write(client_fd, (const char*) &res, sizeof(res)) < 0) {
+            //for testing
+            //res->rsrc_amnt -= 99999;
+            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Failed writing to socket" << std::endl;
                 break;
             }
@@ -126,7 +127,7 @@ void ec::Server::handle_client_reqs(void *args) {
         else {
             std::cout << "[FAILED] Error code: [" << ret << "]: EC Server id: " << m->get_ec_id() << ". Server thread: " << mem_reqs++ << std::endl;
 
-            if(write(client_fd, (const char*) &res, sizeof(res)) < 0) {
+            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Failed writing to socket. Part 2" << std::endl;
                 break;
             }
@@ -187,7 +188,7 @@ int ec::Server::serve_cpu_req(const msg_t *req, msg_t *res, serv_thread_args* ar
         return __FAILED__;
 //        exit(EXIT_FAILURE);
     }
-    uint64_t bandwidth = m->handle_bandwidth(req);
+    uint64_t bandwidth = m->handle_bandwidth(req, res);
     if(!bandwidth) {
         return __ALLOC_FAILED__;
     }

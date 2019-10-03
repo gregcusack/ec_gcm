@@ -56,7 +56,7 @@ ec::SubContainer *ec::Manager::get_container(ec::SubContainer::ContainerId &cont
 
 int ec::Manager::insert_sc(ec::SubContainer &_sc) {
     containers.insert({*(_sc.get_id()), &_sc});
-    return 0; //not sure what exactly to return here
+    return 1; //not sure what exactly to return here
 }
 
 uint64_t ec::Manager::decr_rt_remaining(uint64_t _slice) {
@@ -69,7 +69,7 @@ uint64_t ec::Manager::incr_rt_remaining(uint64_t give_back) {
     return runtime_remaining;
 }
 
-uint64_t ec::Manager::handle_bandwidth(msg_t *req, msg_t *res) {
+uint64_t ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
     if(req == nullptr || res == nullptr) {
         std::cout << "req or res == null in handle_bandwidth()" << std::endl;
         exit(EXIT_FAILURE);
