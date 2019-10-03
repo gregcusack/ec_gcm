@@ -127,7 +127,7 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res) {
         std::cout << "successfully decrease remaining mem to: " << memory_available << std::endl;
         memlock.unlock();
 
-        res->rsrc_amnt = ret;   //give back "ret" pages
+        res->rsrc_amnt = req->rsrc_amnt + ret;   //give back "ret" pages
         res->request = 0;       //give back
         return __ALLOC_SUCCESS__;
     }
