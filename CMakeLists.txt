@@ -21,4 +21,9 @@ add_executable(tester tests/run_test.cpp
         om.h
         )
 
+add_executable(loop_test tests/run_continuous.cpp
+        types/msg.cpp                   types/msg.h
+        om.h
+        )
+
 target_link_libraries(ec_gcm ${PTHREAD_LIB})
