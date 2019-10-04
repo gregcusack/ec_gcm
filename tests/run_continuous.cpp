@@ -47,6 +47,7 @@ int main() {
     send(sock , (char*)&*msg_req , sizeof(*msg_req) , 0 );
     valread = read( sock , (char*)&msg_res, sizeof(msg_res));
     std::cout << msg_res << std::endl;
+    close(sock);
     return 0;
 
 

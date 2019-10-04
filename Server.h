@@ -79,6 +79,7 @@ namespace ec {
         uint64_t cpu_limit;     //TODO: delete this. idk what this is supposed to be
         uint64_t memory_limit;
         bool server_initialized;
+        uint32_t num_of_cli;
     };
 }
 

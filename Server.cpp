@@ -7,7 +7,7 @@
 ec::Server::Server(ip4_addr _ip_address, uint16_t _port)
         : ip_address(_ip_address), port(_port), m(nullptr),
         mem_reqs(0), cpu_limit(500000), memory_limit(30000),
-        server_initialized(false), test(23) {}
+        server_initialized(false), test(23), num_of_cli(0) {}
 
 void ec::Server::initialize_server() {
     if(m == nullptr) {
@@ -58,7 +58,7 @@ void ec::Server::serve() {
     fd_set readfds;
     //struct sockaddr_in cliaddr; -- this is server_socket.adder
     int32_t max_sd, sd, cliaddr_len, clifd, select_rv;
-    int32_t num_of_cli = 0;
+//    int32_t num_of_cli = 0;
     std::thread threads[__MAX_CLIENT__];
     serv_thread_args *args;
     FD_ZERO(&readfds);
@@ -82,6 +82,7 @@ void ec::Server::serve() {
                 args->clifd = clifd;
                 args->cliaddr = &server_socket.addr;
                 std::cout << "server rx connection from clifd: " << clifd << std::endl;
+                std::cout << "num_cli: " << num_of_cli << std::endl;
                 threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)args);
 //                threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)&clifd);
             }
@@ -104,7 +105,7 @@ void ec::Server::handle_client_reqs(void *args) {
 
     std::cout << "[SUCCESS] Server id: " << m->get_ec_id() << ". Server thread! New connection created. "
                                                               "new socket fd: " << client_fd << std::endl;
-
+    num_of_cli++;
     bzero(buffer, __BUFFSIZE__);
     while((num_bytes = read(client_fd, buffer, __BUFFSIZE__)) > 0 ) {
         ret = 0;
@@ -136,7 +137,9 @@ void ec::Server::handle_client_reqs(void *args) {
         }
 
     }
-    pthread_exit(nullptr);
+//    std::thread(ex)
+//    std::terminate();
+//    pthread_exit(nullptr);
 }
 
 int ec::Server::handle_req(const msg_t *req, msg_t *res, serv_thread_args* args) {
