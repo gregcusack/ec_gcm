@@ -164,7 +164,7 @@ int ec::Server::handle_req(const msg_t *req, msg_t *res, serv_thread_args* args)
             break;
         case _INIT_:
             std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling INIT request" << std::endl;
-            ret = add_cgroup_id_to_ec(req, args);
+            ret = serve_add_cgroup_to_ec(req, res, args);
             break;
         default:
             std::cout << "[Error]: EC Server id: " << m->get_ec_id() << ". Handling memory/cpu request failed!" << std::endl;
@@ -173,15 +173,16 @@ int ec::Server::handle_req(const msg_t *req, msg_t *res, serv_thread_args* args)
 
 }
 
-int ec::Server::add_cgroup_id_to_ec(const ec::msg_t *req, serv_thread_args* args) {
-    mtx.lock();
+//int ec::Server::serve_add_cgroup_to_ec()
 
-    auto *sc = new SubContainer(req->cgroup_id, args->cliaddr->sin_addr.s_addr, m->get_ec_id());
-    int ret = m->insert_sc(*sc);
-
-    std::cout << "[dbg]: Init. Added cgroup to ec. cgroup id: " << *sc->get_id() << std::endl;
-
-    mtx.unlock();
+int ec::Server::serve_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, serv_thread_args* args) {
+    if(!req || !res || !args) {
+        std::cout << "req, res, or args == null in serve_add_cgroup_to_ec()" << std::endl;
+        return __FAILED__;
+    }
+//    mtx.lock(); //TODO: check if we actually need to lock here
+    int ret = m->handle_add_cgroup_to_ec(res, req->cgroup_id, args->cliaddr->sin_addr.s_addr);
+//    mtx.unlock();
     return ret;
 }
 

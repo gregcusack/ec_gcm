@@ -137,3 +137,15 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res) {
         return __ALLOC_FAILED__;
     }
 }
+
+int ec::Manager::handle_add_cgroup_to_ec(msg_t *res, const uint32_t cgroup_id, const uint32_t ip) {
+    if(!res) {
+        std::cout << "ERROR. res == null in handle_Add_cgroup_to_ec()" << std::endl;
+        return __ALLOC_FAILED__;
+    }
+    auto *sc = new SubContainer(cgroup_id, cgroup_id, ec_id);
+    int ret = insert_sc(*sc);
+    std::cout << "[dbg]: Init. Added cgroup to ec. cgroup id: " << *sc->get_id() << std::endl;
+    res->request = 0; //giveback (or send back)
+    return ret;
+}

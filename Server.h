@@ -53,7 +53,7 @@ namespace ec {
         //TODO: make return values error codes and pass struct via "msg_res"
         int handle_req(const msg_t *req, msg_t *res, serv_thread_args* args);
 
-        int add_cgroup_id_to_ec(const msg_t *req, serv_thread_args* args);
+        int serve_add_cgroup_to_ec(const msg_t *req, msg_t *res, serv_thread_args* args);
 
         int serve_cpu_req(const msg_t *req, msg_t *res, serv_thread_args* args);
 

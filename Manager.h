@@ -64,6 +64,7 @@ namespace ec {
         inline uint64_t decr_rt_remaining(uint64_t slice);
         inline uint64_t incr_rt_remaining(uint64_t give_back);
         void reset_rt_remaining() { runtime_remaining = quota; }
+        int handle_add_cgroup_to_ec(msg_t *res, uint32_t cgroup_id, uint32_t ip);
         int handle_bandwidth(const msg_t *req, msg_t *res);
         int handle_mem_req(const msg_t *req, msg_t *res);
 
