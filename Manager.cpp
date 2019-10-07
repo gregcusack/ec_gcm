@@ -116,7 +116,7 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res) {
     }
     uint64_t ret = 0;
     std::mutex memlock;
-    if(!req->req_type) { return __ALLOC_FAILED__; }
+    if(req->req_type != _MEM_) { return __ALLOC_FAILED__; }
     memlock.lock();
     if(memory_available > 0) {          //TODO: integrate give back here
         std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
@@ -125,15 +125,16 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res) {
         memory_available -= ret;
 
         std::cout << "successfully decrease remaining mem to: " << memory_available << std::endl;
-        memlock.unlock();
 
         res->rsrc_amnt = req->rsrc_amnt + ret;   //give back "ret" pages
+        memlock.unlock();
         res->request = 0;       //give back
         return __ALLOC_SUCCESS__;
     }
     else {
         memlock.unlock();
         std::cout << "no memory available" << std::endl;
+        res->rsrc_amnt = 0;
         return __ALLOC_FAILED__;
     }
 }

@@ -117,7 +117,7 @@ void ec::Server::handle_client_reqs(void *args) {
         auto *res = new msg_t(*req);
 
         ret = handle_req(req, res, arguments);
-        if(ret == __ALLOC_SUCCESS__) {
+        if(ret == __ALLOC_SUCCESS__) {  //TODO: fix this.
             //for testing
             //res->rsrc_amnt -= 99999;
             std::cout << "sending back: " << *res << std::endl;
@@ -128,12 +128,11 @@ void ec::Server::handle_client_reqs(void *args) {
         }
         else {
             std::cout << "[FAILED] Error code: [" << ret << "]: EC Server id: " << m->get_ec_id() << ". Server thread: " << mem_reqs++ << std::endl;
-
             if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Failed writing to socket. Part 2" << std::endl;
                 break;
             }
-            break;
+//            break;
         }
 
     }
@@ -155,7 +154,7 @@ int ec::Server::handle_req(const msg_t *req, msg_t *res, serv_thread_args* args)
     switch(req -> req_type) {
         case _MEM_:
             std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling Mem request" << std::endl;
-            ret = serve_mem_req(req, res,args);
+            ret = serve_mem_req(req, res, args);
             break;
         case _CPU_:
             std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling CPU request" << std::endl;
