@@ -69,11 +69,11 @@ void ec::Server::serve() {
 
     while(true) {
         FD_SET(server_socket.sock_fd, &readfds);
-        std::cout << "[dgb]: In while loop waiting for server socket event. EC Server id: " << m->get_ec_id() << std::endl;
+//        std::cout << "[dgb]: In while loop waiting for server socket event. EC Server id: " << m->get_ec_id() << std::endl;
 
         select_rv = select(max_sd, &readfds, nullptr, nullptr, nullptr);
 
-        std::cout << "[dgb] an even happened on the server socket. EC Server id: " << m->get_ec_id() << std::endl;
+//        std::cout << "[dgb] an even happened on the server socket. EC Server id: " << m->get_ec_id() << std::endl;
 
         if(FD_ISSET(server_socket.sock_fd, &readfds)) {
             if((clifd = accept(server_socket.sock_fd, (struct sockaddr *)&server_socket.addr, (socklen_t*)&cliaddr_len)) > 0) {
@@ -82,7 +82,7 @@ void ec::Server::serve() {
                 args->clifd = clifd;
                 args->cliaddr = &server_socket.addr;
                 std::cout << "server rx connection from clifd: " << clifd << std::endl;
-                std::cout << "num_cli: " << num_of_cli << std::endl;
+//                std::cout << "num_cli: " << num_of_cli << std::endl;
                 threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)args);
 //                threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)&clifd);
             }
@@ -103,13 +103,13 @@ void ec::Server::handle_client_reqs(void *args) {
     auto *arguments = reinterpret_cast<serv_thread_args*>(args);
     int client_fd = arguments->clifd;
 
-    std::cout << "[SUCCESS] Server id: " << m->get_ec_id() << ". Server thread! New connection created. "
-                                                              "new socket fd: " << client_fd << std::endl;
+//    std::cout << "[SUCCESS] Server id: " << m->get_ec_id() << ". Server thread! New connection created. "
+//                                                              "new socket fd: " << client_fd << std::endl;
     num_of_cli++;
     bzero(buffer, __BUFFSIZE__);
     while((num_bytes = read(client_fd, buffer, __BUFFSIZE__)) > 0 ) {
         ret = 0;
-        std::cout << "[dbg] Number of bytes read: " << num_bytes << std::endl;
+//        std::cout << "[dbg] Number of bytes read: " << num_bytes << std::endl;
 
         //moved up from handle_req
         auto *req = reinterpret_cast<msg_t*>(buffer);
@@ -120,14 +120,14 @@ void ec::Server::handle_client_reqs(void *args) {
         if(ret == __ALLOC_SUCCESS__) {  //TODO: fix this.
             //for testing
             //res->rsrc_amnt -= 99999;
-            std::cout << "sending back: " << *res << std::endl;
+//            std::cout << "sending back: " << *res << std::endl;
             if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Failed writing to socket" << std::endl;
                 break;
             }
         }
         else {
-            std::cout << "[FAILED] Error code: [" << ret << "]: EC Server id: " << m->get_ec_id() << ". Server thread: " << mem_reqs++ << std::endl;
+//            std::cout << "[FAILED] Error code: [" << ret << "]: EC Server id: " << m->get_ec_id() << ". Server thread: " << mem_reqs++ << std::endl;
             if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Failed writing to socket. Part 2" << std::endl;
                 break;
@@ -147,22 +147,21 @@ int ec::Server::handle_req(const msg_t *req, msg_t *res, serv_thread_args* args)
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "req: " << *req << std::endl;
+//    std::cout << "req: " << *req << std::endl;
     uint64_t ret = __FAILED__;
-    std::cout << "req->req_type: " << req->req_type << std::endl;
+//    std::cout << "req->req_type: " << req->req_type << std::endl;
 
     switch(req -> req_type) {
         case _MEM_:
-            std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling Mem request" << std::endl;
+//            std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling Mem request" << std::endl;
             ret = serve_mem_req(req, res, args);
             break;
         case _CPU_:
-            std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling CPU request" << std::endl;
+//            std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling CPU request" << std::endl;
             ret = serve_cpu_req(req, res, args);
-            std::cout << "[dbg] EC Server id: " << m->get_ec_id() << ". Return CPU Request: " << ret << std::endl;
             break;
         case _INIT_:
-            std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling INIT request" << std::endl;
+//            std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling INIT request" << std::endl;
             ret = serve_add_cgroup_to_ec(req, res, args);
             break;
         default:

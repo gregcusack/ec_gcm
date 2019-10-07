@@ -89,7 +89,7 @@ int ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
     if(runtime_remaining > 0) {
         ret = slice > runtime_remaining ? runtime_remaining : slice;
         runtime_remaining -= ret;
-        std::cout << "Server sending back " << ret << "ns in runtime" << std::endl;
+//        std::cout << "Server sending back " << ret << "ns in runtime" << std::endl;
         //TODO: THIS SHOULDN'T BE HERE. BUT USING IT FOR TESTING
         if(runtime_remaining <= 0) {
             refill_runtime();
@@ -119,12 +119,12 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res) {
     if(req->req_type != _MEM_) { return __ALLOC_FAILED__; }
     memlock.lock();
     if(memory_available > 0) {          //TODO: integrate give back here
-        std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
+//        std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
         ret = memory_available > mem_slice ? mem_slice : memory_available;
 
         memory_available -= ret;
 
-        std::cout << "successfully decrease remaining mem to: " << memory_available << std::endl;
+//        std::cout << "successfully decrease remaining mem to: " << memory_available << std::endl;
 
         res->rsrc_amnt = req->rsrc_amnt + ret;   //give back "ret" pages
         memlock.unlock();
@@ -133,7 +133,7 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res) {
     }
     else {
         memlock.unlock();
-        std::cout << "no memory available" << std::endl;
+//        std::cout << "no memory available" << std::endl;
         res->rsrc_amnt = 0;
         return __ALLOC_FAILED__;
     }
