@@ -87,7 +87,10 @@ int ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
     if(req->req_type != _CPU_) { return __ALLOC_FAILED__; }
     cpulock.lock();
     if(runtime_remaining > 0) {
-        ret = slice > runtime_remaining ? runtime_remaining : slice;
+        //give back what it asks for
+        ret = req->rsrc_amnt > runtime_remaining ? runtime_remaining : req->rsrc_amnt;
+//        //give back a slice
+//        ret = slice > runtime_remaining ? runtime_remaining : slice;
         runtime_remaining -= ret;
 //        std::cout << "Server sending back " << ret << "ns in runtime" << std::endl;
         //TODO: THIS SHOULDN'T BE HERE. BUT USING IT FOR TESTING
