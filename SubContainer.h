@@ -22,10 +22,12 @@ namespace ec {
      */
     class SubContainer {
     public:
-        SubContainer(uint32_t cgroup_id, uint32_t ip, uint32_t manager_id);     //from uint32_t
-        SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t manager_id);     //from ip4_addr
-        SubContainer(uint32_t cgroup_id, std::string ip, uint32_t manager_id);     //from const char[8]
-        SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t manager_id, uint64_t mem_lim);
+        SubContainer(uint32_t cgroup_id, uint32_t ip, uint32_t manager_id);
+        SubContainer(uint32_t cgroup_id, std::string ip, uint32_t manager_id);
+        SubContainer(uint32_t cgroup_id, uint32_t ip, uint32_t manager_id, int fd);     //from uint32_t
+        SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t manager_id, int fd);     //from ip4_addr
+        SubContainer(uint32_t cgroup_id, std::string ip, uint32_t manager_id, int fd);     //from const char[8]
+        SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t manager_id, uint64_t mem_lim, int fd);
 
         struct ContainerId {
             ContainerId(uint32_t _cgroup_id, ip4_addr _ip, uint32_t _ec_id);
@@ -43,10 +45,12 @@ namespace ec {
         };
 
         ContainerId* get_id() {return &_id;}
+        int get_fd() { return fd; }
 
 
     private:
         ContainerId _id;
+        int fd;
 //        Manager *manager_p;
         ContainerId *c_id;
         uint64_t runtime_received;

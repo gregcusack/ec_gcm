@@ -11,11 +11,12 @@ ec::Manager::Manager(uint32_t _ec_id, int64_t _quota, uint64_t _slice_size,
         uint64_t _mem_limit, uint64_t _mem_slice_size)
     : ec_id(_ec_id), s(nullptr), quota(_quota), slice(_slice_size),
       runtime_remaining(_quota), memory_available(_mem_limit), mem_slice(_mem_slice_size) {
+
+    //TODO: change num_agents to however many servers we have. IDK how to set it rn.
     std::cout << "runtime_remaining on init: " << runtime_remaining << std::endl;
     std::cout << "memory_available on init: " << memory_available << std::endl;
 
 }
-
 
 void ec::Manager::allocate_container(uint32_t cgroup_id, uint32_t server_ip) {
 
@@ -28,9 +29,9 @@ void ec::Manager::allocate_container(uint32_t cgroup_id, uint32_t server_ip) {
     containers.insert({*c->get_id(), c});
 }
 
-void ec::Manager::allocate_container(uint32_t cgroup_id, std::string server_ip) {
+void ec::Manager::allocate_container(uint32_t cgroup_id, const std::string &server_ip) {
 
-    auto *c = new ec::SubContainer(cgroup_id, std::move(server_ip), ec_id);
+    auto *c = new ec::SubContainer(cgroup_id, server_ip, ec_id);
     if (containers.find(*c->get_id()) != containers.end()) {
         std::cout << "This SubContainer already exists! Can't allocate identical one!" << std::endl;
         return;
@@ -112,7 +113,7 @@ int ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
 
 }
 
-int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res) {
+int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd) {
     if(req == nullptr || res == nullptr) {
         std::cout << "req or res == null in handle_mem_req()" << std::endl;
         exit(EXIT_FAILURE);
@@ -121,8 +122,8 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res) {
     std::mutex memlock;
     if(req->req_type != _MEM_) { return __ALLOC_FAILED__; }
     memlock.lock();
-    if(memory_available > 0) {          //TODO: integrate give back here
-//        std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
+    if(memory_available > 0 || (memory_available = reclaim_memory(clifd)) > 0) {          //TODO: integrate give back here
+        std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
         ret = memory_available > mem_slice ? mem_slice : memory_available;
 
         memory_available -= ret;
@@ -136,20 +137,69 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res) {
     }
     else {
         memlock.unlock();
-//        std::cout << "no memory available" << std::endl;
+        std::cout << "no memory available!" << std::endl;
         res->rsrc_amnt = 0;
         return __ALLOC_FAILED__;
     }
 }
 
-int ec::Manager::handle_add_cgroup_to_ec(msg_t *res, const uint32_t cgroup_id, const uint32_t ip) {
+int ec::Manager::handle_add_cgroup_to_ec(msg_t *res, const uint32_t cgroup_id, const uint32_t ip, int fd) {
     if(!res) {
         std::cout << "ERROR. res == null in handle_Add_cgroup_to_ec()" << std::endl;
         return __ALLOC_FAILED__;
     }
-    auto *sc = new SubContainer(cgroup_id, cgroup_id, ec_id);
+    auto *sc = new SubContainer(cgroup_id, ip, ec_id, fd);
     int ret = insert_sc(*sc);
     std::cout << "[dbg]: Init. Added cgroup to ec. cgroup id: " << *sc->get_id() << std::endl;
     res->request = 0; //giveback (or send back)
     return ret;
+}
+
+const std::vector<ec::Manager::agent*> &ec::Manager::get_agents() const {
+    return agents;
+}
+
+int ec::Manager::alloc_agents(uint32_t num_agents) {
+    for(uint32_t i = 0; i < num_agents; i++) {
+        agents.emplace_back(new agent());
+    }
+    return agents.size();
+}
+
+uint64_t ec::Manager::reclaim_memory(int client_fd) {
+    int j = 0;
+    char buffer[__BUFF_SIZE__];
+    uint64_t reclaimed = 0;
+
+    std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
+    for(const auto &container : containers) {
+        if(container.second->get_fd() == client_fd) {
+            continue;
+        }
+        auto ip = container.second->get_id()->server_ip;
+        std::cout << "ip of server container is on. also ip of agent" << std::endl;
+
+        for(const auto & ag : agents) {
+            if(!(ag->ip == ip)) {
+                auto *reclaim_req = new reclaim_msg;
+                reclaim_req->cgroup_id = container.second->get_id()->ec_id;
+                reclaim_req->is_mem = 1;
+                //TODO: anyway to get the server to do this?
+                if (write(ag->sockfd, (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
+                    std::cout << "[ERROR]: GCM EC Server id: " << ec_id << ". Failed writing to agent socket"
+                              << std::endl;
+                }
+                read(ag->sockfd, buffer, sizeof(buffer));
+                if(strncmp(buffer, "NOMEM", sizeof("NOMEM")) != 0) {
+                    reclaimed += *((uint64_t*)buffer);
+                }
+                std::cout << "[INFO] GCM: Current amount of reclaimed memory: " << reclaimed << std::endl;
+
+            }
+
+        }
+
+    }
+    std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << reclaimed << std::endl;
+    return reclaimed;
 }

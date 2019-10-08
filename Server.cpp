@@ -7,7 +7,11 @@
 ec::Server::Server(ip4_addr _ip_address, uint16_t _port)
         : ip_address(_ip_address), port(_port), m(nullptr),
         mem_reqs(0), cpu_limit(500000), memory_limit(30000),
-        server_initialized(false), test(23), num_of_cli(0) {}
+        server_initialized(false), test(23), num_of_cli(0) {
+
+    //TODO: initialize agents
+
+}
 
 void ec::Server::initialize_server() {
     if(m == nullptr) {
@@ -42,6 +46,13 @@ void ec::Server::initialize_server() {
     std::cout << "[dgb]: EC Server id: " << m->get_ec_id() << ". socket successfully created!" << std::endl;
 
     server_initialized = true; //server setup can run now
+
+    if(!init_agents_connection(m->get_num_agents())) {
+        std::cout << "Agent initialization failed" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    std::cout << "Agent conenctions successful!" << std::endl;
+
 }
 
 //We may want to make this a separate process???
@@ -179,7 +190,7 @@ int ec::Server::serve_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, ser
         return __FAILED__;
     }
 //    mtx.lock(); //TODO: check if we actually need to lock here
-    int ret = m->handle_add_cgroup_to_ec(res, req->cgroup_id, args->cliaddr->sin_addr.s_addr);
+    int ret = m->handle_add_cgroup_to_ec(res, req->cgroup_id, args->cliaddr->sin_addr.s_addr, args->clifd);
 //    mtx.unlock();
     return ret;
 }
@@ -198,15 +209,45 @@ int ec::Server::serve_cpu_req(const msg_t *req, msg_t *res, serv_thread_args* ar
 }
 
 int ec::Server::serve_mem_req(const msg_t *req, msg_t *res, serv_thread_args* args) {
-    if (req == nullptr || res == nullptr) {
-        std::cout << "req or res == null in serve_mem_req()" << std::endl;
+    if (req == nullptr || res == nullptr || args == nullptr) {
+        std::cout << "req, res, or args == null in serve_mem_req()" << std::endl;
         return __FAILED__;
     }
-    int ret = m->handle_mem_req(req, res);
+    int ret = m->handle_mem_req(req, res, args->clifd);
     if (ret != __ALLOC_SUCCESS__) {
         return __ALLOC_FAILED__;
     }
     return __ALLOC_SUCCESS__;
+}
+
+int ec::Server::init_agents_connection(int num_agents) {
+    int sockfd, i;
+    struct sockaddr_in servaddr;
+    int num_connections = 0;
+
+    for(i = 0; i < num_agents; i++) {
+        if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+            std::cout << "[ERROR]: GCM Socket creation failed. Agent is not up!" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+
+        memset(&servaddr, 0, sizeof(servaddr));
+
+        servaddr.sin_family = AF_INET;
+        servaddr.sin_port = htons(m->get_agents()[i]->port);
+        servaddr.sin_addr.s_addr = inet_addr((m->get_agents()[i]->ip).to_string().c_str());
+
+        if(connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
+            std::cout << "[ERROR] GCM: Connection to agent failed. \n Agent on ip: " << m->get_agents()[i]->ip << "is not connected" << std::endl;
+            std::cout << "Are the agents up?" << std::endl;
+        }
+        else {
+            num_connections++;
+        }
+
+        m->get_agents()[i]->sockfd = sockfd;
+    }
+    return num_connections == num_agents;
 }
 
 
