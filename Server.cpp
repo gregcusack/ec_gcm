@@ -246,6 +246,7 @@ int ec::Server::init_agents_connection(int num_agents) {
         }
 
         m->get_agents()[i]->sockfd = sockfd;
+        std::cout << "agent sockfd: " << sockfd << ", " << m->get_agents()[i]->sockfd << std::endl;
     }
     return num_connections == num_agents;
 }

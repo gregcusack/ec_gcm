@@ -168,7 +168,7 @@ int ec::Manager::alloc_agents(uint32_t num_agents) {
 
 uint64_t ec::Manager::reclaim_memory(int client_fd) {
     int j = 0;
-    char buffer[__BUFF_SIZE__];
+    char buffer[__BUFF_SIZE__] = {0};
     uint64_t reclaimed = 0;
 
     std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
@@ -180,9 +180,10 @@ uint64_t ec::Manager::reclaim_memory(int client_fd) {
         std::cout << "ip of server container is on. also ip of agent" << std::endl;
 
         for(const auto & ag : agents) {
-            if(!(ag->ip == ip)) {
+            std::cout << "(ag->ip, container ip): (" << ag->ip << ", " << ip << ")" << std::endl;
+            if(ag->ip == ip) {
                 auto *reclaim_req = new reclaim_msg;
-                reclaim_req->cgroup_id = container.second->get_id()->ec_id;
+                reclaim_req->cgroup_id = container.second->get_id()->cgroup_id;
                 reclaim_req->is_mem = 1;
                 //TODO: anyway to get the server to do this?
                 if (write(ag->sockfd, (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
