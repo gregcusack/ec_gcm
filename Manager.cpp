@@ -16,6 +16,9 @@ ec::Manager::Manager(uint32_t _ec_id, int64_t _quota, uint64_t _slice_size,
     std::cout << "runtime_remaining on init: " << runtime_remaining << std::endl;
     std::cout << "memory_available on init: " << memory_available << std::endl;
 
+    //test
+    flag = 0;
+
 }
 
 void ec::Manager::allocate_container(uint32_t cgroup_id, uint32_t server_ip) {
@@ -100,6 +103,16 @@ int ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
         }
         cpulock.unlock();
         res->rsrc_amnt = ret;   //set bw we're returning
+        if(flag < 150) {
+            res->rsrc_amnt = req->rsrc_amnt; //TODO: this just gives back what was asked for!
+        }
+        else {
+            res->rsrc_amnt = 0;
+            if(flag == 499) flag = -1;
+        }
+
+//        res->rsrc_amnt = req->rsrc_amnt; //TODO: this just gives back what was asked for!
+        flag++;
         res->request = 0;       //set to give back
         return __ALLOC_SUCCESS__;
     }
@@ -170,6 +183,7 @@ uint64_t ec::Manager::reclaim_memory(int client_fd) {
     int j = 0;
     char buffer[__BUFF_SIZE__] = {0};
     uint64_t reclaimed = 0;
+    int ret;
 
     std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
     for(const auto &container : containers) {
@@ -190,7 +204,10 @@ uint64_t ec::Manager::reclaim_memory(int client_fd) {
                     std::cout << "[ERROR]: GCM EC Server id: " << ec_id << ". Failed writing to agent socket"
                               << std::endl;
                 }
-                read(ag->sockfd, buffer, sizeof(buffer));
+                ret = read(ag->sockfd, buffer, sizeof(buffer));
+                if(ret <= 0) {
+                    std::cout << "[ERROR]: GCM. Can't read from socke to reclaim memory" << std::endl;
+                }
                 if(strncmp(buffer, "NOMEM", sizeof("NOMEM")) != 0) {
                     reclaimed += *((uint64_t*)buffer);
                 }

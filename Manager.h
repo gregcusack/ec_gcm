@@ -13,6 +13,9 @@
 #include <vector>
 #include <string>
 
+#include <chrono>
+#include <thread>
+
 #include "types/msg.h"
 #include "types/k_msg.h"
 #include "SubContainer.h"
@@ -25,6 +28,7 @@
 #define _CPU_ 0
 #define _MEM_ 1
 #define _INIT_ 2
+
 
 class container;
 
@@ -111,6 +115,9 @@ namespace ec {
         //mem
         uint64_t memory_available;
         uint64_t mem_slice;
+
+        //test
+        int flag;
 
         //cpu
 //        uint64_t runtime_remaining;
