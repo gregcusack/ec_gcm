@@ -36,7 +36,7 @@ namespace ec {
             cpu() = default;
             uint64_t period             =   100000000;      //100 ms
             int64_t quota               =   period;             //-1: no limit, in ms
-            uint64_t slice_size         =   10000000;       //10 ms
+            uint64_t slice_size         =   5000000;       //5 ms
             friend std::ostream& operator<<(std::ostream& os, const cpu& rhs) {
                 os  << "period: " << rhs.period << ", "
                     << "quota: " << rhs.quota << ", "

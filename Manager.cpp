@@ -103,16 +103,16 @@ int ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
         }
         cpulock.unlock();
         res->rsrc_amnt = ret;   //set bw we're returning
-        if(flag < 150) {
-            res->rsrc_amnt = req->rsrc_amnt; //TODO: this just gives back what was asked for!
-        }
-        else {
-            res->rsrc_amnt = 0;
-            if(flag == 499) flag = -1;
-        }
-
-//        res->rsrc_amnt = req->rsrc_amnt; //TODO: this just gives back what was asked for!
-        flag++;
+//        if(flag < 150) {
+//            res->rsrc_amnt = req->rsrc_amnt; //TODO: this just gives back what was asked for!
+//        }
+//        else {
+//            res->rsrc_amnt = 0;
+//            if(flag == 499) flag = -1;
+//        }
+//
+////        res->rsrc_amnt = req->rsrc_amnt; //TODO: this just gives back what was asked for!
+//        flag++;
         res->request = 0;       //set to give back
         return __ALLOC_SUCCESS__;
     }
@@ -124,6 +124,32 @@ int ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
         return __ALLOC_FAILED__;
     }
 
+}
+
+int ec::Manager::handle_slice_req(const ec::msg_t *req, ec::msg_t *res, int clifd) {
+    if(req == nullptr || res == nullptr) {
+        std::cout << "req or res == null in handle_slice_req()" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    if(req->rsrc_amnt != slice) {
+        std::cout << "req slice size != default slice of 5ms (req->rsrc_amnt, slice): "
+                     "(" << req->rsrc_amnt << ", " << slice << ")" << std::endl;
+    }
+    if(runtime_remaining > 0) {
+        res->rsrc_amnt = std::min(runtime_remaining, slice);
+        runtime_remaining -= res->rsrc_amnt;
+        if(runtime_remaining <= 0) {
+            refill_runtime();
+        }
+        res->request = 0;
+        return __ALLOC_SUCCESS__;
+    }
+    else {
+        res->rsrc_amnt = 0;
+        res->request = 0;
+        return __ALLOC_FAILED__;
+    }
 }
 
 int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd) {
@@ -221,3 +247,5 @@ uint64_t ec::Manager::reclaim_memory(int client_fd) {
     std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << reclaimed << std::endl;
     return reclaimed;
 }
+
+
