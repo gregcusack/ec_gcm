@@ -131,7 +131,7 @@ void ec::Server::handle_client_reqs(void *args) {
         if(ret == __ALLOC_SUCCESS__) {  //TODO: fix this.
             //for testing
             //res->rsrc_amnt -= 99999;
-//            std::cout << "sending back: " << *res << std::endl;
+            std::cout << "sending back: " << *res << std::endl;
             if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Failed writing to socket" << std::endl;
                 break;
@@ -211,7 +211,7 @@ int ec::Server::serve_cpu_req(const msg_t *req, msg_t *res, serv_thread_args* ar
     return __ALLOC_SUCCESS__;
 }
 
-int ec::Server::serve_acquire_slice(const ec::msg_t *req, ec::msg_t *res, ec::Server::serv_thread_args *args) {
+int ec::Server::serve_acquire_slice(const ec::msg_t *req, ec::msg_t *res, serv_thread_args *args) {
     if (req == nullptr || res == nullptr || args == nullptr) {
         std::cout << "req, res, or args == null in serve_acquire_slice()" << std::endl;
         return __FAILED__;

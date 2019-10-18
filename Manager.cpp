@@ -136,6 +136,8 @@ int ec::Manager::handle_slice_req(const ec::msg_t *req, ec::msg_t *res, int clif
         std::cout << "req slice size != default slice of 5ms (req->rsrc_amnt, slice): "
                      "(" << req->rsrc_amnt << ", " << slice << ")" << std::endl;
     }
+    std::cout << "pre  change req: " << *req << std::endl;
+    std::cout << "pre change res: " << *res << std::endl;
     if(runtime_remaining > 0) {
         res->rsrc_amnt = std::min(runtime_remaining, slice);
         runtime_remaining -= res->rsrc_amnt;
@@ -143,6 +145,8 @@ int ec::Manager::handle_slice_req(const ec::msg_t *req, ec::msg_t *res, int clif
             refill_runtime();
         }
         res->request = 0;
+        std::cout << "post  change req: " << *req << std::endl;
+        std::cout << "post change res: " << *res << std::endl;
         return __ALLOC_SUCCESS__;
     }
     else {
