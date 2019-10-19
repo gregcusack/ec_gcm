@@ -2,3 +2,10 @@ cmake-build-debug/
 .idea/
 old_Server/
 cmake-build-release/
+CMakeFiles/
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+ec_gcm
+loop_test
+tester
