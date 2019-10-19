@@ -131,10 +131,10 @@ void ec::Server::handle_client_reqs(void *args) {
         if(ret == __ALLOC_SUCCESS__) {  //TODO: fix this.
             //for testing
             //res->rsrc_amnt -= 99999;
-            std::cout << "sending back: " << *res << std::endl;
+//            std::cout << "sending back: " << *res << std::endl;
             if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
-                std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Failed writing to socket" << std::endl;
-                break;
+                    std::cout << "[ERROR]: EC Server id: " << m->get_ec_id() << ". Failed writing to socket" << std::endl;
+                    break;
             }
         }
         else {

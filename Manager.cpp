@@ -93,8 +93,7 @@ int ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
     if(runtime_remaining > 0) {
         //give back what it asks for
         ret = req->rsrc_amnt > runtime_remaining ? runtime_remaining : req->rsrc_amnt;
-//        //give back a slice
-//        ret = slice > runtime_remaining ? runtime_remaining : slice;
+
         runtime_remaining -= ret;
 //        std::cout << "Server sending back " << ret << "ns in runtime" << std::endl;
         //TODO: THIS SHOULDN'T BE HERE. BUT USING IT FOR TESTING
@@ -102,6 +101,9 @@ int ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
             refill_runtime();
         }
         cpulock.unlock();
+
+        //TEST
+        ret += 3*slice; //see what happens
         res->rsrc_amnt = ret;   //set bw we're returning
 //        if(flag < 150) {
 //            res->rsrc_amnt = req->rsrc_amnt; //TODO: this just gives back what was asked for!
