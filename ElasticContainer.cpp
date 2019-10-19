@@ -4,8 +4,8 @@
 
 #include "ElasticContainer.h"
 
-ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, ip4_addr _ip_address, uint32_t _num_agents)
-    : ec_id(_ec_id), ip_address(_ip_address), num_agents(_num_agents) {
+ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, ip4_addr _ip_address, std::vector<std::string>& _agents_ips)
+    : ec_id(_ec_id), ip_address(_ip_address), agents_ips(_agents_ips) {
 
     server = nullptr;
     manager = nullptr;
@@ -17,7 +17,7 @@ void ec::ElasticContainer::create_manager() {
     manager = new Manager(ec_id, _cpu.quota, _cpu.slice_size,
             _mem.memory_limit, _mem.slice_size);       //pass in gcm_ip for now
 
-    if(!manager->alloc_agents(num_agents)) {
+    if(!manager->alloc_agents(agents_ips)) {
         std::cout << "ERROR: alloc agents failed!" << std::endl;
         exit(EXIT_FAILURE);
     }

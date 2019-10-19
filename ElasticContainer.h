@@ -12,7 +12,7 @@
 namespace ec {
     class ElasticContainer {
     public:
-        ElasticContainer(uint32_t _ec_id, ip4_addr _ip_address, uint32_t _num_agents);
+        ElasticContainer(uint32_t _ec_id, ip4_addr _ip_address, std::vector<std::string>& agents_ips);
 
         //creates manager and server and connects them
         void build_ec_handler(uint16_t _port);
@@ -65,8 +65,8 @@ namespace ec {
         Manager *manager;
         Server *server;
 
-        uint32_t num_agents;
-
+        //uint32_t num_agents;
+	std::vector<std::string> agents_ips;
 
         memory _mem;
         cpu _cpu;
