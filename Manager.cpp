@@ -204,10 +204,10 @@ const std::vector<ec::Manager::agent*> &ec::Manager::get_agents() const {
     return agents;
 }
 
-int ec::Manager::alloc_agents(uint32_t num_agents) {
-    for(uint32_t i = 0; i < num_agents; i++) {
-        agents.emplace_back(new agent());
-    }
+int ec::Manager::alloc_agents(std::vector<std::string>& agents_ips) {
+    for(auto agent_ip : agents_ips)
+        agents.emplace_back(new agent(agent_ip));
+
     return agents.size();
 }
 

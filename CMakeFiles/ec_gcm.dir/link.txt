@@ -1,0 +1,1 @@
+/usr/bin/g++-5  -O3 -DNDEBUG   CMakeFiles/ec_gcm.dir/main.cpp.o CMakeFiles/ec_gcm.dir/Manager.cpp.o CMakeFiles/ec_gcm.dir/container_handler.cpp.o CMakeFiles/ec_gcm.dir/SubContainer.cpp.o CMakeFiles/ec_gcm.dir/ElasticContainer.cpp.o CMakeFiles/ec_gcm.dir/GlobalCloudManager.cpp.o CMakeFiles/ec_gcm.dir/types/msg.cpp.o CMakeFiles/ec_gcm.dir/Server.cpp.o  -o ec_gcm  -lpthread 

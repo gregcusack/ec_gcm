@@ -48,8 +48,8 @@ namespace ec {
 
         //agents
         struct agent {
-            agent()               = default;
-            om::net::ip4_addr ip    = om::net::ip4_addr::from_string("127.0.0.1");
+            agent(std::string ip_addr_) : ip(om::net::ip4_addr::from_string(ip_addr_)) {}
+            om::net::ip4_addr ip;
             uint16_t port           = 4445;
             int sockfd              = 0;
             friend std::ostream& operator<<(std::ostream& os, const agent& rhs) {
@@ -96,7 +96,7 @@ namespace ec {
         //agents
         uint32_t get_num_agents() { return agents.size(); }
         const std::vector<agent*> &get_agents() const;
-        int alloc_agents(uint32_t num_agents);
+        int alloc_agents(std::vector<std::string>& agents_ips);
 
 
 

@@ -22,7 +22,7 @@ namespace ec {
         GlobalCloudManager();
         GlobalCloudManager(std::string ip_addr, uint16_t port);
 
-        uint32_t create_ec(uint32_t num_agents);
+        uint32_t create_ec(std::vector<std::string>& agents_ips);
 
         const ec_map& get_ecs() {return ecs;}
         ElasticContainer* get_ec(uint32_t ec_id);

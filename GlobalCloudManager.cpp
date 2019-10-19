@@ -10,13 +10,13 @@ ec::GlobalCloudManager::GlobalCloudManager()
 ec::GlobalCloudManager::GlobalCloudManager(std::string ip_addr, uint16_t port)
     : gcm_ip(ec::ip4_addr::from_string(std::move(ip_addr))), gcm_port(port), ec_counter(1) {}
 
-uint32_t ec::GlobalCloudManager::create_ec(uint32_t num_agents) {
+uint32_t ec::GlobalCloudManager::create_ec(std::vector<std::string>& agents_ips) {
     if(ecs.find(ec_counter) != ecs.end()) {
         std::cout << "ERROR: Error allocating new Manager. Manager IDs not correct" << std::endl;
         return 0;
     }
 
-    auto *ec = new ec::ElasticContainer(ec_counter, gcm_ip, num_agents);
+    auto *ec = new ec::ElasticContainer(ec_counter, gcm_ip, agents_ips);
     ecs.insert({ec_counter, ec});
 
 //    eclock.lock();
