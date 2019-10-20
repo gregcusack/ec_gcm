@@ -175,9 +175,6 @@ int ec::Server::handle_req(const msg_t *req, msg_t *res, serv_thread_args* args)
 //            std::cout << "[dbg]: EC Server id: " << m->get_ec_id() << ".Handling INIT request" << std::endl;
             ret = serve_add_cgroup_to_ec(req, res, args);
             break;
-        case _SLICE_:
-            ret = serve_acquire_slice(req, res, args);
-            break;
         default:
             std::cout << "[Error]: EC Server id: " << m->get_ec_id() << ". Handling memory/cpu request failed!" << std::endl;
     }
@@ -210,20 +207,6 @@ int ec::Server::serve_cpu_req(const msg_t *req, msg_t *res, serv_thread_args* ar
     }
     return __ALLOC_SUCCESS__;
 }
-
-int ec::Server::serve_acquire_slice(const ec::msg_t *req, ec::msg_t *res, serv_thread_args *args) {
-    if (req == nullptr || res == nullptr || args == nullptr) {
-        std::cout << "req, res, or args == null in serve_acquire_slice()" << std::endl;
-        return __FAILED__;
-    }
-    int ret = m->handle_slice_req(req, res, args->clifd);
-    std::cout << "server slice returning slice: " << res->rsrc_amnt << std::endl;
-    if (ret != __ALLOC_SUCCESS__) {
-        return __ALLOC_FAILED__;
-    }
-    return __ALLOC_SUCCESS__;
-}
-
 
 int ec::Server::serve_mem_req(const msg_t *req, msg_t *res, serv_thread_args* args) {
     if (req == nullptr || res == nullptr || args == nullptr) {
