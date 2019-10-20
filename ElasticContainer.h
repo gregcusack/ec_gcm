@@ -66,8 +66,7 @@ namespace ec {
         Manager *manager;
         Server *server;
 
-        //uint32_t num_agents;
-	    std::vector<std::string> agents_ips;
+        //passed by reference from GlobalCloudManager
 	    std::vector<Agent *> agents;
 
         memory _mem;

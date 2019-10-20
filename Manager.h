@@ -97,8 +97,7 @@ namespace ec {
         //agents
         uint32_t get_num_agents() { return agents.size(); }
         const std::vector<Agent*> &get_agents() const;
-//        int alloc_agents(std::vector<std::string>& agents_ips);
-//        int alloc_agents(std::vector<Agent *> &_agents);
+
 
 
 
@@ -110,6 +109,7 @@ namespace ec {
 
         //agents
         //TODO: this may need to be a map
+        //Passed by reference from ElasticContainer but owned by GCM
         std::vector<Agent *> agents;
 
         //cpu
