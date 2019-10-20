@@ -12,15 +12,14 @@
 #define GCM_PORT        8888             //Not sure if we need a port here tbh
 #define SERVER_PORT     4444
 
-std::vector<std::string>  agents_addr{"127.0.0.1", "127.0.0.1", "127.0.0.1"};
-
 int main() {
-
+    std::vector<std::string>  agent_ips{"127.0.0.1", "127.0.0.1", "127.0.0.1"};
 
 //    auto *gcm = new ec::GlobalCloudManager("128.138.244.104", GCM_PORT);
-    auto *gcm = new ec::GlobalCloudManager("127.0.0.1", GCM_PORT);
+    auto *gcm = new ec::GlobalCloudManager("127.0.0.1", GCM_PORT, agent_ips);
 
-    uint32_t ec_id = gcm->create_ec(agents_addr);
+
+    uint32_t ec_id = gcm->create_ec();
     std::cout << "ec_id: " << ec_id << std::endl;
 
     ec::ElasticContainer *ec = gcm->get_ec(ec_id);
@@ -35,6 +34,9 @@ int main() {
 
     s->initialize_server();
     s->serve();
+
+//    delete agents;
+    delete gcm;
 
 //    ec->create_manager();
 //    ec->create_server(SERVER_PORT);

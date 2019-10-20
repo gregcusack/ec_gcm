@@ -7,12 +7,13 @@
 #include "Manager.h"
 #include "Server.h"
 #include "SubContainer.h"
+#include "Agent.h"
 #include "om.h"
 
 namespace ec {
     class ElasticContainer {
     public:
-        ElasticContainer(uint32_t _ec_id, ip4_addr _ip_address, std::vector<std::string>& agents_ips);
+        ElasticContainer(uint32_t _ec_id, ip4_addr _ip_address, std::vector<Agent *> &_agents);
 
         //creates manager and server and connects them
         void build_ec_handler(uint16_t _port);
@@ -66,7 +67,8 @@ namespace ec {
         Server *server;
 
         //uint32_t num_agents;
-	std::vector<std::string> agents_ips;
+	    std::vector<std::string> agents_ips;
+	    std::vector<Agent *> agents;
 
         memory _mem;
         cpu _cpu;

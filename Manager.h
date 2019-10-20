@@ -19,6 +19,7 @@
 #include "types/msg.h"
 #include "types/k_msg.h"
 #include "SubContainer.h"
+#include "Agent.h"
 #include "om.h"
 //#include "Server.h"
 
@@ -43,20 +44,20 @@ namespace ec {
     using container_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
     public:
         explicit Manager(uint32_t _ec_id);
-        Manager(uint32_t _ec_id, int64_t _quota, uint64_t _slice_size,
+        Manager(uint32_t _ec_id, std::vector<Agent*> &_agents, int64_t _quota, uint64_t _slice_size,
                 uint64_t _mem_limit, uint64_t _mem_slice_size);
 
-        //agents
-        struct agent {
-            agent(std::string ip_addr_) : ip(om::net::ip4_addr::from_string(ip_addr_)) {}
-            om::net::ip4_addr ip;
-            uint16_t port           = 4445;
-            int sockfd              = 0;
-            friend std::ostream& operator<<(std::ostream& os, const agent& rhs) {
-                os << "ip: " << rhs.ip << ", port: " << rhs.port << std::endl;
-                return os;
-            }
-        };
+//        //agents
+//        struct agent {
+//            agent(std::string ip_addr_) : ip(om::net::ip4_addr::from_string(ip_addr_)) {}
+//            om::net::ip4_addr ip;
+//            uint16_t port           = 4445;
+//            int sockfd              = 0;
+//            friend std::ostream& operator<<(std::ostream& os, const agent& rhs) {
+//                os << "ip: " << rhs.ip << ", port: " << rhs.port << std::endl;
+//                return os;
+//            }
+//        };
         struct reclaim_msg {
             uint16_t cgroup_id;
             uint32_t is_mem;
@@ -95,8 +96,10 @@ namespace ec {
 
         //agents
         uint32_t get_num_agents() { return agents.size(); }
-        const std::vector<agent*> &get_agents() const;
-        int alloc_agents(std::vector<std::string>& agents_ips);
+        const std::vector<Agent*> &get_agents() const;
+//        int alloc_agents(std::vector<std::string>& agents_ips);
+//        int alloc_agents(std::vector<Agent *> &_agents);
+
 
 
 
@@ -107,7 +110,7 @@ namespace ec {
 
         //agents
         //TODO: this may need to be a map
-        std::vector<agent*> agents;
+        std::vector<Agent *> agents;
 
         //cpu
         uint64_t runtime_remaining;
@@ -132,11 +135,11 @@ namespace ec {
 
 namespace std {
     template<>
-    struct hash<ec::Manager::agent> {
-        std::size_t operator()(ec::Manager::agent const& p) const {
-            auto h1 = std::hash<om::net::ip4_addr>()(p.ip);
-            auto h2 = std::hash<uint16_t>()(p.port);
-            auto h3 = std::hash<int>()(p.sockfd);
+    struct hash<ec::Agent> {
+        std::size_t operator()(ec::Agent const& p) const {
+            auto h1 = std::hash<om::net::ip4_addr>()(p.get_ip());
+            auto h2 = std::hash<uint16_t>()(p.get_port());
+            auto h3 = std::hash<int>()(p.get_sockfd());
             return h1 xor h2 xor h3;
         }
     };

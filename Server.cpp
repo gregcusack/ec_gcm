@@ -251,19 +251,19 @@ int ec::Server::init_agents_connection(int num_agents) {
         memset(&servaddr, 0, sizeof(servaddr));
 
         servaddr.sin_family = AF_INET;
-        servaddr.sin_port = htons(m->get_agents()[i]->port);
-        servaddr.sin_addr.s_addr = inet_addr((m->get_agents()[i]->ip).to_string().c_str());
+        servaddr.sin_port = htons(m->get_agents()[i]->get_port());
+        servaddr.sin_addr.s_addr = inet_addr((m->get_agents()[i]->get_ip()).to_string().c_str());
 
         if(connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
-            std::cout << "[ERROR] GCM: Connection to agent failed. \n Agent on ip: " << m->get_agents()[i]->ip << "is not connected" << std::endl;
+            std::cout << "[ERROR] GCM: Connection to agent failed. \n Agent on ip: " << m->get_agents()[i]->get_ip() << "is not connected" << std::endl;
             std::cout << "Are the agents up?" << std::endl;
         }
         else {
             num_connections++;
         }
 
-        m->get_agents()[i]->sockfd = sockfd;
-        std::cout << "agent sockfd: " << sockfd << ", " << m->get_agents()[i]->sockfd << std::endl;
+        m->get_agents()[i]->set_sockfd(sockfd);
+        std::cout << "agent sockfd: " << sockfd << ", " << m->get_agents()[i]->get_sockfd() << std::endl;
     }
     return num_connections == num_agents;
 }

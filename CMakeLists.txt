@@ -14,7 +14,9 @@ add_executable(ec_gcm main.cpp
         #Server.cpp                     Server.h
 
         types/msg.h                     types/msg.cpp
-        types/types.h                   types/k_msg.h Server.cpp Server.h)
+        types/types.h                   types/k_msg.h
+        Server.h                        Server.cpp
+        Agent.h                         Agent.cpp)
 
 add_executable(tester tests/run_test.cpp
         types/msg.cpp                   types/msg.h

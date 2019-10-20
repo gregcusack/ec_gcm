@@ -7,16 +7,29 @@
 ec::GlobalCloudManager::GlobalCloudManager()
     : gcm_ip(ec::ip4_addr::from_string("127.0.0.1")), gcm_port(4444), ec_counter(1) {}
 
-ec::GlobalCloudManager::GlobalCloudManager(std::string ip_addr, uint16_t port)
-    : gcm_ip(ec::ip4_addr::from_string(std::move(ip_addr))), gcm_port(port), ec_counter(1) {}
+ec::GlobalCloudManager::GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &_agent_ips)
+    : gcm_ip(ec::ip4_addr::from_string(std::move(ip_addr))), gcm_port(port), ec_counter(1) {
 
-uint32_t ec::GlobalCloudManager::create_ec(std::vector<std::string>& agents_ips) {
+    for(const auto &i : _agent_ips) {
+        agents.emplace_back(new Agent(i));
+    }
+    for(auto &i : agents) {
+        std::cout << "agent: " << *i << std::endl;
+    }
+
+    if(agents.size() != _agent_ips.size()) {
+        std::cout << "ERROR: alloc agents failed!" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+}
+
+uint32_t ec::GlobalCloudManager::create_ec() {
     if(ecs.find(ec_counter) != ecs.end()) {
         std::cout << "ERROR: Error allocating new Manager. Manager IDs not correct" << std::endl;
         return 0;
     }
 
-    auto *ec = new ec::ElasticContainer(ec_counter, gcm_ip, agents_ips);
+    auto *ec = new ec::ElasticContainer(ec_counter, gcm_ip, agents);
     ecs.insert({ec_counter, ec});
 
 //    eclock.lock();

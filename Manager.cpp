@@ -7,9 +7,9 @@
 
 ec::Manager::Manager(uint32_t _ec_id) : ec_id(_ec_id), s(nullptr) {}
 
-ec::Manager::Manager(uint32_t _ec_id, int64_t _quota, uint64_t _slice_size,
+ec::Manager::Manager(uint32_t _ec_id, std::vector<Agent *> &_agents, int64_t _quota, uint64_t _slice_size,
         uint64_t _mem_limit, uint64_t _mem_slice_size)
-    : ec_id(_ec_id), s(nullptr), quota(_quota), slice(_slice_size),
+    : ec_id(_ec_id), agents(_agents), s(nullptr), quota(_quota), slice(_slice_size),
       runtime_remaining(_quota), memory_available(_mem_limit), mem_slice(_mem_slice_size) {
 
     //TODO: change num_agents to however many servers we have. IDK how to set it rn.
@@ -200,16 +200,16 @@ int ec::Manager::handle_add_cgroup_to_ec(msg_t *res, const uint32_t cgroup_id, c
     return ret;
 }
 
-const std::vector<ec::Manager::agent*> &ec::Manager::get_agents() const {
+const std::vector<ec::Agent *> &ec::Manager::get_agents() const {
     return agents;
 }
 
-int ec::Manager::alloc_agents(std::vector<std::string>& agents_ips) {
-    for(auto agent_ip : agents_ips)
-        agents.emplace_back(new agent(agent_ip));
-
-    return agents.size();
-}
+//int ec::Manager::alloc_agents(std::vector<Agent *> &_agents) {
+//    for(auto agent_ip : agents_ips)
+//        agents.emplace_back(new agent(agent_ip));
+//
+//    return agents.size();
+//}
 
 uint64_t ec::Manager::reclaim_memory(int client_fd) {
     int j = 0;
@@ -226,17 +226,17 @@ uint64_t ec::Manager::reclaim_memory(int client_fd) {
         std::cout << "ip of server container is on. also ip of agent" << std::endl;
 
         for(const auto & ag : agents) {
-            std::cout << "(ag->ip, container ip): (" << ag->ip << ", " << ip << ")" << std::endl;
-            if(ag->ip == ip) {
+            std::cout << "(ag->ip, container ip): (" << ag->get_ip() << ", " << ip << ")" << std::endl;
+            if(ag->get_ip() == ip) {
                 auto *reclaim_req = new reclaim_msg;
                 reclaim_req->cgroup_id = container.second->get_id()->cgroup_id;
                 reclaim_req->is_mem = 1;
                 //TODO: anyway to get the server to do this?
-                if (write(ag->sockfd, (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
+                if (write(ag->get_sockfd(), (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
                     std::cout << "[ERROR]: GCM EC Server id: " << ec_id << ". Failed writing to agent socket"
                               << std::endl;
                 }
-                ret = read(ag->sockfd, buffer, sizeof(buffer));
+                ret = read(ag->get_sockfd(), buffer, sizeof(buffer));
                 if(ret <= 0) {
                     std::cout << "[ERROR]: GCM. Can't read from socke to reclaim memory" << std::endl;
                 }
