@@ -29,6 +29,7 @@
 #define _CPU_ 0
 #define _MEM_ 1
 #define _INIT_ 2
+#define _SLICE_ 3
 
 
 class container;
@@ -87,6 +88,7 @@ namespace ec {
         int handle_add_cgroup_to_ec(msg_t *res, uint32_t cgroup_id, uint32_t ip, int fd);
         int handle_bandwidth(const msg_t *req, msg_t *res);
         int handle_mem_req(const msg_t *req, msg_t *res, int clifd);
+        int handle_slice_req(const msg_t *req, msg_t *res, int clifd);
 
         uint64_t reclaim_memory(int client_fd);
 
