@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include "ElasticContainer.h"
+#include "Agent.h"
 #include "Manager.h"
 #include "om.h"
 
@@ -16,26 +17,30 @@
 
 namespace ec {
     class GlobalCloudManager {
+        using agents_ip_list = std::vector<std::string>;
         using manager_map = std::unordered_map<uint32_t, ec::Manager*>;
         using ec_map = std::unordered_map<uint32_t, ec::ElasticContainer*>;
     public:
         GlobalCloudManager();
-        GlobalCloudManager(std::string ip_addr, uint16_t port);
+        GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &agents);
 
-        uint32_t create_ec(uint32_t num_agents);
+        uint32_t create_ec();
 
         const ec_map& get_ecs() {return ecs;}
         ElasticContainer* get_ec(uint32_t ec_id);
 
 
-
-
     private:
-        ip4_addr        gcm_ip;
-        uint16_t        gcm_port;           //unknown if needed
+        ip4_addr                gcm_ip;
+        uint16_t                gcm_port;           //unknown if needed
 
-        ec_map          ecs;
-        uint32_t        ec_counter;
+        ec_map                  ecs;
+        uint32_t                ec_counter;
+
+        std::vector<Agent*>     agents;
+
+
+
 
 
     };
