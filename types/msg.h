@@ -20,6 +20,7 @@ namespace ec {
         msg_t& operator=(msg_t&&)                   = default;
         explicit msg_t(const ec::k_msg_t& k_msg);
 
+        uint32_t            ec_id;
         om::net::ip4_addr   client_ip;      //ip SubContainer sending message is on
 //        uint32_t            client_ip;      //ip SubContainer sending message is on
         uint32_t            cgroup_id;      //id of SubContainer on that Server
@@ -30,6 +31,7 @@ namespace ec {
 
         friend std::ostream& operator<<(std::ostream& os_, const msg_t& k) {
             return os_ << "msg_t: "
+                       << k.ec_id << ","
                        << k.client_ip << ","
                        << k.cgroup_id << ","
                        << k.req_type << ","
