@@ -43,6 +43,11 @@ void ec::Manager::allocate_container(uint32_t cgroup_id, const std::string &serv
     containers.insert({*c->get_id(), c});
 }
 
+
+ec::SubContainer *ec::Manager::create_new_sc(const uint32_t cgroup_id, const uint32_t host_ip, const int sockfd) {
+    return new SubContainer(cgroup_id, host_ip, ec_id, sockfd);
+}
+
 uint32_t ec::Manager::handle(uint32_t cgroup_id, uint32_t server_ip) {
     auto c_id = ec::SubContainer::ContainerId(cgroup_id, ip4_addr::from_host(server_ip), ec_id);
     if (containers.find(c_id) != containers.end()) {
@@ -61,8 +66,12 @@ ec::SubContainer *ec::Manager::get_container(ec::SubContainer::ContainerId &cont
 }
 
 int ec::Manager::insert_sc(ec::SubContainer &_sc) {
+    if (containers.find(*_sc.get_id()) != containers.end()) {
+        std::cout << "This SubContainer already exists! Can't allocate identical one!" << std::endl;
+        return __ALLOC_FAILED__;
+    }
     containers.insert({*(_sc.get_id()), &_sc});
-    return __ALLOC_SUCCESS__; //not sure what exactly to return here
+    return __ALLOC_SUCCESS__;
 }
 
 uint64_t ec::Manager::decr_rt_remaining(uint64_t _slice) {
@@ -194,7 +203,8 @@ int ec::Manager::handle_add_cgroup_to_ec(msg_t *res, const uint32_t cgroup_id, c
         std::cout << "ERROR. res == null in handle_Add_cgroup_to_ec()" << std::endl;
         return __ALLOC_FAILED__;
     }
-    auto *sc = new SubContainer(cgroup_id, ip, ec_id, fd);
+
+    auto *sc = create_new_sc(cgroup_id, ip, fd);
     int ret = insert_sc(*sc);
     std::cout << "[dbg]: Init. Added cgroup to ec. cgroup id: " << *sc->get_id() << std::endl;
     res->request = 0; //giveback (or send back)
@@ -204,13 +214,6 @@ int ec::Manager::handle_add_cgroup_to_ec(msg_t *res, const uint32_t cgroup_id, c
 const std::vector<ec::Agent *> &ec::Manager::get_agents() const {
     return agents;
 }
-
-//int ec::Manager::alloc_agents(std::vector<Agent *> &_agents) {
-//    for(auto agent_ip : agents_ips)
-//        agents.emplace_back(new agent(agent_ip));
-//
-//    return agents.size();
-//}
 
 uint64_t ec::Manager::reclaim_memory(int client_fd) {
     int j = 0;
@@ -254,5 +257,13 @@ uint64_t ec::Manager::reclaim_memory(int client_fd) {
     std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << reclaimed << std::endl;
     return reclaimed;
 }
+
+ec::Manager::~Manager() {
+    for(auto &i : containers) {
+        delete i.second;
+    }
+    containers.clear();
+}
+
 
 

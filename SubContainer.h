@@ -28,6 +28,7 @@ namespace ec {
         SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t manager_id, int fd);     //from ip4_addr
         SubContainer(uint32_t cgroup_id, std::string ip, uint32_t manager_id, int fd);     //from const char[8]
         SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t manager_id, uint64_t mem_lim, int fd);
+        ~SubContainer() = default;
 
         struct ContainerId {
             ContainerId(uint32_t _cgroup_id, ip4_addr _ip, uint32_t _ec_id);
@@ -43,6 +44,15 @@ namespace ec {
                 return os;
             };
         };
+
+        //TODO: implement mem and cpu stats/current usage
+//        struct cpu_stats {
+//
+//        };
+//
+//        struct mem_stats {
+//
+//        };
 
         ContainerId* get_id() {return &_id;}
         int get_fd() { return fd; }

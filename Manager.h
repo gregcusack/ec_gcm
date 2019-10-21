@@ -46,6 +46,7 @@ namespace ec {
         explicit Manager(uint32_t _ec_id);
         Manager(uint32_t _ec_id, std::vector<Agent*> &_agents, int64_t _quota, uint64_t _slice_size,
                 uint64_t _mem_limit, uint64_t _mem_slice_size);
+        ~Manager();
 
         struct reclaim_msg {
             uint16_t cgroup_id;
@@ -56,6 +57,7 @@ namespace ec {
         uint32_t accept_container();       //probably want to return a FD for that new SubContainer thread
         void allocate_container(uint32_t cgroup_id, uint32_t server_ip);
         void allocate_container(uint32_t cgroup_id, const std::string &server_ip);
+        SubContainer* create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd);
 
         uint32_t handle(uint32_t cgroup_id, uint32_t server_ip);
 

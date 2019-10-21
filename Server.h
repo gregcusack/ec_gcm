@@ -28,6 +28,7 @@ namespace ec {
     class Server {
     public:
         explicit Server(ip4_addr _ip_address, uint16_t _port);
+        ~Server() = default;
         void initialize_server();
 
         void set_manager(Manager *man) { m = man; }

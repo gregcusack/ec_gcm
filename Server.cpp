@@ -47,11 +47,11 @@ void ec::Server::initialize_server() {
 
     server_initialized = true; //server setup can run now
 
-    if(!init_agents_connection(m->get_num_agents())) {
-        std::cout << "Agent initialization failed" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    std::cout << "Agent conenctions successful!" << std::endl;
+//    if(!init_agents_connection(m->get_num_agents())) {
+//        std::cout << "Agent initialization failed" << std::endl;
+//        exit(EXIT_FAILURE);
+//    }
+//    std::cout << "Agent conenctions successful!" << std::endl;
 
 }
 
@@ -145,6 +145,7 @@ void ec::Server::handle_client_reqs(void *args) {
             }
 //            break;
         }
+        delete res;
 
     }
 }

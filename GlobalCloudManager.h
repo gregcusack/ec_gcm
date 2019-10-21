@@ -18,11 +18,11 @@
 namespace ec {
     class GlobalCloudManager {
         using agents_ip_list = std::vector<std::string>;
-        using manager_map = std::unordered_map<uint32_t, ec::Manager*>;
         using ec_map = std::unordered_map<uint32_t, ec::ElasticContainer*>;
     public:
-        GlobalCloudManager();
-        GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &agents);
+//        GlobalCloudManager();
+        GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<uint16_t> &ec_ports);
+        ~GlobalCloudManager();
 
         uint32_t create_ec();
 
@@ -38,6 +38,7 @@ namespace ec {
         uint32_t                ec_counter;
 
         std::vector<Agent*>     agents;
+        std::vector<uint16_t>   ec_ports;
 
 
 
