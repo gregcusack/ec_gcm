@@ -26,6 +26,8 @@ namespace ec {
 
         uint32_t create_ec();
 
+        int init_agent_connections();
+
         const ec_map& get_ecs() {return ecs;}
         ElasticContainer* get_ec(uint32_t ec_id);
 

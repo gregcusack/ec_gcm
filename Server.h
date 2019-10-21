@@ -60,8 +60,6 @@ namespace ec {
 
         int serve_mem_req(const msg_t *req, msg_t *res, serv_thread_args* args);
 
-        int init_agents_connection(int num_agents);
-
         int serve_acquire_slice(const msg_t *req, msg_t *res, serv_thread_args* args);
 
 

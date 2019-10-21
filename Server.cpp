@@ -47,12 +47,6 @@ void ec::Server::initialize_server() {
 
     server_initialized = true; //server setup can run now
 
-//    if(!init_agents_connection(m->get_num_agents())) {
-//        std::cout << "Agent initialization failed" << std::endl;
-//        exit(EXIT_FAILURE);
-//    }
-//    std::cout << "Agent conenctions successful!" << std::endl;
-
 }
 
 //We may want to make this a separate process???
@@ -234,38 +228,6 @@ int ec::Server::serve_mem_req(const msg_t *req, msg_t *res, serv_thread_args* ar
     }
     return __ALLOC_SUCCESS__;
 }
-
-int ec::Server::init_agents_connection(int num_agents) {
-    int sockfd, i;
-    struct sockaddr_in servaddr;
-    int num_connections = 0;
-
-    for(i = 0; i < num_agents; i++) {
-        if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-            std::cout << "[ERROR]: GCM Socket creation failed. Agent is not up!" << std::endl;
-            exit(EXIT_FAILURE);
-        }
-
-        memset(&servaddr, 0, sizeof(servaddr));
-
-        servaddr.sin_family = AF_INET;
-        servaddr.sin_port = htons(m->get_agents()[i]->get_port());
-        servaddr.sin_addr.s_addr = inet_addr((m->get_agents()[i]->get_ip()).to_string().c_str());
-
-        if(connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
-            std::cout << "[ERROR] GCM: Connection to agent failed. \n Agent on ip: " << m->get_agents()[i]->get_ip() << "is not connected" << std::endl;
-            std::cout << "Are the agents up?" << std::endl;
-        }
-        else {
-            num_connections++;
-        }
-
-        m->get_agents()[i]->set_sockfd(sockfd);
-        std::cout << "agent sockfd: " << sockfd << ", " << m->get_agents()[i]->get_sockfd() << std::endl;
-    }
-    return num_connections == num_agents;
-}
-
 
 
 
