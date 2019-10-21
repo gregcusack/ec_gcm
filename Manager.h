@@ -47,17 +47,6 @@ namespace ec {
         Manager(uint32_t _ec_id, std::vector<Agent*> &_agents, int64_t _quota, uint64_t _slice_size,
                 uint64_t _mem_limit, uint64_t _mem_slice_size);
 
-//        //agents
-//        struct agent {
-//            agent(std::string ip_addr_) : ip(om::net::ip4_addr::from_string(ip_addr_)) {}
-//            om::net::ip4_addr ip;
-//            uint16_t port           = 4445;
-//            int sockfd              = 0;
-//            friend std::ostream& operator<<(std::ostream& os, const agent& rhs) {
-//                os << "ip: " << rhs.ip << ", port: " << rhs.port << std::endl;
-//                return os;
-//            }
-//        };
         struct reclaim_msg {
             uint16_t cgroup_id;
             uint32_t is_mem;
