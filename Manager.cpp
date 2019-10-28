@@ -111,6 +111,8 @@ int ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
         }
         cpulock.unlock();
 
+        std::cout << "slice (s,f): (" << req->slice_succeed << ", " << req->slice_fail << ")" << std::endl;
+
         //TEST
 //        ret += 3*slice; //see what happens
         res->rsrc_amnt = ret;   //set bw we're returning

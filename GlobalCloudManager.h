@@ -8,6 +8,8 @@
 #include <iostream>
 #include <cstdint>
 #include <unordered_map>
+#include <sys/types.h>
+#include <wait.h>
 #include "ElasticContainer.h"
 #include "Agent.h"
 #include "Manager.h"
