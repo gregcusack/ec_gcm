@@ -29,24 +29,7 @@ int main(){
     }
     std::cout << "num ecs: " << gcm->get_ecs().size() << std::endl;
 
-    for(const auto &ec : gcm->get_ecs()) {
-        if(fork() == 0) {
-            std::cout << "[child] pid: " << getpid() << ", [parent] pid: " <<  getppid() << std::endl;
-            std::cout << "ec_id: " << ec.second->get_ec_id() << std::endl;
-            ec.second->build_ec_handler();
-            auto *m = ec.second->get_manager();
-            auto *s = m->get_server();
-            s->initialize_server();
-            s->serve();
-        }
-        else {
-            continue;
-        }
-        break;
-    }
-    for(const auto &i : gcm->get_ecs()) {
-        wait(nullptr);
-    }
+    gcm->run();
 
     delete gcm;
 

@@ -112,17 +112,9 @@ int ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
         cpulock.unlock();
 
         //TEST
-        ret += 3*slice; //see what happens
+//        ret += 3*slice; //see what happens
         res->rsrc_amnt = ret;   //set bw we're returning
-//        if(flag < 150) {
-//            res->rsrc_amnt = req->rsrc_amnt; //TODO: this just gives back what was asked for!
-//        }
-//        else {
-//            res->rsrc_amnt = 0;
-//            if(flag == 499) flag = -1;
-//        }
 
-//        res->rsrc_amnt = ret;   //set bw we're returning
 ////        res->rsrc_amnt = req->rsrc_amnt; //TODO: this just gives back what was asked for!
 //        flag++;
         res->request = 0;       //set to give back

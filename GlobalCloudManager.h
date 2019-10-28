@@ -24,6 +24,8 @@ namespace ec {
         GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<uint16_t> &ec_ports);
         ~GlobalCloudManager();
 
+        void run();
+
         uint32_t create_ec();
 
         int init_agent_connections();
@@ -41,10 +43,6 @@ namespace ec {
 
         std::vector<Agent*>     agents;
         std::vector<uint16_t>   ec_ports;
-
-
-
-
 
     };
 

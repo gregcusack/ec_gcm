@@ -9,8 +9,6 @@ ec::Server::Server(ip4_addr _ip_address, uint16_t _port)
         mem_reqs(0), cpu_limit(500000), memory_limit(30000),
         server_initialized(false), test(23), num_of_cli(0) {
 
-    //TODO: initialize agents
-
 }
 
 void ec::Server::initialize_server() {
@@ -228,36 +226,5 @@ int ec::Server::serve_mem_req(const msg_t *req, msg_t *res, serv_thread_args* ar
     }
     return __ALLOC_SUCCESS__;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

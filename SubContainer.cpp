@@ -4,44 +4,44 @@
 
 #include "SubContainer.h"
 
-ec::SubContainer::SubContainer(uint32_t cgroup_id, uint32_t ip, uint32_t manager_id) {
-    _id = ContainerId(cgroup_id, ip4_addr::from_net(ip), manager_id);
+ec::SubContainer::SubContainer(uint32_t cgroup_id, uint32_t ip, uint32_t ec_id) {
+    _id = ContainerId(cgroup_id, ip4_addr::from_net(ip), ec_id);
     runtime_received = 0;
     mem_limit = 0;
     fd = 0;
 }
 
-ec::SubContainer::SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t manager_id, int _fd)
+ec::SubContainer::SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t ec_id, int _fd)
     : fd(_fd) {
 
-    _id = ContainerId(cgroup_id, ip, manager_id);
+    _id = ContainerId(cgroup_id, ip, ec_id);
     runtime_received = 0;
     mem_limit = 0;
 }
 
-ec::SubContainer::SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t manager_id, uint64_t mem_lim, int _fd)
-    : mem_limit(mem_lim), fd(_fd) {
+//ec::SubContainer::SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t ec_id, uint64_t mem_lim, int _fd)
+//    : mem_limit(mem_lim), fd(_fd) {
+//
+//    _id = ContainerId(cgroup_id, ip, ec_id);
+//    runtime_received = 0;
+//}
 
-    _id = ContainerId(cgroup_id, ip, manager_id);
-    runtime_received = 0;
-}
-
-ec::SubContainer::SubContainer(uint32_t cgroup_id, uint32_t ip, uint32_t manager_id, int _fd)
-    : fd(_fd){
-    _id = ContainerId(cgroup_id, ip4_addr::from_net(ip), manager_id);
-    runtime_received = 0;
-    mem_limit = 0;
-}
-
-ec::SubContainer::SubContainer(uint32_t cgroup_id, std::string ip, uint32_t manager_id, int _fd)
-    : fd(_fd){
-    _id = ContainerId(cgroup_id, ip4_addr::from_string(std::move(ip)), manager_id);
+ec::SubContainer::SubContainer(uint32_t cgroup_id, uint32_t ip, uint32_t ec_id, int _fd)
+    : fd(_fd), cpu(new stats::cpu()), mem(new stats::mem()) {
+    _id = ContainerId(cgroup_id, ip4_addr::from_net(ip), ec_id);
     runtime_received = 0;
     mem_limit = 0;
 }
 
-ec::SubContainer::SubContainer(uint32_t cgroup_id, std::string ip, uint32_t manager_id) {
-    _id = ContainerId(cgroup_id, ip4_addr::from_string(std::move(ip)), manager_id);
+ec::SubContainer::SubContainer(uint32_t cgroup_id, std::string ip, uint32_t ec_id, int _fd)
+    : fd(_fd), cpu(new stats::cpu()), mem(new stats::mem()) {
+    _id = ContainerId(cgroup_id, ip4_addr::from_string(std::move(ip)), ec_id);
+    runtime_received = 0;
+    mem_limit = 0;
+}
+
+ec::SubContainer::SubContainer(uint32_t cgroup_id, std::string ip, uint32_t ec_id) {
+    _id = ContainerId(cgroup_id, ip4_addr::from_string(std::move(ip)), ec_id);
     runtime_received = 0;
     mem_limit = 0;
     fd = 0;

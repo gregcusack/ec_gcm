@@ -89,10 +89,6 @@ namespace ec {
         uint32_t get_num_agents() { return agents.size(); }
         const std::vector<Agent*> &get_agents() const;
 
-
-
-
-
     private:
         uint32_t ec_id;
         container_map containers;

@@ -43,9 +43,7 @@ namespace ec {
             struct sockaddr_in *cliaddr     = nullptr;
         };
 
-
         Manager *manager() { return m; }
-
 
         void serve();
 
@@ -67,9 +65,6 @@ namespace ec {
         uint16_t get_port() { return port; }
         int32_t get_test_var() { return test; }
         std::mutex mtx;
-
-
-
 
     private:
         ip4_addr ip_address;

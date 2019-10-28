@@ -7,7 +7,7 @@
 
 #include <cstdint>
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 #include "../om.h"
 #include "k_msg.h"
 
@@ -27,6 +27,8 @@ namespace ec {
         uint32_t                req_type;         //1: mem, 0: cpu, 2: init, 3: slice
         uint64_t            rsrc_amnt;      //amount of resources (cpu/mem)
         uint32_t                request;        //1: request, 0: give back
+        uint32_t            slice_succeed;
+        uint32_t            slice_fail;
 
 
         friend std::ostream& operator<<(std::ostream& os_, const msg_t& k) {
@@ -36,7 +38,9 @@ namespace ec {
                        << k.cgroup_id << ","
                        << k.req_type << ","
                        << k.rsrc_amnt << ","
-                       << k.request;
+                       << k.request << ","
+                       << k.slice_succeed << ","
+                       << k.slice_fail;
         }
         void from_net() {
             client_ip = om::net::ip4_addr::reverse_byte_order(client_ip);
@@ -44,13 +48,9 @@ namespace ec {
 
         void set_ip(uint32_t ip) { //this will not be needed later
             client_ip = om::net::ip4_addr::from_net(ip);
-
         };
 
-
     };
-
-
 
 }
 

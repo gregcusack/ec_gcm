@@ -90,3 +90,25 @@ int ec::GlobalCloudManager::init_agent_connections() {
     }
     return num_connections == agents.size();
 }
+
+void ec::GlobalCloudManager::run() {
+    for(const auto &ec : ecs) {
+        if(fork() == 0) {
+            std::cout << "[child] pid: " << getpid() << ", [parent] pid: " <<  getppid() << std::endl;
+            std::cout << "ec_id: " << ec.second->get_ec_id() << std::endl;
+            ec.second->build_ec_handler();
+            auto *m = ec.second->get_manager();
+            auto *s = m->get_server();
+            s->initialize_server();
+            s->serve();
+        }
+        else {
+            continue;
+        }
+        break;
+    }
+    for(const auto &i : ecs) {
+        wait(nullptr);
+    }
+
+}

@@ -8,12 +8,8 @@
 #include <cstdint>
 #include <iostream>
 #include "types/types.h"
-//#include "Manager.h"
-//
-//class Manager;
-//struct container_id;
-//struct Manager::ContainerId;
-//struct ContainerId;
+#include "stats/cpu.h"
+#include "stats/mem.h"
 
 namespace ec {
     /*!
@@ -22,12 +18,12 @@ namespace ec {
      */
     class SubContainer {
     public:
-        SubContainer(uint32_t cgroup_id, uint32_t ip, uint32_t manager_id);
-        SubContainer(uint32_t cgroup_id, std::string ip, uint32_t manager_id);
-        SubContainer(uint32_t cgroup_id, uint32_t ip, uint32_t manager_id, int fd);     //from uint32_t
-        SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t manager_id, int fd);     //from ip4_addr
-        SubContainer(uint32_t cgroup_id, std::string ip, uint32_t manager_id, int fd);     //from const char[8]
-        SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t manager_id, uint64_t mem_lim, int fd);
+        SubContainer(uint32_t cgroup_id, uint32_t ip, uint32_t ec_id);
+        SubContainer(uint32_t cgroup_id, std::string ip, uint32_t ec_id);
+        SubContainer(uint32_t cgroup_id, uint32_t ip, uint32_t ec_id, int fd);     //from uint32_t
+        SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t ec_id, int fd);     //from ip4_addr
+        SubContainer(uint32_t cgroup_id, std::string ip, uint32_t ec_id, int fd);     //from const char[8]
+//        SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t ec_id, uint64_t mem_lim, int fd);
         ~SubContainer() = default;
 
         struct ContainerId {
@@ -45,11 +41,6 @@ namespace ec {
             };
         };
 
-        //TODO: implement mem and cpu stats/current usage
-//        struct cpu_stats {
-//
-//        };
-//
 //        struct mem_stats {
 //
 //        };
@@ -65,6 +56,10 @@ namespace ec {
         ContainerId *c_id;
         uint64_t runtime_received;
         uint64_t mem_limit;
+
+        stats::cpu *cpu;
+        stats::mem *mem;
+
 
 
     };
