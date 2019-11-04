@@ -150,7 +150,7 @@ int ec::Server::handle_req(const msg_t *req, msg_t *res, serv_thread_args* args)
 
 //    std::cout << "req: " << *req << std::endl;
     uint64_t ret = __FAILED__;
-    std::cout << "req->req_type: " << req->req_type << std::endl;
+//    std::cout << "req->req_type: " << req->req_type << std::endl;
 
     switch(req -> req_type) {
         case _MEM_:

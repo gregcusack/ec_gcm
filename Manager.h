@@ -15,6 +15,7 @@
 
 #include <chrono>
 #include <thread>
+#include <fstream>
 
 #include "types/msg.h"
 #include "types/k_msg.h"
@@ -107,13 +108,10 @@ namespace ec {
         //mem
         uint64_t memory_available;
         uint64_t mem_slice;
+        std::ofstream test_file;
 
         //test
         int flag;
-
-        //cpu
-//        uint64_t runtime_remaining;
-
 
     };
 

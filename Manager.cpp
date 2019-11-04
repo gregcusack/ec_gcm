@@ -16,6 +16,8 @@ ec::Manager::Manager(uint32_t _ec_id, std::vector<Agent *> &_agents, int64_t _qu
     std::cout << "runtime_remaining on init: " << runtime_remaining << std::endl;
     std::cout << "memory_available on init: " << memory_available << std::endl;
 
+    test_file.open("test_file.txt", std::ios_base::app);
+
     //test
     flag = 0;
 
@@ -103,7 +105,7 @@ int ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
         //give back what it asks for
         ret = req->rsrc_amnt > runtime_remaining ? runtime_remaining : req->rsrc_amnt;
 
-        runtime_remaining -= ret;
+//        runtime_remaining -= ret; //TODO: put back in at some point??
 //        std::cout << "Server sending back " << ret << "ns in runtime" << std::endl;
         //TODO: THIS SHOULDN'T BE HERE. BUT USING IT FOR TESTING
         if(runtime_remaining <= 0) {
@@ -111,7 +113,11 @@ int ec::Manager::handle_bandwidth(const msg_t *req, msg_t *res) {
         }
         cpulock.unlock();
 
-        std::cout << "slice (s,f): (" << req->slice_succeed << ", " << req->slice_fail << ")" << std::endl;
+//        std::cout << req->slice_succeed << std::endl;
+//        test_file << req->request << "," << req->slice_succeed << "," << req->slice_fail << std::endl;
+//        std::cout << req->request << "," << req->slice_succeed << "," << req->slice_fail << std::endl;
+//        test_file << req->slice_succeed << std::endl;
+//        std::cout << "slice (s,f): (" << req->slice_succeed << ", " << req->slice_fail << ")" << std::endl;
 
         //TEST
 //        ret += 3*slice; //see what happens
