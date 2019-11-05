@@ -9,10 +9,11 @@
 #include <cstdint>
 #include <unordered_map>
 #include <sys/types.h>
-#include <wait.h>
-#include "ElasticContainer.h"
-#include "Agent.h"
+//#include <wait.h>
 #include "Manager.h"
+#include "Server.h"
+#include "Agent.h"
+#include "ElasticContainer.h"
 #include "om.h"
 
 //std::mutex eclock;
@@ -20,31 +21,34 @@
 namespace ec {
     class GlobalCloudManager {
         using agents_ip_list = std::vector<std::string>;
-        using ec_map = std::unordered_map<uint32_t, ec::ElasticContainer*>;
+//        using server_map = std::unordered_map<uint32_t, ec::Manager*>;
+        using server_map = std::unordered_map<uint16_t, ec::Server*>;
     public:
 //        GlobalCloudManager();
-        GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<uint16_t> &ec_ports);
+        GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<uint16_t> &_server_ports);
         ~GlobalCloudManager();
 
         void run();
 
-        uint32_t create_ec();
+        uint32_t create_server();
 
         int init_agent_connections();
 
-        const ec_map& get_ecs() {return ecs;}
-        ElasticContainer* get_ec(uint32_t ec_id);
+        const server_map& get_servers() {return servers;}
+        const Server& get_server(uint32_t server_id) const;
+//        Manager* get_manager(uint32_t manager_id);
 
 
     private:
         ip4_addr                gcm_ip;
         uint16_t                gcm_port;           //unknown if needed
 
-        ec_map                  ecs;
-        uint32_t                ec_counter;
+        server_map              servers;
+        uint32_t                server_counts;
+
 
         std::vector<Agent*>     agents;
-        std::vector<uint16_t>   ec_ports;
+        std::vector<uint16_t>   server_ports;
 
     };
 

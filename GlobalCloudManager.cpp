@@ -4,11 +4,11 @@
 
 #include "GlobalCloudManager.h"
 
-//ec::GlobalCloudManager::GlobalCloudManager()
-//    : gcm_ip(ec::ip4_addr::from_string("127.0.0.1")), gcm_port(4444), ec_counter(1) {}
+//_ec::GlobalCloudManager::GlobalCloudManager()
+//    : gcm_ip(_ec::ip4_addr::from_string("127.0.0.1")), gcm_port(4444), server_counts(1) {}
 
-ec::GlobalCloudManager::GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &_agent_ips, std::vector<uint16_t> &_ec_ports)
-    : gcm_ip(ec::ip4_addr::from_string(std::move(ip_addr))), gcm_port(port), ec_ports(_ec_ports), ec_counter(1) {
+ec::GlobalCloudManager::GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &_agent_ips, std::vector<uint16_t> &_server_ports)
+    : gcm_ip(ec::ip4_addr::from_string(std::move(ip_addr))), gcm_port(port), server_ports(_server_ports), server_counts(1) {
 
     for(const auto &i : _agent_ips) {
         agents.emplace_back(new Agent(i));
@@ -23,40 +23,51 @@ ec::GlobalCloudManager::GlobalCloudManager(std::string ip_addr, uint16_t port, a
     }
 }
 
-uint32_t ec::GlobalCloudManager::create_ec() {
-    if(ecs.find(ec_counter) != ecs.end()) {
-        std::cout << "ERROR: Error allocating new EC. EC IDs not correct" << std::endl;
+uint32_t ec::GlobalCloudManager::create_server() {
+    if(servers.find(server_counts) != servers.end()) {
+        std::cout << "ERROR: Error allocating new Server. Server IDs not correct" << std::endl;
         return 0;
     }
 
-    uint16_t ec_port = ec_ports[ec_counter - 1]; //Give new EC, the next available port in the list
-    auto *ec = new ec::ElasticContainer(ec_counter, gcm_ip, ec_port, agents);
-    ecs.insert({ec_counter, ec});
+    uint16_t server_port = server_ports[server_counts - 1]; //Give new EC, the next available port in the list
+    auto *server = new Server(server_counts, gcm_ip, server_port, agents);
+//    auto *manager = new ec::Manager(server_counts, gcm_ip, server_port, agents);
+    servers.insert({server_counts, server});
 
 //    eclock.lock();
-    ec_counter++;
+    server_counts++;
 //    eclock.unlock();
-    return ec->get_ec_id();
+    return server->get_server_id();
 }
 
-ec::ElasticContainer *ec::GlobalCloudManager::get_ec(uint32_t ec_id) {
-    auto itr = ecs.find(ec_id);
-    if(itr == ecs.end()) {
-        std::cout << "ERROR: No EC with ec_id: " << ec_id << ". Exiting...." << std::endl;
+//ec::Manager *ec::GlobalCloudManager::get_manager(uint32_t manager_id) {
+//    auto itr = servers.find(manager_id);
+//    if(itr == servers.end()) {
+//        std::cout << "ERROR: No EC with manager_id: " << manager_id << ". Exiting...." << std::endl;
+//        std::exit(EXIT_FAILURE);
+//    }
+//    return itr->second;
+//}
+
+const ec::Server &ec::GlobalCloudManager::get_server(const uint32_t server_id) const {
+    auto itr = servers.find(server_id);
+    if(itr == servers.end()) {
+        std::cout << "ERROR: No Server with server_id: " << server_id << ". Exiting...." << std::endl;
         std::exit(EXIT_FAILURE);
     }
-    return itr->second;
+    return *itr->second;
 }
+
 
 ec::GlobalCloudManager::~GlobalCloudManager() {
     for(auto a : agents) {
         delete a;
     }
     agents.clear();
-    for(auto &ec : ecs) {
-        delete ec.second;
+    for(auto &s : servers) {
+        delete s.second;
     }
-    ecs.clear();
+    servers.clear();
 }
 
 int ec::GlobalCloudManager::init_agent_connections() {
@@ -92,23 +103,26 @@ int ec::GlobalCloudManager::init_agent_connections() {
 }
 
 void ec::GlobalCloudManager::run() {
-    for(const auto &ec : ecs) {
+    for(const auto &s : servers) {
         if(fork() == 0) {
             std::cout << "[child] pid: " << getpid() << ", [parent] pid: " <<  getppid() << std::endl;
-            std::cout << "ec_id: " << ec.second->get_ec_id() << std::endl;
-            ec.second->build_ec_handler();
-            auto *m = ec.second->get_manager();
-            auto *s = m->get_server();
-            s->initialize_server();
-            s->serve();
+            std::cout << "server_id: " << s.second->get_server_id() << std::endl;
+
+
+//            m.second->build_manager_handler();
+//            auto *ec = m.second->get_elastic_container();
+//            auto *s = ec->get_server();
+            s.second->initialize_server();
+            s.second->serve();
         }
         else {
             continue;
         }
         break;
     }
-    for(const auto &i : ecs) {
+    for(const auto &i : servers) {
         wait(nullptr);
     }
 
 }
+

@@ -6,10 +6,10 @@ set(PTHREAD_LIB pthread)
 
 
 add_executable(ec_gcm main.cpp
-        Manager.cpp                     Manager.h
-        SubContainer.cpp                SubContainer.h
-        ElasticContainer.cpp            ElasticContainer.h
-        GlobalCloudManager.cpp          GlobalCloudManager.h
+        ElasticContainer.h              ElasticContainer.cpp
+        SubContainer.h                  SubContainer.cpp
+        Manager.h                       Manager.cpp
+        GlobalCloudManager.h            GlobalCloudManager.cpp
         #Server.cpp                     Server.h
 
         types/msg.h                     types/msg.cpp

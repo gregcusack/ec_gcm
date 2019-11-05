@@ -23,7 +23,7 @@ namespace ec {
         SubContainer(uint32_t cgroup_id, uint32_t ip, uint32_t ec_id, int fd);     //from uint32_t
         SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t ec_id, int fd);     //from ip4_addr
         SubContainer(uint32_t cgroup_id, std::string ip, uint32_t ec_id, int fd);     //from const char[8]
-//        SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t ec_id, uint64_t mem_lim, int fd);
+//        SubContainer(uint32_t cgroup_id, ip4_addr ip, uint32_t manager_id, uint64_t mem_lim, int fd);
         ~SubContainer() = default;
 
         struct ContainerId {
@@ -36,7 +36,7 @@ namespace ec {
             friend std::ostream& operator<<(std::ostream& os, const ContainerId& rhs) {
                 os  << "cgroup_id: " << rhs.cgroup_id << ", "
                     << "server_ip: " << rhs.server_ip << ", "
-                    << "ec_id: " << rhs.ec_id;
+                    << "manager_id: " << rhs.ec_id;
                 return os;
             };
         };
@@ -52,7 +52,7 @@ namespace ec {
     private:
         ContainerId _id;
         int fd;
-//        Manager *manager_p;
+//        ElasticContainer *manager_p;
         ContainerId *c_id;
         uint64_t runtime_received;
         uint64_t mem_limit;

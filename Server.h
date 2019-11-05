@@ -10,6 +10,9 @@
 #include <thread>
 #include "types/msg.h"
 #include "types/k_msg.h"
+#include "Agent.h"
+#include "Manager.h"
+//#include "ElasticContainer.h"
 #include "Manager.h"
 #include "om.h"
 
@@ -24,14 +27,14 @@
 
 
 namespace ec {
-//    struct Manager;
+//    struct ElasticContainer;
     class Server {
     public:
-        explicit Server(ip4_addr _ip_address, uint16_t _port);
+        Server(uint32_t server_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
         ~Server() = default;
         void initialize_server();
 
-        void set_manager(Manager *man) { m = man; }
+//        void set_ec(ElasticContainer *ec) { ec = ec; }
 
         struct server_t {
             int32_t sock_fd;
@@ -43,7 +46,7 @@ namespace ec {
             struct sockaddr_in *cliaddr     = nullptr;
         };
 
-        Manager *manager() { return m; }
+//        ElasticContainer *manager() { return ec; }
 
         void serve();
 
@@ -63,18 +66,17 @@ namespace ec {
 
         ip4_addr get_ip() { return ip_address; }
         uint16_t get_port() { return port; }
-        int32_t get_test_var() { return test; }
+        uint32_t get_server_id() { return server_id; }
         std::mutex mtx;
 
     private:
+        uint32_t server_id;
         ip4_addr ip_address;
         uint16_t port;
+        std::vector<Agent *> agents;
+        Manager *manager;
         struct server_t server_socket;
-        Manager *m;
-        int32_t test;
-        uint32_t mem_reqs;
-        uint64_t cpu_limit;     //TODO: delete this. idk what this is supposed to be
-        uint64_t memory_limit;
+
         bool server_initialized;
         uint32_t num_of_cli;
     };
