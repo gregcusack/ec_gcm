@@ -8,7 +8,7 @@ set(PTHREAD_LIB pthread)
 add_executable(ec_gcm main.cpp
         ElasticContainer.h              ElasticContainer.cpp
         SubContainer.h                  SubContainer.cpp
-        Manager.h                       Manager.cpp
+        ECAPI.h ECAPI.cpp
         GlobalCloudManager.h            GlobalCloudManager.cpp
         #Server.cpp                     Server.h
 
@@ -18,6 +18,7 @@ add_executable(ec_gcm main.cpp
         Agent.h                         Agent.cpp
         stats/cpu.h                     stats/cpu.cpp
         stats/mem.h                     stats/mem.cpp
+        Manager.h Manager.cpp
         )
 
 add_executable(tester tests/run_test.cpp

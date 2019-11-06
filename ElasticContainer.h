@@ -75,48 +75,60 @@ namespace ec {
             }
         };
 
-        struct reclaim_msg {
-            uint16_t cgroup_id;
-            uint32_t is_mem;
-            //...maybe it needs more things
-        };
 
-        uint32_t accept_container();       //probably want to return a FD for that new SubContainer thread
-        void allocate_container(uint32_t cgroup_id, uint32_t server_ip);
-        void allocate_container(uint32_t cgroup_id, const std::string &server_ip);
-        SubContainer* create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd);
-
-        uint32_t handle(uint32_t cgroup_id, uint32_t server_ip);
-
-        //getters
+        /**
+         *******************************************************
+         * GETTERS
+         *******************************************************
+         **/
+        //MISC
         uint32_t get_ec_id() { return ec_id; }
-        const container_map& get_containers() {return containers;}
+        const container_map& get_subcontainers() {return containers;}
         SubContainer* get_container(SubContainer::ContainerId &container_id);
 
-        int insert_sc(SubContainer &_sc);
-
-        //cpu
+        //CPU
         uint64_t get_rt_remaining() { return runtime_remaining; }
-        inline uint64_t decr_rt_remaining(uint64_t slice);
-        inline uint64_t incr_rt_remaining(uint64_t give_back);
-        void reset_rt_remaining() { runtime_remaining = quota; }
-        int add_cgroup_to_ec(msg_t *res, const uint32_t cgroup_id, const uint32_t ip, int fd);
-        int handle_bandwidth(const msg_t *req, msg_t *res);
-        int handle_mem_req(const msg_t *req, msg_t *res, int clifd);
-        int handle_slice_req(const msg_t *req, msg_t *res, int clifd);
 
-        uint64_t reclaim_memory(int client_fd);
+        //MEM
+        uint64_t get_memory_available() { return memory_available; }
+        uint64_t get_memory_slice() { return _mem.slice_size; }
 
-        uint64_t refill_runtime();
-
-        //agents
+        //AGENTS
         uint32_t get_num_agents() { return agents.size(); }
-        const std::vector<Agent*> &get_agents() const;
+        const std::vector<Agent*> &get_agents() const { return agents; };
 
-        void set_max_mem(int64_t _max_mem) { _mem.memory_limit = _max_mem; }
-        void set_period(int64_t _period)  { _cpu.period = _period; }   //will need to update maanger too
+        /**
+         *******************************************************
+         * SETTERS
+         *******************************************************
+         **/
+
+        //CPU
+        void set_ec_period(int64_t _period)  { _cpu.period = _period; }   //will need to update maanger too
         void set_quota(int64_t _quota) { _cpu.quota = _quota; }
         void set_slice_size(uint64_t _slice_size) { _cpu.slice_size = _slice_size; }
+        uint64_t refill_runtime();
+
+        //MEM
+        void ec_resize_memory_max(int64_t _max_mem) { _mem.memory_limit = _max_mem; }
+        void ec_decrement_memory_available(uint64_t _mem_to_reduce) { memory_available -= _mem_to_reduce; }
+
+
+
+        /**
+         *******************************************************
+         * HELPERS
+         *******************************************************
+         **/
+        //MISC
+        SubContainer* create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd);
+        int insert_sc(SubContainer &_sc);
+//        uint32_t handle(uint32_t cgroup_id, uint32_t server_ip);
+
+        //CPU
+
+        //MEM
+
 
     private:
         uint32_t ec_id;
@@ -124,7 +136,7 @@ namespace ec {
 
         //agents
         //TODO: this may need to be a map
-        //Passed by reference from Manager but owned by GCM
+        //Passed by reference from ECAPI but owned by GCM
         std::vector<Agent *> agents;
 
         //cpu

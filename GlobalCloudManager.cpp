@@ -31,7 +31,6 @@ uint32_t ec::GlobalCloudManager::create_server() {
 
     uint16_t server_port = server_ports[server_counts - 1]; //Give new EC, the next available port in the list
     auto *server = new Server(server_counts, gcm_ip, server_port, agents);
-//    auto *manager = new ec::Manager(server_counts, gcm_ip, server_port, agents);
     servers.insert({server_counts, server});
 
 //    eclock.lock();
@@ -39,15 +38,6 @@ uint32_t ec::GlobalCloudManager::create_server() {
 //    eclock.unlock();
     return server->get_server_id();
 }
-
-//ec::Manager *ec::GlobalCloudManager::get_manager(uint32_t manager_id) {
-//    auto itr = servers.find(manager_id);
-//    if(itr == servers.end()) {
-//        std::cout << "ERROR: No EC with manager_id: " << manager_id << ". Exiting...." << std::endl;
-//        std::exit(EXIT_FAILURE);
-//    }
-//    return itr->second;
-//}
 
 const ec::Server &ec::GlobalCloudManager::get_server(const uint32_t server_id) const {
     auto itr = servers.find(server_id);
@@ -108,11 +98,7 @@ void ec::GlobalCloudManager::run() {
             std::cout << "[child] pid: " << getpid() << ", [parent] pid: " <<  getppid() << std::endl;
             std::cout << "server_id: " << s.second->get_server_id() << std::endl;
 
-
-//            m.second->build_manager_handler();
-//            auto *ec = m.second->get_elastic_container();
-//            auto *s = ec->get_server();
-            s.second->initialize_server();
+            s.second->initialize();
             s.second->serve();
         }
         else {

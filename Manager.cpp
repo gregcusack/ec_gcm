@@ -1,76 +1,128 @@
 //
-// Created by greg on 9/12/19.
+// Created by Greg Cusack on 11/5/19.
 //
 
 #include "Manager.h"
 
-//ec::Manager::Manager(uint32_t _ec_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents)
-//    : manager_id(_ec_id), ip_address(_ip_address), port(_port), agents(_agents) {
-//
-////    server = nullptr;
-//    _ec = nullptr;
-//}
-
-ec::Manager::Manager(uint32_t _ec_id, std::vector<Agent *> &_agents)
-    : manager_id(_ec_id), agents(_agents) {
-
-    _ec = new ElasticContainer(manager_id, agents);
-}
-
-
-void ec::Manager::create_ec() {
-    _ec = new ElasticContainer(manager_id, agents);       //pass in gcm_ip for now
-}
-
-//void ec::Manager::create_server() {
-//    server = new Server(ip_address, port);
-//}
-
-//void ec::Manager::connect_server_and_ec() {
-//    _ec->set_server(server);
-//    server->set_ec(_ec);
-//}
-
-const ec::ElasticContainer& ec::Manager::get_elastic_container() const {
-    if(_ec == nullptr) {
-        std::cout << "[ERROR]: Must create _ec before accessing it" << std::endl;
+int ec::Manager::handle_bandwidth(const ec::msg_t *req, ec::msg_t *res) {
+    if(req == nullptr || res == nullptr) {
+        std::cout << "req or res == null in handle_bandwidth()" << std::endl;
         exit(EXIT_FAILURE);
     }
-    return *_ec;
+    uint64_t ret;
+    std::mutex cpulock;
+    if(req->req_type != _CPU_) { return __ALLOC_FAILED__; }
+    cpulock.lock();
+    uint64_t ec_rt_remaining = ec_get_cpu_runtime_remaining();
+    if(ec_rt_remaining > 0) {
+        //give back what it asks for
+        ret = req->rsrc_amnt > ec_rt_remaining ? ec_rt_remaining : req->rsrc_amnt;
+
+//        runtime_remaining -= ret; //TODO: put back in at some point??
+//        std::cout << "Server sending back " << ret << "ns in runtime" << std::endl;
+        //TODO: THIS SHOULDN'T BE HERE. BUT USING IT FOR TESTING
+        if(ec_rt_remaining <= 0) {
+            ec_refill_runtime();
+        }
+        cpulock.unlock();
+
+//        std::cout << req->slice_succeed << std::endl;
+//        test_file << req->request << "," << req->slice_succeed << "," << req->slice_fail << std::endl;
+//        std::cout << req->request << "," << req->slice_succeed << "," << req->slice_fail << std::endl;
+//        test_file << req->slice_succeed << std::endl;
+//        std::cout << "slice (s,f): (" << req->slice_succeed << ", " << req->slice_fail << ")" << std::endl;
+
+        //TEST
+//        ret += 3*slice; //see what happens
+        res->rsrc_amnt = ret;   //set bw we're returning
+
+////        res->rsrc_amnt = req->rsrc_amnt; //TODO: this just gives back what was asked for!
+//        flag++;
+        res->request = 0;       //set to give back
+        return __ALLOC_SUCCESS__;
+    }
+    else {
+        cpulock.unlock();
+        //TODO: Throttle here
+        res->rsrc_amnt = 0;
+        res->request = 0;
+        return __ALLOC_FAILED__;
+    }
+
 }
 
-//void ec::Manager::build_manager_handler() {
-//    create_ec();
-////    create_server();
-////    connect_server_and_ec();
-//}
+int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd) {
+    if(req == nullptr || res == nullptr) {
+        std::cout << "req or res == null in handle_mem_req()" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    uint64_t ret = 0;
+    std::mutex memlock;
+    if(req->req_type != _MEM_) { return __ALLOC_FAILED__; }
+    memlock.lock();
+    uint64_t memory_available = ec_get_memory_available();
+    if(memory_available > 0 || (memory_available = handle_reclaim_memory(clifd)) > 0) {          //TODO: integrate give back here
+        std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
+        ret = memory_available > ec_get_memory_slice() ? ec_get_memory_slice() : memory_available;
 
-ec::Manager::~Manager() {
-    delete _ec;
-//    delete server;
+        ec_decrement_memory_available(ret);
+//        memory_available -= ret;
+
+//        std::cout << "successfully decrease remaining mem to: " << memory_available << std::endl;
+
+        res->rsrc_amnt = req->rsrc_amnt + ret;   //give back "ret" pages
+        memlock.unlock();
+        res->request = 0;       //give back
+        return __ALLOC_SUCCESS__;
+    }
+    else {
+        memlock.unlock();
+        std::cout << "no memory available!" << std::endl;
+        res->rsrc_amnt = 0;
+        return __ALLOC_FAILED__;
+    }
 }
 
-int ec::Manager::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const uint32_t ip, int fd) {
-    return _ec->add_cgroup_to_ec(res, cgroup_id, ip, fd);
+uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
+    int j = 0;
+    char buffer[__BUFF_SIZE__] = {0};
+    uint64_t reclaimed = 0;
+    int ret;
+
+    std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
+    for (const auto &container : get_subcontainers()) {
+        if (container.second->get_fd() == client_fd) {
+            continue;
+        }
+        auto ip = container.second->get_id()->server_ip;
+        std::cout << "ip of server container is on. also ip of agent" << std::endl;
+
+        for (const auto &ag : get_agents()) {
+            std::cout << "(ag->ip, container ip): (" << ag->get_ip() << ", " << ip << ")" << std::endl;
+            if (ag->get_ip() == ip) {
+                auto *reclaim_req = new reclaim_msg;
+                reclaim_req->cgroup_id = container.second->get_id()->cgroup_id;
+                reclaim_req->is_mem = 1;
+                //TODO: anyway to get the server to do this?
+                if (write(ag->get_sockfd(), (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
+                    std::cout << "[ERROR]: GCM EC Manager id: " << get_manager_id() << ". Failed writing to agent socket"
+                              << std::endl;
+                }
+                ret = read(ag->get_sockfd(), buffer, sizeof(buffer));
+                if (ret <= 0) {
+                    std::cout << "[ERROR]: GCM. Can't read from socke to reclaim memory" << std::endl;
+                }
+                if (strncmp(buffer, "NOMEM", sizeof("NOMEM")) != 0) {
+                    reclaimed += *((uint64_t *) buffer);
+                }
+                std::cout << "[INFO] GCM: Current amount of reclaimed memory: " << reclaimed << std::endl;
+
+            }
+
+        }
+
+    }
 }
 
 
 
-
-//_ec::Manager::Manager(uint32_t _ec_id, _ec::ip4_addr _ip_address, std::vector<GlobalCloudManager::agent *> &_agents)
-//    : manager_id(_ec_id), ip_address(_ip_address), agents(&_agents) {
-//
-//    server = nullptr;
-//    _ec = nullptr;
-//    _mem = memory();
-//    _cpu = cpu();
-//
-//}
-
-
-//void _ec::Manager::set_period(int64_t _period) {
-//    _cpu.period = _period;
-//    if(_ec != nullptr) {
-//        _ec
-//    }
-//}

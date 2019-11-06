@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <sys/types.h>
 //#include <wait.h>
-#include "Manager.h"
+#include "ECAPI.h"
 #include "Server.h"
 #include "Agent.h"
 #include "ElasticContainer.h"
@@ -21,7 +21,6 @@
 namespace ec {
     class GlobalCloudManager {
         using agents_ip_list = std::vector<std::string>;
-//        using server_map = std::unordered_map<uint32_t, ec::Manager*>;
         using server_map = std::unordered_map<uint16_t, ec::Server*>;
     public:
 //        GlobalCloudManager();
@@ -36,7 +35,6 @@ namespace ec {
 
         const server_map& get_servers() {return servers;}
         const Server& get_server(uint32_t server_id) const;
-//        Manager* get_manager(uint32_t manager_id);
 
 
     private:

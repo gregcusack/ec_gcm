@@ -1,55 +1,34 @@
 //
-// Created by greg on 9/12/19.
+// Created by Greg Cusack on 11/5/19.
 //
 
 #ifndef EC_GCM_MANAGER_H
 #define EC_GCM_MANAGER_H
-#include "ElasticContainer.h"
-//#include "Server.h"
-//#include "SubContainer.h"
-#include "types/msg.h"
+
+#include "ECAPI.h"
 #include "Agent.h"
-#include "om.h"
+#include <cstdint>
 
 namespace ec {
-    class Manager {
+    class Manager : public ECAPI {
     public:
-//        Manager(uint32_t _ec_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
-        Manager(uint32_t _ec_id, std::vector<Agent *> &_agents);
-        ~Manager();
-        //creates _ec and server and connects them
-//        void build_manager_handler();
-        void create_ec();
+        Manager(uint32_t _ec_id, std::vector<Agent *> &_agents) : ECAPI(_ec_id, _agents){};
+        int handle_bandwidth(const msg_t *req, msg_t *res) override;
 
+        int handle_mem_req(const msg_t *req, msg_t *res, int clifd) override;
+        uint64_t handle_reclaim_memory(int client_fd) override;
 
-        const ElasticContainer& get_elastic_container() const;
+        struct reclaim_msg {
+            uint16_t cgroup_id;
+            uint32_t is_mem;
+            //...maybe it needs more things
+        };
 
-        int handle_add_cgroup_to_ec(msg_t *res, uint32_t cgroup_id, uint32_t ip, int fd);
-
-
-        uint32_t get_manager_id() { return manager_id; };
-
-//        void set_server(Server *serv) { server = serv; }
-//        Server *get_server() { return server; }
-
-
-
-
-    private:
-        uint32_t manager_id;
-//        ip4_addr ip_address;
-//        uint16_t port;
-        ElasticContainer *_ec;
-//        Server *server;
-
-        //passed by reference from GlobalCloudManager
-	    std::vector<Agent *> agents;
 
 
 
     };
 }
-
 
 
 #endif //EC_GCM_MANAGER_H

@@ -9,11 +9,10 @@
 #include <cstdint>
 #include <thread>
 #include "types/msg.h"
-#include "types/k_msg.h"
 #include "Agent.h"
+#include "ECAPI.h"
 #include "Manager.h"
 //#include "ElasticContainer.h"
-#include "Manager.h"
 #include "om.h"
 
 
@@ -23,16 +22,13 @@
 //#define __ALLOC_FAILED__ 0
 #define __QUOTA__ 50000
 
-
-
-
 namespace ec {
 //    struct ElasticContainer;
     class Server {
     public:
         Server(uint32_t server_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
         ~Server() = default;
-        void initialize_server();
+        void initialize();
 
 //        void set_ec(ElasticContainer *ec) { ec = ec; }
 
@@ -45,8 +41,6 @@ namespace ec {
             int clifd                       = 0;
             struct sockaddr_in *cliaddr     = nullptr;
         };
-
-//        ElasticContainer *manager() { return ec; }
 
         void serve();
 
@@ -61,8 +55,6 @@ namespace ec {
 
         int serve_mem_req(const msg_t *req, msg_t *res, serv_thread_args* args);
 
-        int serve_acquire_slice(const msg_t *req, msg_t *res, serv_thread_args* args);
-
 
         ip4_addr get_ip() { return ip_address; }
         uint16_t get_port() { return port; }
@@ -74,7 +66,7 @@ namespace ec {
         ip4_addr ip_address;
         uint16_t port;
         std::vector<Agent *> agents;
-        Manager *manager;
+        ECAPI *manager;
         struct server_t server_socket;
 
         bool server_initialized;
