@@ -11,11 +11,12 @@ ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<Agent *> &_a
     : ec_id(_ec_id), agents(_agents) {
 
     //TODO: change num_agents to however many servers we have. IDK how to set it rn.
-    std::cout << "runtime_remaining on init: " << runtime_remaining << std::endl;
-    std::cout << "memory_available on init: " << memory_available << std::endl;
 
     _mem = memory();
     _cpu = cpu();
+
+    std::cout << "runtime_remaining on init: " << _cpu.runtime_remaining << std::endl;
+    std::cout << "memory_available on init: " << _mem.memory_available << std::endl;
 
     test_file.open("test_file.txt", std::ios_base::app);
 
@@ -79,8 +80,8 @@ int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
 
 uint64_t ec::ElasticContainer::refill_runtime() {
     std::cout << "refilling runtime_remaining" << std::endl;
-    runtime_remaining = quota;
-    return runtime_remaining;
+    _cpu.runtime_remaining = _cpu.quota;
+    return _cpu.runtime_remaining;
 }
 
 ec::ElasticContainer::~ElasticContainer() {

@@ -32,29 +32,6 @@ int main(){
 
     delete gcm;
 
-/*
-//    uint32_t manager_id = gcm->create_server();
-
-//    std::cout << "manager_id: " << manager_id << std::endl;
-
-//    _ec::ECAPI *_ec = gcm- >get_manager(manager_id);
-
-//    std::cout << "manager_id from _ec: " << _ec->get_ec_id() << std::endl;
-//
-//    _ec->build_manager_handler();
-//
-//    _ec::ElasticContainer *_ec = _ec->get_elastic_container();
-//    _ec::Server *s = _ec->get_server();
-//
-//    std::cout <<  "(manager_id: " << _ec->get_manager_id() << ", ip: " << s->get_ip() << ", port: " << s->get_port() << ")" <<std::endl;
-//
-//    s->initialize();
-//    s->serve();
-
-//    delete agents;
- */
-
-
 
     return 0;
 }

@@ -54,6 +54,7 @@ namespace ec {
             //init to 30000 pages (that's what maziyar has it as)
             uint64_t memory_limit           =   30000;                   //-1 no limit, (in mbytes or pages tbd)
             uint64_t slice_size             =   5000; //pages
+            uint64_t memory_available       =   memory_limit;
             friend std::ostream& operator<<(std::ostream& os, const memory& rhs) {
                 os << "memory_limit: " << rhs.memory_limit;
                 return os;
@@ -67,6 +68,7 @@ namespace ec {
             uint64_t period             =   100000000;      //100 ms
             int64_t quota               =   period;             //-1: no limit, in ms
             uint64_t slice_size         =   5000000;       //5 ms
+            uint64_t runtime_remaining  =   quota;
             friend std::ostream& operator<<(std::ostream& os, const cpu& rhs) {
                 os  << "period: " << rhs.period << ", "
                     << "quota: " << rhs.quota << ", "
@@ -87,10 +89,10 @@ namespace ec {
         SubContainer* get_container(SubContainer::ContainerId &container_id);
 
         //CPU
-        uint64_t get_rt_remaining() { return runtime_remaining; }
+        uint64_t get_rt_remaining() { return _cpu.runtime_remaining; }
 
         //MEM
-        uint64_t get_memory_available() { return memory_available; }
+        uint64_t get_memory_available() { return _mem.memory_available; }
         uint64_t get_memory_slice() { return _mem.slice_size; }
 
         //AGENTS
@@ -111,7 +113,7 @@ namespace ec {
 
         //MEM
         void ec_resize_memory_max(int64_t _max_mem) { _mem.memory_limit = _max_mem; }
-        void ec_decrement_memory_available(uint64_t _mem_to_reduce) { memory_available -= _mem_to_reduce; }
+        void ec_decrement_memory_available(uint64_t _mem_to_reduce) { _mem.memory_available -= _mem_to_reduce; }
 
 
 
@@ -140,12 +142,9 @@ namespace ec {
         std::vector<Agent *> agents;
 
         //cpu
-        uint64_t runtime_remaining;
-        int64_t quota;
+//        uint64_t runtime_remaining;
         //TODO: need file/struct of macros - like slice, failed, etc
-        uint64_t slice;
         //mem
-        uint64_t memory_available;
         uint64_t mem_slice;
         std::ofstream test_file;
 
