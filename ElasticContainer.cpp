@@ -41,6 +41,7 @@ const ec::SubContainer &ec::ElasticContainer::get_subcontainer(ec::SubContainer:
 int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
     if (subcontainers.find(*_sc.get_id()) != subcontainers.end()) {
         std::cout << "This SubContainer already exists! Can't allocate identical one!" << std::endl;
+        //TODO: should delete sc
         return __ALLOC_FAILED__;
     }
     subcontainers.insert({*(_sc.get_id()), &_sc});
