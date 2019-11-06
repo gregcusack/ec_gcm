@@ -14,7 +14,7 @@
 
 namespace ec {
     class ECAPI {
-    using container_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
+    using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
     public:
 //        ECAPI(uint32_t _ec_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
         ECAPI(uint32_t _ec_id, std::vector<Agent *> &_agents);
@@ -38,8 +38,9 @@ namespace ec {
          **/
         //MISC
         uint32_t get_ec_id() { return _ec->get_ec_id(); }
-        const container_map& get_subContainers() {return _ec->get_subcontainers(); }
-        SubContainer* get_container(SubContainer::ContainerId &container_id) {return _ec->get_container(container_id);}
+        [[nodiscard]] const subcontainer_map  &get_subcontainers() const {return _ec->get_subcontainers(); }
+        const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id) {return _ec->get_subcontainer(
+                    container_id);}
 
         //CPU
         //TODO: this has to be passed a specific sc id
@@ -53,8 +54,7 @@ namespace ec {
 
         //AGENTS
         uint32_t get_agents_num_agents() { return _ec->get_num_agents(); }
-        const std::vector<Agent*> &get_agents() const {return _ec->get_agents(); }
-        const container_map  &get_subcontainers() const {return _ec->get_subcontainers(); }
+        [[nodiscard]] const std::vector<Agent*> &get_agents() const {return _ec->get_agents(); }
 
         /**
          *******************************************************
@@ -97,10 +97,7 @@ namespace ec {
 
     private:
         uint32_t manager_id;
-//        ip4_addr ip_address;
-//        uint16_t port;
         ElasticContainer *_ec;
-//        Server *server;
 
         //passed by reference from GlobalCloudManager
 	    std::vector<Agent *> agents;

@@ -28,7 +28,7 @@ int ec::Manager::handle_bandwidth(const ec::msg_t *req, ec::msg_t *res) {
 
 //        std::cout << req->slice_succeed << std::endl;
 //        test_file << req->request << "," << req->slice_succeed << "," << req->slice_fail << std::endl;
-//        std::cout << req->request << "," << req->slice_succeed << "," << req->slice_fail << std::endl;
+        std::cout << req->request << "," << req->slice_succeed << "," << req->slice_fail << std::endl;
 //        test_file << req->slice_succeed << std::endl;
 //        std::cout << "slice (s,f): (" << req->slice_succeed << ", " << req->slice_fail << ")" << std::endl;
 
@@ -122,6 +122,8 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
         }
 
     }
+    std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << reclaimed << std::endl;
+    return reclaimed;
 }
 
 

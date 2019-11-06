@@ -42,7 +42,7 @@ namespace ec {
      */
 //    struct Server;
     class ElasticContainer {
-    using container_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
+    using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
     public:
         explicit ElasticContainer(uint32_t _ec_id);
         ElasticContainer(uint32_t _ec_id, std::vector<Agent*> &_agents);
@@ -85,8 +85,8 @@ namespace ec {
          **/
         //MISC
         uint32_t get_ec_id() { return ec_id; }
-        const container_map& get_subcontainers() {return containers;}
-        SubContainer* get_container(SubContainer::ContainerId &container_id);
+        const subcontainer_map &get_subcontainers() {return subcontainers;}
+        const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id);
 
         //CPU
         uint64_t get_rt_remaining() { return _cpu.runtime_remaining; }
@@ -115,8 +115,6 @@ namespace ec {
         void ec_resize_memory_max(int64_t _max_mem) { _mem.memory_limit = _max_mem; }
         void ec_decrement_memory_available(uint64_t _mem_to_reduce) { _mem.memory_available -= _mem_to_reduce; }
 
-
-
         /**
          *******************************************************
          * HELPERS
@@ -134,7 +132,7 @@ namespace ec {
 
     private:
         uint32_t ec_id;
-        container_map containers;
+        subcontainer_map subcontainers;
 
         //agents
         //TODO: this may need to be a map
@@ -145,7 +143,6 @@ namespace ec {
 //        uint64_t runtime_remaining;
         //TODO: need file/struct of macros - like slice, failed, etc
         //mem
-        uint64_t mem_slice;
         std::ofstream test_file;
 
         //test

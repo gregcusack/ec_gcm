@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include <sys/types.h>
-//#include <wait.h>
+#include <wait.h>
 #include "ECAPI.h"
 #include "Server.h"
 #include "Agent.h"
