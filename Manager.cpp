@@ -96,7 +96,7 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
         }
         auto ip = container.second->get_id()->server_ip;
         std::cout << "ip of server container is on. also ip of agent_clients" << std::endl;
-
+        std::cout << "ac.size(): " << get_agent_clients().size() << std::endl;
         for (const auto &agentClient : get_agent_clients()) {
             std::cout << "(agentClient->ip, container ip): (" << agentClient->get_agent_ip() << ", " << ip << ")" << std::endl;
             if (agentClient->get_agent_ip() == ip) {

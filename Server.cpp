@@ -6,17 +6,14 @@
 
 ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents)
     : server_id(_server_id), ip_address(_ip_address), port(_port), agents(_agents), server_initialized(false),
-    agent_clients({}) {
+    agent_clients({}), manager(nullptr) {
 
-    manager = new Manager(_server_id, agent_clients);
+//    manager = new Manager(_server_id, agent_clients);
 }
 
 
 void ec::Server::initialize() {
-    if(manager == nullptr) {
-        std::cout << "ERROR: Server initialized without manager. " << std::endl;
-        exit(EXIT_FAILURE);
-    }
+
     int32_t addrlen, opt = 1;
     if((server_socket.sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         std::cout << "[ERROR]: Server socket creation failed in server: " << server_id << std::endl;
@@ -50,6 +47,11 @@ void ec::Server::initialize() {
         exit(EXIT_FAILURE);
     }
 
+    manager = new Manager(server_id, agent_clients);
+    if(manager == nullptr) {
+        std::cout << "ERROR: Server initialized without manager. " << std::endl;
+        exit(EXIT_FAILURE);
+    }
     server_initialized = true; //server setup can run now
 
 }
