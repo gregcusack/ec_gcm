@@ -20,7 +20,7 @@
 #include "types/msg.h"
 #include "types/k_msg.h"
 #include "SubContainer.h"
-#include "Agent.h"
+#include "Agents/AgentClient.h"
 #include "om.h"
 //#include "Server.h"
 
@@ -45,7 +45,7 @@ namespace ec {
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
     public:
         explicit ElasticContainer(uint32_t _ec_id);
-        ElasticContainer(uint32_t _ec_id, std::vector<Agent*> &_agents);
+        ElasticContainer(uint32_t _ec_id, std::vector<AgentClient*> &_agent_clients);
         ~ElasticContainer();
 
         struct memory {
@@ -96,8 +96,8 @@ namespace ec {
         uint64_t get_memory_slice() { return _mem.slice_size; }
 
         //AGENTS
-        uint32_t get_num_agents() { return agents.size(); }
-        const std::vector<Agent*> &get_agents() const { return agents; };
+        uint32_t get_num_agent_clients() { return agent_clients.size(); }
+        const std::vector<AgentClient *> &get_agent_clients() const { return agent_clients; };
 
         /**
          *******************************************************
@@ -123,7 +123,6 @@ namespace ec {
         //MISC
         SubContainer* create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd);
         int insert_sc(SubContainer &_sc);
-//        uint32_t handle(uint32_t cgroup_id, uint32_t server_ip);
 
         //CPU
 
@@ -137,7 +136,7 @@ namespace ec {
         //agents
         //TODO: this may need to be a map
         //Passed by reference from ECAPI but owned by GCM
-        std::vector<Agent *> agents;
+        std::vector<AgentClient *> agent_clients;
 
         //cpu
 //        uint64_t runtime_remaining;
@@ -158,11 +157,11 @@ namespace ec {
 
 namespace std {
     template<>
-    struct hash<ec::Agent> {
-        std::size_t operator()(ec::Agent const& p) const {
-            auto h1 = std::hash<om::net::ip4_addr>()(p.get_ip());
-            auto h2 = std::hash<uint16_t>()(p.get_port());
-            auto h3 = std::hash<int>()(p.get_sockfd());
+    struct hash<ec::AgentClient> {
+        std::size_t operator()(ec::AgentClient const& p) const {
+            auto h1 = std::hash<om::net::ip4_addr>()(p.get_agent_ip());
+            auto h2 = std::hash<uint16_t>()(p.get_agent_port());
+            auto h3 = std::hash<int>()(p.get_socket());
             return h1 xor h2 xor h3;
         }
     };

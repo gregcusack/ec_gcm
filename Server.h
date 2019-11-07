@@ -9,9 +9,10 @@
 #include <cstdint>
 #include <thread>
 #include "types/msg.h"
-#include "Agent.h"
+#include "Agents/Agent.h"
 #include "ECAPI.h"
 #include "Manager.h"
+#include "Agents/AgentClient.h"
 //#include "ElasticContainer.h"
 #include "om.h"
 
@@ -61,11 +62,14 @@ namespace ec {
         uint32_t get_server_id() { return server_id; }
         std::mutex mtx;
 
+        int init_agent_connections();
+
     private:
         uint32_t server_id;
         ip4_addr ip_address;
         uint16_t port;
         std::vector<Agent *> agents;
+        std::vector<AgentClient *> agent_clients;
         ECAPI *manager;
         struct server_t server_socket;
 

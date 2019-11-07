@@ -6,13 +6,13 @@
 #define EC_GCM_MANAGER_H
 
 #include "ECAPI.h"
-#include "Agent.h"
+#include "Agents/AgentClient.h"
 #include <cstdint>
 
 namespace ec {
     class Manager : public ECAPI {
     public:
-        Manager(uint32_t _ec_id, std::vector<Agent *> &_agents) : ECAPI(_ec_id, _agents){};
+        Manager(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients) : ECAPI(_ec_id, _agent_clients){};
         int handle_bandwidth(const msg_t *req, msg_t *res) override;
 
         int handle_mem_req(const msg_t *req, msg_t *res, int clifd) override;

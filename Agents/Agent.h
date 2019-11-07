@@ -5,7 +5,7 @@
 #ifndef EC_GCM_AGENT_H
 #define EC_GCM_AGENT_H
 
-#include "om.h"
+#include "../om.h"
 #include <iostream>
 
 namespace ec {

@@ -5,9 +5,10 @@
 #include "Server.h"
 
 ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents)
-    : server_id(_server_id), ip_address(_ip_address), port(_port), agents(_agents), server_initialized(false) {
+    : server_id(_server_id), ip_address(_ip_address), port(_port), agents(_agents), server_initialized(false),
+    agent_clients({}) {
 
-    manager = new Manager(_server_id, agents);
+    manager = new Manager(_server_id, agent_clients);
 }
 
 
@@ -42,6 +43,12 @@ void ec::Server::initialize() {
         exit(EXIT_FAILURE);
     }
     std::cout << "[dgb]: EC Server id: " << server_id << ". socket successfully created!" << std::endl;
+
+    //Create AgentClients
+    if(!init_agent_connections()) {
+        std::cout << "[ERROR Server] not all agents connected to server_id: " << server_id << "! Exiting..." << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
     server_initialized = true; //server setup can run now
 
@@ -222,5 +229,35 @@ int ec::Server::serve_mem_req(const msg_t *req, msg_t *res, serv_thread_args* ar
     return __ALLOC_SUCCESS__;
 }
 
+int ec::Server::init_agent_connections() {
+    int sockfd, i;
+    struct sockaddr_in servaddr;
+    int num_connections = 0;
 
+//    for(i = 0; i < num_agents; i++) {
+    for(const auto &ag : agents) {
+        if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+            std::cout << "[ERROR]: GCM Socket creation failed. Agent is not up!" << std::endl;
+            exit(EXIT_FAILURE);
+        }
 
+        memset(&servaddr, 0, sizeof(servaddr));
+
+        servaddr.sin_family = AF_INET;
+        servaddr.sin_port = htons(ag->get_port());
+        servaddr.sin_addr.s_addr = inet_addr((ag->get_ip()).to_string().c_str());
+
+        if(connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
+            std::cout << "[ERROR] GCM: Connection to agent_clients failed. \n Agent on ip: " << ag->get_ip() << "is not connected" << std::endl;
+            std::cout << "Are the agents up?" << std::endl;
+        }
+        else {
+            num_connections++;
+        }
+
+        agent_clients.push_back(new AgentClient(ag, sockfd));
+//        ag->set_sockfd(sockfd);
+        std::cout << "agent_clients sockfd: " << sockfd << ", " << agent_clients[agent_clients.size() - 1]->get_socket() << std::endl;
+    }
+    return num_connections == agent_clients.size();
+}

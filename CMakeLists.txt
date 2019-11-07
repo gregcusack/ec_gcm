@@ -15,10 +15,11 @@ add_executable(ec_gcm main.cpp
         types/msg.h                     types/msg.cpp
         types/types.h                   types/k_msg.h
         Server.h                        Server.cpp
-        Agent.h                         Agent.cpp
+        Agents/Agent.h                  Agents/Agent.cpp
         stats/cpu.h                     stats/cpu.cpp
         stats/mem.h                     stats/mem.cpp
-        Manager.h Manager.cpp
+        Manager.h                       Manager.cpp
+        Agents/AgentClient.h            Agents/AgentClient.cpp
         )
 
 add_executable(tester tests/run_test.cpp

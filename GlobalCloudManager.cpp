@@ -14,7 +14,7 @@ ec::GlobalCloudManager::GlobalCloudManager(std::string ip_addr, uint16_t port, a
         agents.emplace_back(new Agent(i));
     }
     for(auto &i : agents) {
-        std::cout << "agent: " << *i << std::endl;
+        std::cout << "agent_clients: " << *i << std::endl;
     }
 
     if(agents.size() != _agent_ips.size()) {
@@ -58,38 +58,6 @@ ec::GlobalCloudManager::~GlobalCloudManager() {
         delete s.second;
     }
     servers.clear();
-}
-
-int ec::GlobalCloudManager::init_agent_connections() {
-    int sockfd, i;
-    struct sockaddr_in servaddr;
-    int num_connections = 0;
-
-//    for(i = 0; i < num_agents; i++) {
-    for(const auto &ag : agents) {
-        if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-            std::cout << "[ERROR]: GCM Socket creation failed. Agent is not up!" << std::endl;
-            exit(EXIT_FAILURE);
-        }
-
-        memset(&servaddr, 0, sizeof(servaddr));
-
-        servaddr.sin_family = AF_INET;
-        servaddr.sin_port = htons(ag->get_port());
-        servaddr.sin_addr.s_addr = inet_addr((ag->get_ip()).to_string().c_str());
-
-        if(connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
-            std::cout << "[ERROR] GCM: Connection to agent failed. \n Agent on ip: " << ag->get_ip() << "is not connected" << std::endl;
-            std::cout << "Are the agents up?" << std::endl;
-        }
-        else {
-            num_connections++;
-        }
-
-       ag->set_sockfd(sockfd);
-        std::cout << "agent sockfd: " << sockfd << ", " << ag->get_sockfd() << std::endl;
-    }
-    return num_connections == agents.size();
 }
 
 void ec::GlobalCloudManager::run() {

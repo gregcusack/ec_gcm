@@ -18,10 +18,6 @@ int main(){
     std::vector<uint16_t>       server_ports{4444};
 
     auto *gcm = new ec::GlobalCloudManager("127.0.0.1", GCM_PORT, agent_ips, server_ports);
-    if(!gcm->init_agent_connections()) {
-        std::cout << "[ERROR GCM] not all agents connected! Exiting..." << std::endl;
-        exit(EXIT_FAILURE);
-    }
 
     for(const auto &i : server_ports) {
         gcm->create_server();

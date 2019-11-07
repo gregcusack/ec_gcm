@@ -7,8 +7,8 @@
 
 ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id) {}
 
-ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<Agent *> &_agents)
-    : ec_id(_ec_id), agents(_agents) {
+ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients)
+    : ec_id(_ec_id), agent_clients(_agent_clients) {
 
     //TODO: change num_agents to however many servers we have. IDK how to set it rn.
 

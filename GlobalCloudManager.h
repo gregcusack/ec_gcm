@@ -9,10 +9,10 @@
 #include <cstdint>
 #include <unordered_map>
 #include <sys/types.h>
-#include <wait.h>
+//#include <wait.h>
 #include "ECAPI.h"
 #include "Server.h"
-#include "Agent.h"
+#include "Agents/Agent.h"
 #include "ElasticContainer.h"
 #include "om.h"
 
@@ -31,11 +31,8 @@ namespace ec {
 
         uint32_t create_server();
 
-        int init_agent_connections();
-
         const server_map& get_servers() {return servers;}
         const Server& get_server(uint32_t server_id) const;
-
 
     private:
         ip4_addr                gcm_ip;

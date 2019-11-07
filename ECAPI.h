@@ -6,10 +6,9 @@
 #define EC_GCM_ECAPI_H
 #include "ElasticContainer.h"
 #include "types/msg.h"
-//#include "Server.h"
-//#include "SubContainer.h"
 #include "types/msg.h"
-#include "Agent.h"
+#include "Agents/Agent.h"
+#include "Agents/AgentClient.h"
 #include "om.h"
 
 namespace ec {
@@ -17,16 +16,13 @@ namespace ec {
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
     public:
 //        ECAPI(uint32_t _ec_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
-        ECAPI(uint32_t _ec_id, std::vector<Agent *> &_agents);
+        ECAPI(uint32_t _ec_id, std::vector<AgentClient *> &_agents);
         ~ECAPI();
         //creates _ec and server and connects them
 //        void build_manager_handler();
         void create_ec();
 
-
         [[nodiscard]] const ElasticContainer& get_elastic_container() const;
-
-
 
         uint32_t get_manager_id() { return manager_id; };
 
@@ -53,8 +49,8 @@ namespace ec {
 
 
         //AGENTS
-        uint32_t get_agents_num_agents() { return _ec->get_num_agents(); }
-        [[nodiscard]] const std::vector<Agent*> &get_agents() const {return _ec->get_agents(); }
+        uint32_t get_num_agent_clients() { return _ec->get_num_agent_clients(); }
+        [[nodiscard]] const std::vector<AgentClient*> &get_agent_clients() const {return _ec->get_agent_clients(); }
 
         /**
          *******************************************************
@@ -91,16 +87,12 @@ namespace ec {
         virtual int handle_mem_req(const msg_t *req, msg_t *res, int clifd) = 0;
         virtual uint64_t handle_reclaim_memory(int client_fd) = 0;
 
-
-
-
-
     private:
         uint32_t manager_id;
         ElasticContainer *_ec;
 
         //passed by reference from GlobalCloudManager
-	    std::vector<Agent *> agents;
+	    std::vector<AgentClient *> agent_clients;
 
 
 

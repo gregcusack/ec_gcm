@@ -4,14 +4,14 @@
 
 #include "ECAPI.h"
 
-ec::ECAPI::ECAPI(uint32_t _ec_id, std::vector<Agent *> &_agents)
-    : manager_id(_ec_id), agents(_agents) {
-    _ec = new ElasticContainer(manager_id, agents);
+ec::ECAPI::ECAPI(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients)
+    : manager_id(_ec_id), agent_clients(_agent_clients) {
+    _ec = new ElasticContainer(manager_id, agent_clients);
 }
 
 
 void ec::ECAPI::create_ec() {
-    _ec = new ElasticContainer(manager_id, agents);       //pass in gcm_ip for now
+    _ec = new ElasticContainer(manager_id, agent_clients);       //pass in gcm_ip for now
 }
 
 const ec::ElasticContainer& ec::ECAPI::get_elastic_container() const {

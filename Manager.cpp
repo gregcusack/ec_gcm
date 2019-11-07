@@ -95,20 +95,20 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
             continue;
         }
         auto ip = container.second->get_id()->server_ip;
-        std::cout << "ip of server container is on. also ip of agent" << std::endl;
+        std::cout << "ip of server container is on. also ip of agent_clients" << std::endl;
 
-        for (const auto &ag : get_agents()) {
-            std::cout << "(ag->ip, container ip): (" << ag->get_ip() << ", " << ip << ")" << std::endl;
-            if (ag->get_ip() == ip) {
+        for (const auto &agentClient : get_agent_clients()) {
+            std::cout << "(agentClient->ip, container ip): (" << agentClient->get_agent_ip() << ", " << ip << ")" << std::endl;
+            if (agentClient->get_agent_ip() == ip) {
                 auto *reclaim_req = new reclaim_msg;
                 reclaim_req->cgroup_id = container.second->get_id()->cgroup_id;
                 reclaim_req->is_mem = 1;
                 //TODO: anyway to get the server to do this?
-                if (write(ag->get_sockfd(), (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
-                    std::cout << "[ERROR]: GCM EC Manager id: " << get_manager_id() << ". Failed writing to agent socket"
+                if (write(agentClient->get_socket(), (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
+                    std::cout << "[ERROR]: GCM EC Manager id: " << get_manager_id() << ". Failed writing to agent_clients socket"
                               << std::endl;
                 }
-                ret = read(ag->get_sockfd(), buffer, sizeof(buffer));
+                ret = read(agentClient->get_socket(), buffer, sizeof(buffer));
                 if (ret <= 0) {
                     std::cout << "[ERROR]: GCM. Can't read from socke to reclaim memory" << std::endl;
                 }
