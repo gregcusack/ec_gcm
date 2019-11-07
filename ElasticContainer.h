@@ -114,7 +114,7 @@ namespace ec {
         //MEM
         void ec_resize_memory_max(int64_t _max_mem) { _mem.memory_limit = _max_mem; }
         void ec_decrement_memory_available(uint64_t _mem_to_reduce) { _mem.memory_available -= _mem_to_reduce; }
-        void ec_set_memory_available(uint64_t mem) { _mem.memory_available = mem; }
+        uint64_t ec_set_memory_available(uint64_t mem) { _mem.memory_available = mem; return _mem.memory_available; }
 
         /**
          *******************************************************

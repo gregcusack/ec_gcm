@@ -61,7 +61,7 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
     if(req->req_type != _MEM_) { return __ALLOC_FAILED__; }
     memlock.lock();
     uint64_t memory_available = ec_get_memory_available();
-    if(memory_available > 0 || (memory_available = handle_reclaim_memory(clifd)) > 0) {          //TODO: integrate give back here
+    if(memory_available > 0 || (memory_available = ec_set_memory_available(handle_reclaim_memory(clifd))) > 0) {          //TODO: integrate give back here
         std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
         ret = memory_available > ec_get_memory_slice() ? ec_get_memory_slice() : memory_available;
 
@@ -123,7 +123,6 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
 
     }
     std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << reclaimed << std::endl;
-    ec_set_memory_available(reclaimed);
     return reclaimed;
 }
 
