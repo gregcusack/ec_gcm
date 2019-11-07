@@ -123,6 +123,7 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
 
     }
     std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << reclaimed << std::endl;
+    ec_set_memory_available(reclaimed);
     return reclaimed;
 }
 
