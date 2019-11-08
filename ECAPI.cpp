@@ -33,9 +33,9 @@ int ec::ECAPI::handle_req(const char *buff_in, char *buff_out, uint32_t host_ip,
     }
 
     auto *req = reinterpret_cast<const msg_t*>(buff_in);
+    std::cout << "req: " << *req << std::endl;
     auto *res = reinterpret_cast<msg_t*>(buff_out);
-//    req->set_ip(host_ip); //TODO: this needs to be removed eventually
-//    auto *res = new msg_t(*req);
+    *res = *req;
 
     uint64_t ret = __FAILED__;
 
@@ -64,7 +64,6 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
     int ret = _ec->insert_sc(*sc);
     std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
     res->request = 0; //giveback (or send back)
-    res->set_ip(ip);
     return ret;
 }
 

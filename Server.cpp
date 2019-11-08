@@ -37,7 +37,7 @@ void ec::Server::initialize() {
     }
     std::cout << "[dgb]: EC Server id: " << server_id << ". socket successfully created!" << std::endl;
 
-    //Create AgentClients
+//    Create AgentClients
     if(!init_agent_connections()) {
         std::cout << "[ERROR Server] not all agents connected to server_id: " << server_id << "! Exiting..." << std::endl;
         exit(EXIT_FAILURE);
@@ -103,6 +103,7 @@ void ec::Server::handle_client_reqs(void *args) {
     ssize_t num_bytes;
     uint64_t ret;
     char buff_in[__BUFFSIZE__], buff_out[__BUFF_SIZE__];
+//    char *buff_out;
     auto *arguments = reinterpret_cast<serv_thread_args*>(args);
     int client_fd = arguments->clifd;
 
@@ -111,29 +112,14 @@ void ec::Server::handle_client_reqs(void *args) {
     num_of_cli++;
     bzero(buff_in, __BUFFSIZE__);
     while((num_bytes = read(client_fd, buff_in, __BUFFSIZE__)) > 0 ) {
-        ret = 0;
-//        std::cout << "[dbg] Number of bytes read: " << num_bytes << std::endl;
-
-        //moved up from handle_req
-//        auto *req = reinterpret_cast<msg_t*>(buff_in);
-//        req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
-//        auto *res = new msg_t(*req);
-
         ret = manager->handle_req(buff_in, buff_out, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
-//        ret = handle_req(req, res, arguments);
         if(ret == __ALLOC_SUCCESS__) {  //TODO: fix this.
-            //for testing
-            //res->rsrc_amnt -= 99999;
-//            std::cout << "sending back: " << *res << std::endl;
-//            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
             if(write(client_fd, (const char*) buff_out, sizeof(buff_out)) < 0) {
                     std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
                     break;
             }
         }
         else {
-//            std::cout << "[FAILED] Error code: [" << ret << "]: EC Server id: " << _ec->get_manager_id() << ". Server thread: " << mem_reqs++ << std::endl;
-//            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
             if(write(client_fd, (const char*) buff_out, sizeof(buff_out)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket. Part 2" << std::endl;
                 break;
@@ -141,96 +127,6 @@ void ec::Server::handle_client_reqs(void *args) {
 //            break;
         }
     }
-}
-
-int ec::Server::handle_req(const msg_t *req, msg_t *res, serv_thread_args* args) {
-//int ec::Server::handle_req(const char *buffer, serv_thread_args* args) {
-//    if(buffer == nullptr) {
-//        std::cout << "buffer == null in handle_req()" << std::endl;
-//        exit(EXIT_FAILURE);
-//    }
-
-    if(req == nullptr || res == nullptr) {
-        std::cout << "req or res == null in handle_req()" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-//    std::cout << "req: " << *req << std::endl;
-    uint64_t ret = __FAILED__;
-//    std::cout << "req->req_type: " << req->req_type << std::endl;
-
-    switch(req -> req_type) {
-        case _MEM_:
-//            std::cout << "[dbg]: EC Server id: " << _ec->get_manager_id() << ".Handling Mem request" << std::endl;
-            ret = serve_mem_req(req, res, args);
-            break;
-        case _CPU_:
-//            std::cout << "[dbg]: EC Server id: " << _ec->get_manager_id() << ".Handling CPU request" << std::endl;
-            ret = serve_cpu_req(req, res, args);
-            break;
-        case _INIT_:
-//            std::cout << "[dbg]: EC Server id: " << _ec->get_manager_id() << ".Handling INIT request" << std::endl;
-            ret = serve_add_cgroup_to_ec(req, res, args);
-            break;
-//        case _SLICE_:
-//            ret = serve_acquire_slice(req, res, args);
-//            break;
-        default:
-            std::cout << "[Error]: EC Server id: " << server_id << ". Handling memory/cpu request failed!" << std::endl;
-    }
-    return ret;
-
-}
-
-
-int ec::Server::serve_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, serv_thread_args* args) {
-    if(!req || !res || !args) {
-        std::cout << "req, res, or args == null in serve_add_cgroup_to_ec()" << std::endl;
-        return __FAILED__;
-    }
-//    mtx.lock(); //TODO: check if we actually need to lock here
-    int ret = manager->handle_add_cgroup_to_ec(res, req->cgroup_id, args->cliaddr->sin_addr.s_addr, args->clifd);
-//    mtx.unlock();
-    return ret;
-}
-
-//Logic in ElasticContainer
-int ec::Server::serve_cpu_req(const msg_t *req, msg_t *res, serv_thread_args* args) {
-    if(req == nullptr || res == nullptr) {
-        std::cout << "req or res == null in serve_cpu_req()" << std::endl;
-        return __FAILED__;
-    }
-    int ret = manager->handle_cpu_req(req, res);
-    if(ret != __ALLOC_SUCCESS__) {
-        return __ALLOC_FAILED__;
-    }
-    return __ALLOC_SUCCESS__;
-}
-
-//int ec::Server::serve_acquire_slice(const ec::msg_t *req, ec::msg_t *res, serv_thread_args *args) {
-//    if (req == nullptr || res == nullptr || args == nullptr) {
-//        std::cout << "req, res, or args == null in serve_acquire_slice()" << std::endl;
-//        return __FAILED__;
-//    }
-//    int ret = ec->handle_slice_req(req, res, args->clifd);
-//    std::cout << "server slice returning slice: " << res->rsrc_amnt << std::endl;
-//    if (ret != __ALLOC_SUCCESS__) {
-//        return __ALLOC_FAILED__;
-//    }
-//    return __ALLOC_SUCCESS__;
-//}
-
-
-int ec::Server::serve_mem_req(const msg_t *req, msg_t *res, serv_thread_args* args) {
-    if (req == nullptr || res == nullptr || args == nullptr) {
-        std::cout << "req, res, or args == null in serve_mem_req()" << std::endl;
-        return __FAILED__;
-    }
-    int ret = manager->handle_mem_req(req, res, args->clifd);
-    if (ret != __ALLOC_SUCCESS__) {
-        return __ALLOC_FAILED__;
-    }
-    return __ALLOC_SUCCESS__;
 }
 
 int ec::Server::init_agent_connections() {

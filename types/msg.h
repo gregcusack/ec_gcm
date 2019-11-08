@@ -42,6 +42,7 @@ namespace ec {
                        << k.slice_succeed << ","
                        << k.slice_fail;
         }
+
         void from_net() {
             client_ip = om::net::ip4_addr::reverse_byte_order(client_ip);
         }
@@ -49,6 +50,7 @@ namespace ec {
         void set_ip(uint32_t ip) { //this will not be needed later
             client_ip = om::net::ip4_addr::from_net(ip);
         };
+
 
     };
 
