@@ -26,6 +26,35 @@ ec::ECAPI::~ECAPI() {
     delete _ec;
 }
 
+int ec::ECAPI::handle_req(const char *buff_in, char *buff_out, uint32_t host_ip, int clifd) {
+    if(buff_in == nullptr) {
+        std::cout << "buffer == null in handle_req()" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    auto *req = reinterpret_cast<const msg_t*>(buff_in);
+    auto *res = reinterpret_cast<msg_t*>(buff_out);
+//    req->set_ip(host_ip); //TODO: this needs to be removed eventually
+//    auto *res = new msg_t(*req);
+
+    uint64_t ret = __FAILED__;
+
+    switch(req -> req_type) {
+        case _MEM_:
+            ret = handle_mem_req(req, res, clifd);
+            break;
+        case _CPU_:
+            ret = handle_cpu_req(req, res);
+            break;
+        case _INIT_:
+            ret = handle_add_cgroup_to_ec(res, req->cgroup_id, host_ip, clifd);
+            break;
+        default:
+            std::cout << "[Error]: ECAPI: " << manager_id << ". Handling memory/cpu request failed!" << std::endl;
+    }
+    return ret;
+}
+
 int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const uint32_t ip, int fd) {
     if(!res) {
         std::cout << "ERROR. res == null in handle_add_cgroup_to_ec()" << std::endl;
@@ -35,6 +64,7 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
     int ret = _ec->insert_sc(*sc);
     std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
     res->request = 0; //giveback (or send back)
+    res->set_ip(ip);
     return ret;
 }
 

@@ -102,47 +102,54 @@ void ec::Server::serve() {
 void ec::Server::handle_client_reqs(void *args) {
     ssize_t num_bytes;
     uint64_t ret;
-    char buffer[__BUFFSIZE__];
+    char buff_in[__BUFFSIZE__], buff_out[__BUFF_SIZE__];
     auto *arguments = reinterpret_cast<serv_thread_args*>(args);
     int client_fd = arguments->clifd;
 
 //    std::cout << "[SUCCESS] Server id: " << _ec->get_manager_id() << ". Server thread! New connection created. "
 //                                                              "new socket fd: " << client_fd << std::endl;
     num_of_cli++;
-    bzero(buffer, __BUFFSIZE__);
-    while((num_bytes = read(client_fd, buffer, __BUFFSIZE__)) > 0 ) {
+    bzero(buff_in, __BUFFSIZE__);
+    while((num_bytes = read(client_fd, buff_in, __BUFFSIZE__)) > 0 ) {
         ret = 0;
 //        std::cout << "[dbg] Number of bytes read: " << num_bytes << std::endl;
 
         //moved up from handle_req
-        auto *req = reinterpret_cast<msg_t*>(buffer);
-        req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
-        auto *res = new msg_t(*req);
+//        auto *req = reinterpret_cast<msg_t*>(buff_in);
+//        req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
+//        auto *res = new msg_t(*req);
 
-        ret = handle_req(req, res, arguments);
+        ret = manager->handle_req(buff_in, buff_out, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
+//        ret = handle_req(req, res, arguments);
         if(ret == __ALLOC_SUCCESS__) {  //TODO: fix this.
             //for testing
             //res->rsrc_amnt -= 99999;
 //            std::cout << "sending back: " << *res << std::endl;
-            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
+//            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
+            if(write(client_fd, (const char*) buff_out, sizeof(buff_out)) < 0) {
                     std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
                     break;
             }
         }
         else {
 //            std::cout << "[FAILED] Error code: [" << ret << "]: EC Server id: " << _ec->get_manager_id() << ". Server thread: " << mem_reqs++ << std::endl;
-            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
+//            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
+            if(write(client_fd, (const char*) buff_out, sizeof(buff_out)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket. Part 2" << std::endl;
                 break;
             }
 //            break;
         }
-        delete res;
-
     }
 }
 
 int ec::Server::handle_req(const msg_t *req, msg_t *res, serv_thread_args* args) {
+//int ec::Server::handle_req(const char *buffer, serv_thread_args* args) {
+//    if(buffer == nullptr) {
+//        std::cout << "buffer == null in handle_req()" << std::endl;
+//        exit(EXIT_FAILURE);
+//    }
+
     if(req == nullptr || res == nullptr) {
         std::cout << "req or res == null in handle_req()" << std::endl;
         exit(EXIT_FAILURE);
@@ -193,7 +200,7 @@ int ec::Server::serve_cpu_req(const msg_t *req, msg_t *res, serv_thread_args* ar
         std::cout << "req or res == null in serve_cpu_req()" << std::endl;
         return __FAILED__;
     }
-    int ret = manager->handle_bandwidth(req, res);
+    int ret = manager->handle_cpu_req(req, res);
     if(ret != __ALLOC_SUCCESS__) {
         return __ALLOC_FAILED__;
     }

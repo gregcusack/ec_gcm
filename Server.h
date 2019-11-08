@@ -45,7 +45,8 @@ namespace ec {
         void handle_client_reqs(void *clifd);
 
         //TODO: make return values error codes and pass struct via "msg_res"
-        int handle_req(const msg_t *req, msg_t *res, serv_thread_args* args);
+//        int handle_req(const msg_t *req, msg_t *res, serv_thread_args* args);
+
 
         int serve_add_cgroup_to_ec(const msg_t *req, msg_t *res, serv_thread_args* args);
 

@@ -4,9 +4,9 @@
 
 #include "Manager.h"
 
-int ec::Manager::handle_bandwidth(const ec::msg_t *req, ec::msg_t *res) {
+int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
     if(req == nullptr || res == nullptr) {
-        std::cout << "req or res == null in handle_bandwidth()" << std::endl;
+        std::cout << "req or res == null in handle_cpu_req()" << std::endl;
         exit(EXIT_FAILURE);
     }
     uint64_t ret;

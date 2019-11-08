@@ -11,6 +11,9 @@
 #include "Agents/AgentClient.h"
 #include "om.h"
 
+#define __FAILED__ -1
+
+
 namespace ec {
     class ECAPI {
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
@@ -78,15 +81,21 @@ namespace ec {
          **/
 
         //MISC
+        int handle_req(const char *buff_in, char *buff_out, uint32_t host_ip, int clifd);
+
         //TODO: implement these here in a class that inherits from manager
         int handle_add_cgroup_to_ec(msg_t *res, uint32_t cgroup_id, uint32_t ip, int fd);
         //CPU
-        virtual int handle_bandwidth(const msg_t *req, msg_t *res) = 0;
+        virtual int handle_cpu_req(const msg_t *req, msg_t *res) = 0;
 //        int handle_slice_req(const msg_t *req, msg_t *res, int clifd);
 
         //MEMORY
         virtual int handle_mem_req(const msg_t *req, msg_t *res, int clifd) = 0;
         virtual uint64_t handle_reclaim_memory(int client_fd) = 0;
+
+        /**
+         * HANDLERS
+         */
 
     private:
         uint32_t manager_id;
