@@ -24,14 +24,11 @@
 #define __QUOTA__ 50000
 
 namespace ec {
-//    struct ElasticContainer;
     class Server {
     public:
         Server(uint32_t server_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
         ~Server() = default;
         void initialize();
-
-//        void set_ec(ElasticContainer *ec) { ec = ec; }
 
         struct server_t {
             int32_t sock_fd;

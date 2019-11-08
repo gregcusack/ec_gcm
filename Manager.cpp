@@ -60,7 +60,7 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
     std::mutex memlock;
     if(req->req_type != _MEM_) { return __ALLOC_FAILED__; }
     memlock.lock();
-    uint64_t memory_available = ec_get_memory_available();
+    int64_t memory_available = ec_get_memory_available();
     if(memory_available > 0 || (memory_available = ec_set_memory_available(handle_reclaim_memory(clifd))) > 0) {          //TODO: integrate give back here
         std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
         ret = memory_available > ec_get_memory_slice() ? ec_get_memory_slice() : memory_available;
@@ -94,14 +94,14 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
         if (container.second->get_fd() == client_fd) {
             continue;
         }
-        auto ip = container.second->get_id()->server_ip;
+        auto ip = container.second->get_c_id()->server_ip;
         std::cout << "ip of server container is on. also ip of agent_clients" << std::endl;
         std::cout << "ac.size(): " << get_agent_clients().size() << std::endl;
         for (const auto &agentClient : get_agent_clients()) {
             std::cout << "(agentClient->ip, container ip): (" << agentClient->get_agent_ip() << ", " << ip << ")" << std::endl;
             if (agentClient->get_agent_ip() == ip) {
                 auto *reclaim_req = new reclaim_msg;
-                reclaim_req->cgroup_id = container.second->get_id()->cgroup_id;
+                reclaim_req->cgroup_id = container.second->get_c_id()->cgroup_id;
                 reclaim_req->is_mem = 1;
                 //TODO: anyway to get the server to do this?
                 if (write(agentClient->get_socket(), (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {

@@ -24,6 +24,18 @@ namespace ec {
     };
 }
 
+namespace std {
+    template<>
+    struct hash<ec::AgentClient> {
+        std::size_t operator()(ec::AgentClient const& p) const {
+            auto h1 = std::hash<om::net::ip4_addr>()(p.get_agent_ip());
+            auto h2 = std::hash<uint16_t>()(p.get_agent_port());
+            auto h3 = std::hash<int>()(p.get_socket());
+            return h1 xor h2 xor h3;
+        }
+    };
+}
+
 
 
 #endif //EC_GCM_AGENTCLIENT_H

@@ -4,7 +4,6 @@
 #include "ElasticContainer.h"
 #include "SubContainer.h"
 #include "types/msg.h"
-#include <sys/wait.h>
 
 
 #define MANAGER_ID      23

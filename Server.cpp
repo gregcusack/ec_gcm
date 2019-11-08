@@ -6,14 +6,10 @@
 
 ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents)
     : server_id(_server_id), ip_address(_ip_address), port(_port), agents(_agents), server_initialized(false),
-    agent_clients({}), manager(nullptr) {
-
-//    manager = new Manager(_server_id, agent_clients);
-}
+    agent_clients({}), manager(nullptr) {}
 
 
 void ec::Server::initialize() {
-
     int32_t addrlen, opt = 1;
     if((server_socket.sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         std::cout << "[ERROR]: Server socket creation failed in server: " << server_id << std::endl;
@@ -179,7 +175,6 @@ int ec::Server::handle_req(const msg_t *req, msg_t *res, serv_thread_args* args)
 
 }
 
-//int _ec::Server::serve_add_cgroup_to_ec()
 
 int ec::Server::serve_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, serv_thread_args* args) {
     if(!req || !res || !args) {
