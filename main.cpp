@@ -6,11 +6,7 @@
 #include "types/msg.h"
 
 
-#define MANAGER_ID      23
-#define CONTAINER_ID    1
-#define SERVER_IP       2130706433      //127.0.0.1
 #define GCM_PORT        8888             //Not sure if we need a port here tbh
-#define SERVER_PORT     4444
 
 int main(){
     std::vector<std::string>    agent_ips{"127.0.0.1"};//), "127.0.0.1", "127.0.0.1"};

@@ -81,7 +81,9 @@ namespace ec {
          **/
 
         //MISC
-        int handle_req(const char *buff_in, char *buff_out, uint32_t host_ip, int clifd);
+//        int handle_req(const char *buff_in, char *buff_out, uint32_t host_ip, int clifd);
+        int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd);
+
 
         //TODO: implement these here in a class that inherits from manager
         int handle_add_cgroup_to_ec(msg_t *res, uint32_t cgroup_id, uint32_t ip, int fd);

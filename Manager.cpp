@@ -26,11 +26,7 @@ int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
         }
         cpulock.unlock();
 
-//        std::cout << req->slice_succeed << std::endl;
-//        test_file << req->request << "," << req->slice_succeed << "," << req->slice_fail << std::endl;
         std::cout << req->request << "," << req->slice_succeed << "," << req->slice_fail << std::endl;
-//        test_file << req->slice_succeed << std::endl;
-//        std::cout << "slice (s,f): (" << req->slice_succeed << ", " << req->slice_fail << ")" << std::endl;
 
         //TEST
 //        ret += 3*slice; //see what happens
@@ -64,6 +60,8 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
     if(memory_available > 0 || (memory_available = ec_set_memory_available(handle_reclaim_memory(clifd))) > 0) {          //TODO: integrate give back here
         std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
         ret = memory_available > ec_get_memory_slice() ? ec_get_memory_slice() : memory_available;
+
+        std::cout << "mem amnt to ret: " << ret << std::endl;
 
         ec_decrement_memory_available(ret);
 //        memory_available -= ret;

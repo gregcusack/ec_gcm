@@ -102,25 +102,27 @@ void ec::Server::serve() {
 void ec::Server::handle_client_reqs(void *args) {
     ssize_t num_bytes;
     uint64_t ret;
-    char buff_in[__BUFFSIZE__], buff_out[__BUFF_SIZE__];
+    char buff_in[__BUFFSIZE__];
 //    char *buff_out;
     auto *arguments = reinterpret_cast<serv_thread_args*>(args);
     int client_fd = arguments->clifd;
 
-//    std::cout << "[SUCCESS] Server id: " << _ec->get_manager_id() << ". Server thread! New connection created. "
-//                                                              "new socket fd: " << client_fd << std::endl;
     num_of_cli++;
     bzero(buff_in, __BUFFSIZE__);
     while((num_bytes = read(client_fd, buff_in, __BUFFSIZE__)) > 0 ) {
-        ret = manager->handle_req(buff_in, buff_out, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
+        auto *req = reinterpret_cast<msg_t*>(buff_in);
+        req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
+        auto *res = new msg_t(*req);
+        ret = manager->handle_req(req, res, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
+//        std::cout << "Sending back: " << *res << std::endl;
         if(ret == __ALLOC_SUCCESS__) {  //TODO: fix this.
-            if(write(client_fd, (const char*) buff_out, sizeof(buff_out)) < 0) {
+            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                     std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
                     break;
             }
         }
         else {
-            if(write(client_fd, (const char*) buff_out, sizeof(buff_out)) < 0) {
+            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket. Part 2" << std::endl;
                 break;
             }

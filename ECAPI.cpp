@@ -26,16 +26,12 @@ ec::ECAPI::~ECAPI() {
     delete _ec;
 }
 
-int ec::ECAPI::handle_req(const char *buff_in, char *buff_out, uint32_t host_ip, int clifd) {
-    if(buff_in == nullptr) {
-        std::cout << "buffer == null in handle_req()" << std::endl;
+//int ec::ECAPI::handle_req(const char *buff_in, char *buff_out, uint32_t host_ip, int clifd) {
+int ec::ECAPI::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) {
+    if(req == nullptr || res == nullptr) {
+        std::cout << "req or res == null in handle_req()" << std::endl;
         exit(EXIT_FAILURE);
     }
-
-    auto *req = reinterpret_cast<const msg_t*>(buff_in);
-    std::cout << "req: " << *req << std::endl;
-    auto *res = reinterpret_cast<msg_t*>(buff_out);
-    *res = *req;
 
     uint64_t ret = __FAILED__;
 
@@ -64,6 +60,7 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
     int ret = _ec->insert_sc(*sc);
     std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
     res->request = 0; //giveback (or send back)
+    res->ec_id = _ec->get_ec_id();
     return ret;
 }
 
