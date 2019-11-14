@@ -60,7 +60,6 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
     int ret = _ec->insert_sc(*sc);
     std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
     res->request = 0; //giveback (or send back)
-    res->ec_id = _ec->get_ec_id();
     return ret;
 }
 

@@ -158,7 +158,6 @@ int ec::Server::init_agent_connections() {
         }
 
         agent_clients.push_back(new AgentClient(ag, sockfd));
-//        ag->set_sockfd(sockfd);
         std::cout << "agent_clients sockfd: " << sockfd << ", " << agent_clients[agent_clients.size() - 1]->get_socket() << std::endl;
     }
     return num_connections == agent_clients.size();

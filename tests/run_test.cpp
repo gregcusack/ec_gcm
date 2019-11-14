@@ -8,14 +8,12 @@
 int main() {
 
     auto *msg_req = new ec::msg_t();
-    msg_req->ec_id = 1;
     msg_req->client_ip = om::net::ip4_addr::from_string("127.0.0.1");
     msg_req->cgroup_id = 23;
     msg_req->req_type = 2;
     msg_req->rsrc_amnt = 10000000;
     msg_req->request = 1;
-    msg_req->slice_succeed = 13;
-    msg_req->slice_fail = 12;
+    msg_req->runtime_remaining = 14;
 
 //    auto *msg_res = new _ec::msg_t();
     auto msg_res = ec::msg_t();

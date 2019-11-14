@@ -20,13 +20,10 @@ int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
 
 //        runtime_remaining -= ret; //TODO: put back in at some point??
 //        std::cout << "Server sending back " << ret << "ns in runtime" << std::endl;
-        //TODO: THIS SHOULDN'T BE HERE. BUT USING IT FOR TESTING
-        if(ec_rt_remaining <= 0) {
-            ec_refill_runtime();
-        }
+
         cpulock.unlock();
 
-        std::cout << req->request << "," << req->slice_succeed << "," << req->slice_fail << std::endl;
+//        std::cout << req->runtime_remaining << std::endl;
 
         //TEST
 //        ret += 3*slice; //see what happens
@@ -66,7 +63,7 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
         ec_decrement_memory_available(ret);
 //        memory_available -= ret;
 
-//        std::cout << "successfully decrease remaining mem to: " << memory_available << std::endl;
+        std::cout << "successfully decrease remaining mem to: " << memory_available << std::endl;
 
         res->rsrc_amnt = req->rsrc_amnt + ret;   //give back "ret" pages
         memlock.unlock();
@@ -85,6 +82,7 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     int j = 0;
     char buffer[__BUFF_SIZE__] = {0};
     uint64_t reclaimed = 0;
+    uint64_t rx_buff;
     int ret;
 
     std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
@@ -93,7 +91,6 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
             continue;
         }
         auto ip = container.second->get_c_id()->server_ip;
-        std::cout << "ip of server container is on. also ip of agent_clients" << std::endl;
         std::cout << "ac.size(): " << get_agent_clients().size() << std::endl;
         for (const auto &agentClient : get_agent_clients()) {
             std::cout << "(agentClient->ip, container ip): (" << agentClient->get_agent_ip() << ", " << ip << ")" << std::endl;
@@ -110,11 +107,10 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
                 if (ret <= 0) {
                     std::cout << "[ERROR]: GCM. Can't read from socke to reclaim memory" << std::endl;
                 }
-                if (strncmp(buffer, "NOMEM", sizeof("NOMEM")) != 0) {
-                    reclaimed += *((uint64_t *) buffer);
-                }
+                rx_buff = *((uint64_t *) buffer);
+                reclaimed += rx_buff;
+                std::cout << "[INFO] GCM: reclaimed: " << rx_buff << " bytes" << std::endl;
                 std::cout << "[INFO] GCM: Current amount of reclaimed memory: " << reclaimed << std::endl;
-
             }
 
         }
