@@ -6,18 +6,22 @@ set(PTHREAD_LIB pthread)
 
 
 add_executable(ec_gcm main.cpp
-        Manager.cpp                     Manager.h
-        SubContainer.cpp                SubContainer.h
-        ElasticContainer.cpp            ElasticContainer.h
-        GlobalCloudManager.cpp          GlobalCloudManager.h
+        ElasticContainer.h              ElasticContainer.cpp
+        SubContainer.h                  SubContainer.cpp
+        ECAPI.h ECAPI.cpp
+        GlobalCloudManager.h            GlobalCloudManager.cpp
         #Server.cpp                     Server.h
 
         types/msg.h                     types/msg.cpp
         types/types.h                   types/k_msg.h
         Server.h                        Server.cpp
-        Agent.h                         Agent.cpp
-        stats/cpu.h                     stats/cpu.cpp
-        stats/mem.h                     stats/mem.cpp
+        Agents/Agent.h                  Agents/Agent.cpp
+        stats/local/cpu_l.h             stats/local/cpu_l.cpp
+        stats/local/mem_l.h             stats/local/mem_l.cpp
+        stats/global/cpu_g.h            stats/global/cpu_g.cpp
+        stats/global/mem_g.h            stats/global/mem_g.cpp
+        Manager.h                       Manager.cpp
+        Agents/AgentClient.h            Agents/AgentClient.cpp
         )
 
 add_executable(tester tests/run_test.cpp

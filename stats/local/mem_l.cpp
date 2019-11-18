@@ -2,7 +2,7 @@
 // Created by Greg Cusack on 10/23/19.
 //
 
-#include "mem.h"
+#include "mem_l.h"
 
-ec::stats::mem::mem()
+ec::local::stats::mem::mem()
     : mem_limit(0), current_usage(0) {}

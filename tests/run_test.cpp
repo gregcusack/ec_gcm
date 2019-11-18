@@ -13,8 +13,9 @@ int main() {
     msg_req->req_type = 2;
     msg_req->rsrc_amnt = 10000000;
     msg_req->request = 1;
+    msg_req->runtime_remaining = 14;
 
-//    auto *msg_res = new ec::msg_t();
+//    auto *msg_res = new _ec::msg_t();
     auto msg_res = ec::msg_t();
 
     std::cout << "msg_req: " << *msg_req << std::endl;

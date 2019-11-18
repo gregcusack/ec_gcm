@@ -1,66 +1,61 @@
 //
-// Created by greg on 9/12/19.
+// Created by greg on 9/11/19.
 //
 
 #include "ElasticContainer.h"
 
-ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents)
-    : ec_id(_ec_id), ip_address(_ip_address), port(_port), agents(_agents) {
 
-    server = nullptr;
-    manager = nullptr;
-    _mem = memory();
-    _cpu = cpu();
+ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id) {}
+
+ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients)
+    : ec_id(_ec_id), agent_clients(_agent_clients) {
+
+    //TODO: change num_agents to however many servers we have. IDK how to set it rn.
+
+    _mem = global::stats::mem();
+    _cpu = global::stats::cpu();
+
+    std::cout << "runtime_remaining on init: " << _cpu.get_runtime_remaining() << std::endl;
+    std::cout << "memory_available on init: " << _mem.get_mem_available() << std::endl;
+
+    test_file.open("test_file.txt", std::ios_base::app);
+
+    //test
+    flag = 0;
+
 }
 
-void ec::ElasticContainer::create_manager() {
-    manager = new Manager(ec_id, agents, _cpu.quota, _cpu.slice_size,
-                          _mem.memory_limit, _mem.slice_size);       //pass in gcm_ip for now
+ec::SubContainer *ec::ElasticContainer::create_new_sc(const uint32_t cgroup_id, const uint32_t host_ip, const int sockfd) {
+    return new SubContainer(cgroup_id, host_ip, sockfd);
 }
 
-void ec::ElasticContainer::create_server() {
-    server = new Server(ip_address, port);
-}
-
-void ec::ElasticContainer::connect_server_and_manager() {
-    manager->set_server(server);
-    server->set_manager(manager);
-}
-
-ec::Manager *ec::ElasticContainer::get_manager() {
-    if(manager == nullptr) {
-        std::cout << "[ERROR]: Must create manager before accessing it" << std::endl;
-        exit(EXIT_FAILURE);
+const ec::SubContainer &ec::ElasticContainer::get_subcontainer(ec::SubContainer::ContainerId &container_id) {
+    auto itr = subcontainers.find(container_id);
+    if(itr == subcontainers.end()) {
+        std::cout << "ERROR: No EC with manager_id: " << ec_id << ". Exiting...." << std::endl;
+        std::exit(EXIT_FAILURE);
     }
-    return manager;
+    return *itr->second;
 }
 
-void ec::ElasticContainer::build_ec_handler() {
-    create_manager();
-    create_server();
-    connect_server_and_manager();
+int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
+    if (subcontainers.find(*_sc.get_c_id()) != subcontainers.end()) {
+        std::cout << "This SubContainer already exists! Can't allocate identical one!" << std::endl;
+        //TODO: should delete sc
+        return __ALLOC_FAILED__;
+    }
+    subcontainers.insert({*(_sc.get_c_id()), &_sc});
+    return __ALLOC_SUCCESS__;
+}
+
+uint64_t ec::ElasticContainer::refill_runtime() {
+    return _cpu.refill_runtime();
 }
 
 ec::ElasticContainer::~ElasticContainer() {
-    delete manager;
-    delete server;
+    for(auto &i : subcontainers) {
+        delete i.second;
+    }
+    subcontainers.clear();
 }
 
-
-//ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, ec::ip4_addr _ip_address, std::vector<GlobalCloudManager::agent *> &_agents)
-//    : ec_id(_ec_id), ip_address(_ip_address), agents(&_agents) {
-//
-//    server = nullptr;
-//    manager = nullptr;
-//    _mem = memory();
-//    _cpu = cpu();
-//
-//}
-
-
-//void ec::ElasticContainer::set_period(int64_t _period) {
-//    _cpu.period = _period;
-//    if(manager != nullptr) {
-//        manager
-//    }
-//}

@@ -15,12 +15,11 @@ ec::msg_t::msg_t(const ec::k_msg_t &k_msg) {
 }
 
 ec::msg_t::msg_t(const ec::msg_t &msg_req) {
-    ec_id = msg_req.ec_id;
     client_ip = msg_req.client_ip;
     cgroup_id = msg_req.cgroup_id;
     req_type = msg_req.req_type;
     rsrc_amnt = msg_req.rsrc_amnt;
     request = msg_req.request;
-    slice_succeed = msg_req.slice_succeed;
-    slice_fail = msg_req.slice_fail;
+    runtime_remaining = msg_req.runtime_remaining;
+
 }
