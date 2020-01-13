@@ -67,6 +67,12 @@ void ec::GlobalCloudManager::run() {
             std::cout << "server_id: " << s.second->get_server_id() << std::endl;
 
             s.second->initialize();
+            // Serve here means waiting for a container to send a request and 
+            // handling it (but we want to create the container of the node via k8s first)
+            // See what the agent connections are here..
+            
+            //s.second->createCont();
+            // Now we can serve all the requests the container makes..
             s.second->serve();
         }
         else {

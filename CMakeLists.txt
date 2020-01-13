@@ -4,6 +4,8 @@ project(ec_gcm)
 set(CMAKE_CXX_STANDARD 17)
 set(PTHREAD_LIB pthread)
 
+set(cpprestsdk_DIR /usr/lib/local/cpprestsdk/)
+find_package(cpprestsdk REQUIRED)
 
 add_executable(ec_gcm main.cpp
         ElasticContainer.h              ElasticContainer.cpp
@@ -34,4 +36,4 @@ add_executable(loop_test tests/run_continuous.cpp
         om.h
         )
 
-target_link_libraries(ec_gcm ${PTHREAD_LIB})
+target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} cpprestsdk::cpprest)
