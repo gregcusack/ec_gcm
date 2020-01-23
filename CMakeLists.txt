@@ -6,6 +6,7 @@ set(PTHREAD_LIB pthread)
 
 set(cpprestsdk_DIR /usr/lib/local/cpprestsdk/)
 find_package(cpprestsdk REQUIRED)
+find_package(Boost REQUIRED system)
 
 add_executable(ec_gcm main.cpp
         ElasticContainer.h              ElasticContainer.cpp
@@ -36,4 +37,4 @@ add_executable(loop_test tests/run_continuous.cpp
         om.h
         )
 
-target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} cpprestsdk::cpprest)
+target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY})

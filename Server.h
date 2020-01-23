@@ -8,6 +8,9 @@
 #include <iostream>
 #include <cstdint>
 #include <thread>
+#include <string>
+#include <cpprest/http_client.h>
+#include <cpprest/json.h>                       // JSON library
 #include "types/msg.h"
 #include "Agents/Agent.h"
 #include "ECAPI.h"
@@ -22,6 +25,9 @@
 #define __FAILED__ -1
 //#define __ALLOC_FAILED__ 0
 #define __QUOTA__ 50000
+
+using namespace utility;                    // Common utilities like string conversions
+using namespace web;                        // Common features like URIs.
 
 namespace ec {
     class Server {
@@ -60,6 +66,9 @@ namespace ec {
         std::mutex mtx;
 
         int init_agent_connections();
+        int deploy_container();
+        json::value generate_container_json(std::string cont_name);
+        int create_cont(json::value cont_json);
 
     private:
         uint32_t server_id;
