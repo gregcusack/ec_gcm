@@ -9,11 +9,39 @@ int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
         std::cout << "req or res == null in handle_cpu_req()" << std::endl;
         exit(EXIT_FAILURE);
     }
-    uint64_t ret;
     std::mutex cpulock;
     if(req->req_type != _CPU_) { return __ALLOC_FAILED__; }
+
     cpulock.lock();
+    auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
+    auto sc = ec_get_sc_for_update(sc_id);
+    auto sc_quota = sc->sc_get_quota();
+
+    auto sc_rt_remaining = req->runtime_remaining;
+    uint32_t throttle_incr = sc->sc_get_thr_incr_and_set_thr(req->request);
+    if(throttle_incr > 0) {                                 //container got throttled during the last period. need rt
+        std::cout << "throttle. try give alloc" << std::endl;
+        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), ec_get_cpu_slice());
+        if(extra_rt > 0) {
+            std::cout << "need extra bw and some avail. giving back: " << extra_rt << std::endl;
+            ec_decr_unallocated_rt(extra_rt);
+            sc->sc_set_quota(sc_quota + extra_rt);
+        }
+    }
+    else if(sc_rt_remaining > 0.2 * sc_quota) {             // is extra rt > than 20ms (if quota = 100ms)
+        ec_incr_unallocated_rt(ec_get_cpu_slice());   // give cpu slice to global pool
+        std::cout << "has extra rt. giving back slice to unalloc. unalloc_rt now: " << ec_get_cpu_unallocated_rt() << std::endl;
+        sc->sc_set_quota(sc_quota - ec_get_cpu_slice());
+    }
+
+    std::cout << "returning quota: " << sc->sc_get_quota() << std::endl;
+    res->rsrc_amnt = sc->sc_get_quota();
+    res->request = 0;
+    cpulock.unlock();
+    return __ALLOC_SUCCESS__;
+/*
     uint64_t ec_rt_remaining = ec_get_cpu_runtime_remaining();
+
     if(ec_rt_remaining > 0) {
         //give back what it asks for
         ret = req->rsrc_amnt > ec_rt_remaining ? ec_rt_remaining : req->rsrc_amnt;
@@ -41,7 +69,7 @@ int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
         res->request = 0;
         return __ALLOC_FAILED__;
     }
-
+    */
 }
 
 int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd) {
@@ -120,5 +148,16 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     return reclaimed;
 }
 
+int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, const uint32_t ip, int fd) {
+    if(!res) {
+        std::cout << "ERROR. res == null in handle_add_cgroup_to_ec()" << std::endl;
+        return __ALLOC_FAILED__;
+    }
+    auto *sc = _ec->create_new_sc(req->cgroup_id, ip, fd, req->rsrc_amnt, req->request);
+    int ret = _ec->insert_sc(*sc);
+    std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
+    res->request = 0; //giveback (or send back)
+    return ret;
+}
 
 

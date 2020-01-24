@@ -56,9 +56,12 @@ namespace ec {
         uint32_t get_ec_id() { return ec_id; }
         const subcontainer_map &get_subcontainers() {return subcontainers;}
         const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id);
+        SubContainer *get_sc_for_update(SubContainer::ContainerId &container_id);
 
         //CPU
-        uint64_t get_rt_remaining() { return _cpu.get_runtime_remaining(); }
+        uint64_t get_cpu_rt_remaining() { return _cpu.get_runtime_remaining(); }
+        uint64_t get_cpu_unallocated_rt() { return _cpu.get_unallocated_rt(); }
+        uint64_t get_cpu_slice() { return _cpu.get_slice(); }
 
         //MEM
         uint64_t get_memory_available() { return _mem.get_mem_available(); }
@@ -79,6 +82,8 @@ namespace ec {
         void set_quota(int64_t _quota) { _cpu.set_quota(_quota); }
         void set_slice_size(uint64_t _slice_size) { _cpu.set_slice_size(_slice_size); }
         uint64_t refill_runtime();
+        void incr_unallocated_rt(uint64_t _incr) { _cpu.incr_unalloacted_rt(_incr); }
+        void decr_unallocated_rt(uint64_t _decr) { _cpu.decr_unallocated_rt(_decr); }
 
         //MEM
         void ec_resize_memory_max(int64_t _max_mem) { _mem.set_mem_limit(_max_mem); }
@@ -92,6 +97,7 @@ namespace ec {
          **/
         //MISC
         SubContainer* create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd);
+        SubContainer* create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd, uint64_t quota, uint32_t nr_throttled);
         int insert_sc(SubContainer &_sc);
 
         //CPU

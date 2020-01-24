@@ -34,7 +34,7 @@ int ec::ECAPI::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int cl
     }
 
     uint64_t ret = __FAILED__;
-
+    
     switch(req -> req_type) {
         case _MEM_:
             ret = handle_mem_req(req, res, clifd);
@@ -43,23 +43,11 @@ int ec::ECAPI::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int cl
             ret = handle_cpu_req(req, res);
             break;
         case _INIT_:
-            ret = handle_add_cgroup_to_ec(res, req->cgroup_id, host_ip, clifd);
+            ret = handle_add_cgroup_to_ec(req, res, host_ip, clifd);
             break;
         default:
             std::cout << "[Error]: ECAPI: " << manager_id << ". Handling memory/cpu request failed!" << std::endl;
     }
-    return ret;
-}
-
-int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const uint32_t ip, int fd) {
-    if(!res) {
-        std::cout << "ERROR. res == null in handle_add_cgroup_to_ec()" << std::endl;
-        return __ALLOC_FAILED__;
-    }
-    auto *sc = _ec->create_new_sc(cgroup_id, ip, fd);
-    int ret = _ec->insert_sc(*sc);
-    std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
-    res->request = 0; //giveback (or send back)
     return ret;
 }
 

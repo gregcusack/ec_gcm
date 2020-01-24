@@ -19,11 +19,14 @@ namespace ec {
     class SubContainer {
     public:
         SubContainer(uint32_t cgroup_id, uint32_t ip, int fd);     //from uint32_t
+        SubContainer(uint32_t cgroup_id, uint32_t ip, int fd, uint64_t _quota, uint32_t _nr_throttled);
+//        SubContainer(const SubContainer &other_sc) {std::cout << "copy constructor!" << std::endl; };
         ~SubContainer() = default;
 
         struct ContainerId {
             ContainerId(uint32_t _cgroup_id, ip4_addr _ip)
                 : cgroup_id(_cgroup_id), server_ip(_ip) {};
+
             ContainerId() = default;
             uint32_t cgroup_id          = 0;
             ip4_addr server_ip;
@@ -37,6 +40,15 @@ namespace ec {
 
         ContainerId* get_c_id() {return &c_id;}
         int get_fd() { return fd; }
+        int64_t sc_get_quota() { return cpu.get_quota(); }
+        uint32_t sc_get_throttled() { return cpu.get_throttled(); }
+
+        void sc_set_quota(int64_t _quota) { cpu.set_quota(_quota); }
+        void sc_set_throttled(uint32_t _throttled) { cpu.set_throttled(_throttled); }
+
+        uint32_t sc_get_throttle_increase(uint32_t _throttled) { return cpu.get_throttle_increase(_throttled); }
+        uint32_t sc_get_thr_incr_and_set_thr(uint32_t _throttled);
+
 
     private:
         ContainerId c_id;

@@ -37,14 +37,19 @@ namespace ec {
          **/
         //MISC
         uint32_t get_ec_id() { return _ec->get_ec_id(); }
+        //TODO: this should be wrapped in ElasticContainer - shouldn't be able to access from Manager
         [[nodiscard]] const subcontainer_map  &get_subcontainers() const {return _ec->get_subcontainers(); }
         const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id) {return _ec->get_subcontainer(
+                    container_id);}
+        SubContainer *ec_get_sc_for_update(SubContainer::ContainerId &container_id) {return _ec->get_sc_for_update(
                     container_id);}
 
         //CPU
         //TODO: this has to be passed a specific sc id
-        uint64_t sc_get_cpu_runtime_remaining() { return _ec->get_rt_remaining(); }
-        uint64_t ec_get_cpu_runtime_remaining() { return _ec->get_rt_remaining(); }
+        uint64_t sc_get_cpu_runtime_remaining() { return _ec->get_cpu_rt_remaining(); }
+        uint64_t ec_get_cpu_runtime_remaining() { return _ec->get_cpu_rt_remaining(); }
+        uint64_t ec_get_cpu_unallocated_rt() { return _ec->get_cpu_unallocated_rt(); }
+        uint64_t ec_get_cpu_slice() { return _ec->get_cpu_slice(); }
 
         //MEM
         uint64_t ec_get_memory_available() { return _ec->get_memory_available(); }
@@ -67,6 +72,8 @@ namespace ec {
         void ec_resize_quota(int64_t _quota) { _ec->set_quota(_quota); }
         void ec_resize_slice(uint64_t _slice_size) { _ec->set_slice_size(_slice_size); }
         uint64_t ec_refill_runtime() {return _ec->refill_runtime(); }
+        void ec_incr_unallocated_rt(uint64_t _incr) { _ec->incr_unallocated_rt(_incr); }
+        void ec_decr_unallocated_rt(uint64_t _decr) { _ec->decr_unallocated_rt(_decr); }
 
         //MEM
         void ec_resize_memory_max(int64_t _max_mem) { _ec->ec_resize_memory_max(_max_mem); }
@@ -86,7 +93,7 @@ namespace ec {
 
 
         //TODO: implement these here in a class that inherits from manager
-        int handle_add_cgroup_to_ec(msg_t *res, uint32_t cgroup_id, uint32_t ip, int fd);
+        virtual int handle_add_cgroup_to_ec(const msg_t *req, msg_t *res, uint32_t ip, int fd) = 0;
         //CPU
         virtual int handle_cpu_req(const msg_t *req, msg_t *res) = 0;
 //        int handle_slice_req(const msg_t *req, msg_t *res, int clifd);
@@ -101,12 +108,12 @@ namespace ec {
 
     private:
         uint32_t manager_id;
-        ElasticContainer *_ec;
 
         //passed by reference from GlobalCloudManager
 	    std::vector<AgentClient *> agent_clients;
 
-
+    protected:
+        ElasticContainer *_ec;
 
     };
 }

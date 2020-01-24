@@ -29,6 +29,10 @@ ec::SubContainer *ec::ElasticContainer::create_new_sc(const uint32_t cgroup_id, 
     return new SubContainer(cgroup_id, host_ip, sockfd);
 }
 
+ec::SubContainer *ec::ElasticContainer::create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd, uint64_t quota, uint32_t nr_throttled) {
+    return new SubContainer(cgroup_id, host_ip, sockfd, quota, nr_throttled);
+}
+
 const ec::SubContainer &ec::ElasticContainer::get_subcontainer(ec::SubContainer::ContainerId &container_id) {
     auto itr = subcontainers.find(container_id);
     if(itr == subcontainers.end()) {
@@ -36,6 +40,15 @@ const ec::SubContainer &ec::ElasticContainer::get_subcontainer(ec::SubContainer:
         std::exit(EXIT_FAILURE);
     }
     return *itr->second;
+}
+
+ec::SubContainer *ec::ElasticContainer::get_sc_for_update(ec::SubContainer::ContainerId &container_id) {
+    auto itr = subcontainers.find(container_id);
+    if(itr == subcontainers.end()) {
+        std::cout << "ERROR: No EC with manager_id: " << ec_id << ". Exiting...." << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    return itr->second;
 }
 
 int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
@@ -58,4 +71,7 @@ ec::ElasticContainer::~ElasticContainer() {
     }
     subcontainers.clear();
 }
+
+
+
 
