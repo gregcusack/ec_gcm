@@ -4,7 +4,6 @@ project(ec_gcm)
 set(CMAKE_CXX_STANDARD 17)
 set(PTHREAD_LIB pthread)
 
-set(cpprestsdk_DIR /usr/lib/local/cpprestsdk/)
 find_package(cpprestsdk REQUIRED)
 find_package(Boost REQUIRED system)
 
@@ -14,7 +13,6 @@ add_executable(ec_gcm main.cpp
         ECAPI.h ECAPI.cpp
         GlobalCloudManager.h            GlobalCloudManager.cpp
         #Server.cpp                     Server.h
-
         types/msg.h                     types/msg.cpp
         types/types.h                   types/k_msg.h
         Server.h                        Server.cpp

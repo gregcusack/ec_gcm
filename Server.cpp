@@ -49,7 +49,11 @@ void ec::Server::initialize() {
         exit(EXIT_FAILURE);
     }
     server_initialized = true; //server setup can run now
-
+    
+    // And this is where we can actually now "deploy" the distributed containers 
+    // instead of the current model of waiting for them to be created on the hosts
+    int cont_create = manager->create_ec();
+    std::cout << "container created status: " << cont_create <<std::endl;
 }
 
 void ec::Server::serve() {
@@ -69,13 +73,6 @@ void ec::Server::serve() {
     max_sd = server_socket.sock_fd + 1;
     cliaddr_len = sizeof(server_socket.addr);
     std::cout << "[dbg]: Max socket descriptor is: " << max_sd << std::endl;
-
-    // First, we get k8s to deploy a container..
-    int cont_status = deploy_container();
-    if (cont_status == -1) {
-        std::cout << "[deploy error]:  Error in Deploying Container. Exiting" << std::endl;
-        return;
-    }
 
     while(true) {
         FD_SET(server_socket.sock_fd, &readfds);
@@ -169,132 +166,6 @@ int ec::Server::init_agent_connections() {
     }
     return num_connections == agent_clients.size();
 
-}
-
-int ec::Server::deploy_container() {
-    std::cout << "[dgb]: In deploy container, deploying container on each node.. ac.size(): " << agent_clients.size() << std::endl;
-    int ret;
-    char buffer[__BUFF_SIZE__] = {0};
-    msg_t* rx_resp;
-    std::string cont_name = "12345";
-    uint64_t cont1_64;
-    char* end;
-
-    for (const auto &agentClient : agent_clients) {
-            // First, we actually get k8s to create a container
-            json::value json_output = generate_container_json(cont_name);
-            // This is for testing purposes
-            // std::cout << "Outut of JSON stream: " << json_output << std::endl;
-
-            // Todo: Add Error Handling for k8s pod not created successfully..
-            // int cont_status = create_cont(json_output);
-            // if(cont_status == -1) {
-            //     std::cout << "Issue with starting container on agent IP: " << agentClient->get_agent_ip() << "" << std::endl;
-            //     return -1;
-            // }
-            
-            // Then, we have to pass a msg to Agent to call sys_connect on the created container
-            // Note: you need to be on the git branch ftr_k8s_integration_cont_creation in EC_Agent for this to work until it's merged into dev.. 
-            
-            cont1_64 = strtoull( cont_name.c_str(), &end,10 );
-            
-            msg_t *agent_ec_cont_req = new msg_t;
-            agent_ec_cont_req->client_ip = om::net::ip4_addr::reverse_byte_order(this->get_ip());
-            agent_ec_cont_req->cgroup_id = 0;
-            agent_ec_cont_req->req_type = 4;
-            agent_ec_cont_req->rsrc_amnt = 0;
-            agent_ec_cont_req->request = 1;
-            agent_ec_cont_req->runtime_remaining = 0;
-            agent_ec_cont_req->cont_name = cont1_64;
-
-            if (write(agentClient->get_socket(), (char *) agent_ec_cont_req, sizeof(*agent_ec_cont_req)) < 0) {
-                    std::cout << "[ERROR]: In Deploy_Container. Error in writing to agent_clients socket: " << std::endl;
-            }
-            ret = read(agentClient->get_socket(), buffer, sizeof(buffer));
-            if (ret <= 0) {
-                std::cout << "[ERROR]: GCM. Can't read from socket after deploying container" << std::endl;
-            }
-            rx_resp = (msg_t *) buffer;
-            //std::cout << "response from agent (client ip, request type, rsrc_amnt): " << rx_resp->client_ip << "," << rx_resp->req_type << ", " <<  rx_resp->rsrc_amnt << std::endl;
-            if (rx_resp->req_type == agent_ec_cont_req->req_type && rx_resp->rsrc_amnt == 1) {
-                std::cout << "[deploy error]: Error in creating a container on agent client with ip: " << this->get_ip() << ". Check Agent Logs for more info" << std::endl;
-                return -1;
-            }
-    }       
-    return 0;
-}
-
-json::value ec::Server::generate_container_json(std::string cont_name) {
-    // Create a JSON object (the pod)
-            json::value pod;
-            pod[U("kind")] = json::value::string(U("Pod"));
-            pod[U("apiVersion")] = json::value::string(U("v1"));
-        
-            // Create a JSON object (the metadata)
-            json::value metadata;
-            metadata[U("namespace")] = json::value::string(U("default"));
-            metadata[U("name")] = json::value::string(U(cont_name));
-
-             // Create a JSON object (the metadata label)
-            json::value metadata_label;
-            metadata_label[U("name")] = json::value::string(U(cont_name));
-
-            metadata[U("labels")] = metadata_label;
-
-            pod[U("metadata")] = metadata;
-
-            // Now we worry about the specs..
-            json::value cont1;
-            cont1[U("name")] = json::value::string(U(cont_name));
-            cont1[U("image")] = json::value::string(U("nginx"));
-
-            json::value cont1_port;
-            cont1_port[U("containerPort")] = json::value::number(U(80));
-        
-            json::value ports;
-	        ports[0] = cont1_port;
-            cont1[U("ports")] = ports;
-
-            // Create the items array
-            json::value containers;
-	        containers[0] = cont1;
-
-            json::value cont;
-            cont[U("containers")] = containers;
-
-            pod[U("spec")] = cont;
-
-            // Write the current JSON value to a stream with the native platform character width
-            utility::stringstream_t stream;
-            pod.serialize(stream);
-
-            // Display the string stream
-            //std::cout << "Outut of JSON stream: " << stream.str() << std::endl;
-            return pod;
-}
-
-int ec::Server::create_cont(json::value cont_json) {
-    std::cout << "Sending k8s request to create Pod and waiting for response.."  << std::endl;
-
-    json::value json_return;
-    web::http::client::http_client client("http://localhost:8000/api/v1/namespaces/default/pods");
-    client.request(web::http::methods::POST, U("/"), cont_json)
-    .then([](const web::http::http_response& response) {
-        return response.extract_json(); 
-    })
-    .then([&json_return](const pplx::task<web::json::value>& task) {
-        try {
-            json_return = task.get();
-        }
-        catch (const web::http::http_exception& e) {                    
-            std::cout << "error " << e.what() << std::endl;
-        }
-    })
-    .wait();
-
-    std::cout << "JSON Response: " << std::endl;
-    std::cout << json_return.serialize() << std::endl;
-    // TODO: Confirm Pod deployed succesfully:    
 }
 
 

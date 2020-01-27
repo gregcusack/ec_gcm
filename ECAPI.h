@@ -4,6 +4,7 @@
 
 #ifndef EC_GCM_ECAPI_H
 #define EC_GCM_ECAPI_H
+
 #include "ElasticContainer.h"
 #include "types/msg.h"
 #include "types/msg.h"
@@ -23,7 +24,7 @@ namespace ec {
         ~ECAPI();
         //creates _ec and server and connects them
 //        void build_manager_handler();
-        void create_ec();
+        int create_ec();
 
         [[nodiscard]] const ElasticContainer& get_elastic_container() const;
 

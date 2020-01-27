@@ -17,6 +17,9 @@
 #include <thread>
 #include <fstream>
 
+#include <cpprest/http_client.h>
+#include <cpprest/json.h> // JSON library
+
 #include "types/msg.h"
 #include "types/k_msg.h"
 #include "SubContainer.h"
@@ -25,6 +28,8 @@
 #include "stats/global/mem_g.h"
 #include "stats/global/cpu_g.h"
 //#include "Server.h"
+
+using namespace web;                        // Common features like URIs, JSON.
 
 #define __ALLOC_FAILED__ -2
 #define __ALLOC_SUCCESS__ 1
@@ -98,6 +103,9 @@ namespace ec {
 
         //MEM
 
+        //K8s
+        json::value generate_pod_json(const std::string pod_name);
+        int deploy_pod(const json::value pod_json);
 
     private:
         uint32_t ec_id;
