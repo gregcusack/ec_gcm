@@ -19,7 +19,6 @@ namespace ec {
         uint32_t                req_type;         //1: mem, 0: cpu, 2: 
         uint64_t            rsrc_amnt;      //amount of resources (cpu/mem)
         uint32_t                request;        //1: mem, 0: cpu
-        uint64_t             cont_name;      
 
         friend std::ostream& operator<<(std::ostream& os_, const k_msg_t& k) {
             return os_ << "k_msg_t: "

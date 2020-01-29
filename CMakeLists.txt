@@ -10,7 +10,7 @@ find_package(Boost REQUIRED system)
 add_executable(ec_gcm main.cpp
         ElasticContainer.h              ElasticContainer.cpp
         SubContainer.h                  SubContainer.cpp
-        ECAPI.h ECAPI.cpp
+        ECAPI.h                         ECAPI.cpp
         GlobalCloudManager.h            GlobalCloudManager.cpp
         #Server.cpp                     Server.h
         types/msg.h                     types/msg.cpp

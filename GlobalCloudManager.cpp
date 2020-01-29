@@ -60,13 +60,13 @@ ec::GlobalCloudManager::~GlobalCloudManager() {
     servers.clear();
 }
 
-void ec::GlobalCloudManager::run() {
+void ec::GlobalCloudManager::run(std::string app_name, std::vector<std::string> app_images) {
     for(const auto &s : servers) {
         if(fork() == 0) {
             std::cout << "[child] pid: " << getpid() << ", [parent] pid: " <<  getppid() << std::endl;
             std::cout << "server_id: " << s.second->get_server_id() << std::endl;
 
-            s.second->initialize();
+            s.second->initialize(app_name, app_images);
             s.second->serve();
         }
         else {

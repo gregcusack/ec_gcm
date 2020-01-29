@@ -9,7 +9,7 @@ ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, uint16_t _port
     agent_clients({}), manager(nullptr) {}
 
 
-void ec::Server::initialize() {
+void ec::Server::initialize(std::string app_name, std::vector<std::string> app_images) {
     int32_t addrlen, opt = 1;
     if((server_socket.sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         std::cout << "[ERROR]: Server socket creation failed in server: " << server_id << std::endl;
@@ -52,8 +52,10 @@ void ec::Server::initialize() {
     
     // And this is where we can actually now "deploy" the distributed containers 
     // instead of the current model of waiting for them to be created on the hosts
-    int cont_create = manager->create_ec();
-    std::cout << "container created status: " << cont_create <<std::endl;
+    for (int i=0; i<app_images.size(); i++) {
+        int cont_create = manager->create_ec(app_name, app_images[i]);
+        std::cout << "Created elastic container status: " << cont_create << " for app: " << app_name << " with image: " << app_images[i] <<std::endl;
+    }
 }
 
 void ec::Server::serve() {

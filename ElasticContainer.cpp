@@ -61,7 +61,8 @@ ec::ElasticContainer::~ElasticContainer() {
 
 //K8s Helper Functions
 
-json::value ec::ElasticContainer::generate_pod_json(const std::string pod_name) {
+json::value ec::ElasticContainer::generate_pod_json(const std::string pod_name, const std::string app_image) {
+    std::string container_name = pod_name;
     // Create a JSON object (the pod)
     json::value pod;
     pod[U("kind")] = json::value::string(U("Pod"));
@@ -70,11 +71,11 @@ json::value ec::ElasticContainer::generate_pod_json(const std::string pod_name) 
     // Create a JSON object (the metadata)
     json::value metadata;
     metadata[U("namespace")] = json::value::string(U("default"));
-    metadata[U("name")] = json::value::string(U(pod_name));
+    metadata[U("name")] = json::value::string(U(container_name));
 
     // Create a JSON object (the metadata label)
     json::value metadata_label;
-    metadata_label[U("name")] = json::value::string(U(pod_name));
+    metadata_label[U("name")] = json::value::string(U(container_name));
 
     metadata[U("labels")] = metadata_label;
 
@@ -82,9 +83,9 @@ json::value ec::ElasticContainer::generate_pod_json(const std::string pod_name) 
 
     // Now we worry about the specs..
     json::value cont1;
-    cont1[U("name")] = json::value::string(U(pod_name));
+    cont1[U("name")] = json::value::string(U(container_name));
     // Default image is nginx
-    cont1[U("image")] = json::value::string(U("nginx"));
+    cont1[U("image")] = json::value::string(U(app_image));
 
     json::value cont1_port;
     cont1_port[U("containerPort")] = json::value::number(U(80));

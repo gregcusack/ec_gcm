@@ -104,7 +104,7 @@ namespace ec {
         //MEM
 
         //K8s
-        json::value generate_pod_json(const std::string pod_name);
+        json::value generate_pod_json(const std::string pod_name, const std::string app_image);
         int deploy_pod(const json::value pod_json);
 
     private:

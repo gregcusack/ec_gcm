@@ -9,7 +9,7 @@ ec::ECAPI::ECAPI(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients)
     // _ec = new ElasticContainer(manager_id, agent_clients);
 }
 
-int ec::ECAPI::create_ec() {
+int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     _ec = new ElasticContainer(manager_id, agent_clients);       //pass in gcm_ip for now
 
     /* This is the highest level of abstraction we want to provide to the end application developer. 
@@ -34,7 +34,7 @@ int ec::ECAPI::create_ec() {
     int pod_creation;
     
     // PreritO Todo: Expand support for msg_struct to send strings and not just uints
-    std::string pod_name = "12345"; 
+    std::string pod_name = app_name+"-"+app_image; 
     uint64_t pod_name_uint64;
     char* end;
     pod_name_uint64 = strtoull( pod_name.c_str(), &end,10 );
@@ -46,7 +46,7 @@ int ec::ECAPI::create_ec() {
     for (const auto &agentClient : ec_agent_clients) {
         // std::cout << "Agent IP" << agentClient->get_agent_ip() << std::endl;
         // Step 1: Generate a JSON file for each Pod definition
-        json::value json_output = _ec->generate_pod_json(pod_name);
+        json::value json_output = _ec->generate_pod_json(pod_name, app_image);
         std::cout << "JSON File output: " << json_output << std::endl;
         // Step 2: Communicate with K8 REST API to deploy the pod on that agent
         //         This is where we might have to deal with some way to correspond the agent ip and k8 node name..
@@ -64,14 +64,26 @@ int ec::ECAPI::create_ec() {
         //         Once the container actually establishes a connection to the GCM, the container will send it's own init 
         //         message to the server which will call: handle_add_cgroup_to_ec
         
+        // This needs to be changed when we implement sending strings across in the correct way..
+        int pod_name_uint64t;
+        std::istringstream iss (pod_name);
+        iss >> pod_name_uint64t;
+
         msg_t *init_cont_msg = new msg_t;
         init_cont_msg->client_ip = om::net::ip4_addr::reverse_byte_order(om::net::ip4_addr::from_string("192.168.6.10"));
         init_cont_msg->cgroup_id = 0;
         init_cont_msg->req_type = 4;
         init_cont_msg->rsrc_amnt = 0;
         init_cont_msg->request = 1;
-        init_cont_msg->runtime_remaining = 0;
-        init_cont_msg->cont_name = pod_name_uint64;
+        init_cont_msg->cont_name = pod_name_uint64t;
+
+        if (app_image == "nginx"){
+            init_cont_msg->runtime_remaining = 1;
+        } else if (app_image == "redis") {
+            init_cont_msg->runtime_remaining = 2;
+        } else {
+            init_cont_msg->runtime_remaining = 1;
+        }
 
         if (write(agentClient->get_socket(), (char *) init_cont_msg, sizeof(*init_cont_msg)) < 0) {
             std::cout << "[ERROR]: In Deploy_Container. Error in writing to agent_clients socket: " << std::endl;

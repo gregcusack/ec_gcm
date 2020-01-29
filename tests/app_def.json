@@ -1,0 +1,13 @@
+{
+	"name": "12345",
+	"specs": {
+		"mem": 20,
+		"cpu": 1.5,
+		"ports": 80,
+		"net": 10
+	},
+	"images": [
+		"nginx",
+		"redis"	
+	]
+}

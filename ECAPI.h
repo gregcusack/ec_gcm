@@ -11,6 +11,9 @@
 #include "Agents/Agent.h"
 #include "Agents/AgentClient.h"
 #include "om.h"
+#include <iostream>
+#include <functional> //for std::hash
+#include <string>
 
 #define __FAILED__ -1
 
@@ -24,7 +27,7 @@ namespace ec {
         ~ECAPI();
         //creates _ec and server and connects them
 //        void build_manager_handler();
-        int create_ec();
+        int create_ec(std::string app_name, std::string app_image);
 
         [[nodiscard]] const ElasticContainer& get_elastic_container() const;
 

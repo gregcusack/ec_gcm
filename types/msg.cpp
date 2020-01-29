@@ -11,7 +11,6 @@ ec::msg_t::msg_t(const ec::k_msg_t &k_msg) {
     req_type = k_msg.req_type;
     rsrc_amnt = k_msg.rsrc_amnt;
     request = k_msg.request;
-    cont_name = k_msg.cont_name;
 }
 
 ec::msg_t::msg_t(const ec::msg_t &msg_req) {
