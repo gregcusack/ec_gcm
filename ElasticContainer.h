@@ -62,6 +62,9 @@ namespace ec {
         uint64_t get_cpu_rt_remaining() { return _cpu.get_runtime_remaining(); }
         uint64_t get_cpu_unallocated_rt() { return _cpu.get_unallocated_rt(); }
         uint64_t get_cpu_slice() { return _cpu.get_slice(); }
+        uint64_t get_fair_cpu_share() { return fair_cpu_share; }
+        uint64_t get_overrun() { return _cpu.get_overrun(); }
+        uint64_t get_total_cpu() { return _cpu.get_total_cpu(); }
 
         //MEM
         uint64_t get_memory_available() { return _mem.get_mem_available(); }
@@ -84,6 +87,11 @@ namespace ec {
         uint64_t refill_runtime();
         void incr_unallocated_rt(uint64_t _incr) { _cpu.incr_unalloacted_rt(_incr); }
         void decr_unallocated_rt(uint64_t _decr) { _cpu.decr_unallocated_rt(_decr); }
+        void update_fair_cpu_share();
+        void incr_total_cpu(uint64_t _incr) { _cpu.incr_total_cpu(_incr); }
+        void decr_total_cpu(uint64_t _decr) { _cpu.decr_total_cpu(_decr); }
+        void incr_overrun(uint64_t _incr) { _cpu.incr_overrun(_incr); }
+        void decr_overrun(uint64_t _decr) { _cpu.decr_overrun(_decr); }
 
         //MEM
         void ec_resize_memory_max(int64_t _max_mem) { _mem.set_mem_limit(_max_mem); }
@@ -108,6 +116,7 @@ namespace ec {
     private:
         uint32_t ec_id;
         subcontainer_map subcontainers;
+        uint64_t fair_cpu_share;
 
         //agents
         //TODO: this may need to be a map

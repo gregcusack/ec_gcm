@@ -50,6 +50,8 @@ namespace ec {
         uint64_t ec_get_cpu_runtime_remaining() { return _ec->get_cpu_rt_remaining(); }
         uint64_t ec_get_cpu_unallocated_rt() { return _ec->get_cpu_unallocated_rt(); }
         uint64_t ec_get_cpu_slice() { return _ec->get_cpu_slice(); }
+        uint64_t ec_get_fair_cpu_share() { return _ec->get_fair_cpu_share(); }
+        uint64_t ec_get_overrun() { return _ec->get_overrun(); }
 
         //MEM
         uint64_t ec_get_memory_available() { return _ec->get_memory_available(); }
@@ -74,6 +76,10 @@ namespace ec {
         uint64_t ec_refill_runtime() {return _ec->refill_runtime(); }
         void ec_incr_unallocated_rt(uint64_t _incr) { _ec->incr_unallocated_rt(_incr); }
         void ec_decr_unallocated_rt(uint64_t _decr) { _ec->decr_unallocated_rt(_decr); }
+        void ec_incr_total_cpu(uint64_t _incr) { _ec->incr_total_cpu(_incr); }
+        void ec_decr_total_cpu(uint64_t _decr) { _ec->decr_total_cpu(_decr); }
+        void ec_incr_overrun(uint64_t _incr) { _ec->incr_overrun(_incr); }
+        void ec_decr_overrun(uint64_t _decr) { _ec->decr_overrun(_decr); }
 
         //MEM
         void ec_resize_memory_max(int64_t _max_mem) { _ec->ec_resize_memory_max(_max_mem); }

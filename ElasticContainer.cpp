@@ -5,10 +5,10 @@
 #include "ElasticContainer.h"
 
 
-ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id) {}
+ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id), fair_cpu_share(0) {}
 
 ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients)
-    : ec_id(_ec_id), agent_clients(_agent_clients) {
+    : ec_id(_ec_id), agent_clients(_agent_clients), fair_cpu_share(0) {
 
     //TODO: change num_agents to however many servers we have. IDK how to set it rn.
 
@@ -70,6 +70,11 @@ ec::ElasticContainer::~ElasticContainer() {
         delete i.second;
     }
     subcontainers.clear();
+}
+
+void ec::ElasticContainer::update_fair_cpu_share() {
+    std::cout << "update fair share. (tot_cpu, # subconts): (" << _cpu.get_total_cpu() << ", " << subcontainers.size() << ")" << std::endl;
+    fair_cpu_share = (uint64_t)(_cpu.get_total_cpu() / subcontainers.size());
 }
 
 

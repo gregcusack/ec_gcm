@@ -113,6 +113,7 @@ void ec::Server::handle_client_reqs(void *args) {
         auto *req = reinterpret_cast<msg_t*>(buff_in);
         req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
         auto *res = new msg_t(*req);
+//        std::cout << "received: " << *req << std::endl;
         ret = manager->handle_req(req, res, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
 //        std::cout << "Sending back: " << *res << std::endl;
         if(ret == __ALLOC_SUCCESS__) {  //TODO: fix this.

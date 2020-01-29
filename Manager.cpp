@@ -16,60 +16,56 @@ int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
     auto sc = ec_get_sc_for_update(sc_id);
     auto sc_quota = sc->sc_get_quota();
+    auto sc_quota_rx = req->rsrc_amnt;
 
     auto sc_rt_remaining = req->runtime_remaining;
     uint32_t throttle_incr = sc->sc_get_thr_incr_and_set_thr(req->request);
-    if(throttle_incr > 0) {                                 //container got throttled during the last period. need rt
-        std::cout << "throttle. try give alloc" << std::endl;
-        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), ec_get_cpu_slice());
-        if(extra_rt > 0) {
-            std::cout << "need extra bw and some avail. giving back: " << extra_rt << std::endl;
-            ec_decr_unallocated_rt(extra_rt);
-            sc->sc_set_quota(sc_quota + extra_rt);
+
+    if(ec_get_overrun() > 0 && sc_quota > ec_get_fair_cpu_share()) {
+        std::cout << "overrun" << std::endl;
+        uint64_t amnt_share_over = sc_quota - ec_get_fair_cpu_share();
+        sc->sc_set_quota(ec_get_fair_cpu_share());
+        ec_decr_overrun(amnt_share_over);
+    }
+    else if(throttle_incr > 0 && sc_quota < ec_get_fair_cpu_share()) {   //throttled but don't have fair share
+        std::cout << "throt and less than fair share" << std::endl;
+        uint64_t amnt_share_lacking = ec_get_fair_cpu_share() - sc_quota;
+        if(ec_get_cpu_unallocated_rt() > 0) {
+            std::cout << "give back some unalloc_Rt" << std::endl;
+            uint64_t to_add = std::min(ec_get_cpu_unallocated_rt(), amnt_share_lacking);
+            sc->sc_set_quota(to_add);
+            ec_decr_unallocated_rt(to_add);
+            sc_quota = sc->sc_get_quota();
+        }
+        if(sc_quota < ec_get_fair_cpu_share()) { //not enough in unalloc_rt to get back to fair share, even out
+            std::cout << "reset to fair share" << std::endl;
+            uint64_t extra_rt = ec_get_fair_cpu_share() - sc_quota;
+            sc->sc_set_quota(ec_get_fair_cpu_share()); //just set to fair share
+            ec_incr_overrun(extra_rt);
         }
     }
-    else if(sc_rt_remaining > 0.2 * sc_quota) {             // is extra rt > than 20ms (if quota = 100ms)
-        ec_incr_unallocated_rt(ec_get_cpu_slice());   // give cpu slice to global pool
-        std::cout << "has extra rt. giving back slice to unalloc. unalloc_rt now: " << ec_get_cpu_unallocated_rt() << std::endl;
-        sc->sc_set_quota(sc_quota - ec_get_cpu_slice());
+    else if(throttle_incr > 0 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
+        std::cout << "throttle. try give alloc" << std::endl;
+        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), ec_get_cpu_slice());
+        ec_decr_unallocated_rt(extra_rt);
+        sc->sc_set_quota(sc_quota + extra_rt);
     }
+    else if(sc_rt_remaining > ec_get_cpu_slice()) { //greater than 5ms unused rt?
+        std::cout << "extra rt > slice size" << std::endl;
+        uint64_t new_quota = sc_quota - sc_rt_remaining + ec_get_cpu_slice();
 
+        std::cout << "new, old, rt_remain, slice: (" << new_quota << "," << sc_quota << "," << sc_rt_remaining << "," << ec_get_cpu_slice() << ")" << std::endl;
+        sc->sc_set_quota(new_quota); //give back what was used + 5ms
+        std::cout << "old quota, new quota: (" << sc_quota << ", " << sc->sc_get_quota() << ")" << std::endl;
+        ec_incr_unallocated_rt(sc_quota - sc->sc_get_quota()); //unalloc_rt <-- old quota - new quota
+    }
+    std::cout << "unalloc rt: " << ec_get_cpu_unallocated_rt() << std::endl;
     std::cout << "returning quota: " << sc->sc_get_quota() << std::endl;
     res->rsrc_amnt = sc->sc_get_quota();
     res->request = 0;
     cpulock.unlock();
     return __ALLOC_SUCCESS__;
-/*
-    uint64_t ec_rt_remaining = ec_get_cpu_runtime_remaining();
 
-    if(ec_rt_remaining > 0) {
-        //give back what it asks for
-        ret = req->rsrc_amnt > ec_rt_remaining ? ec_rt_remaining : req->rsrc_amnt;
-
-//        runtime_remaining -= ret; //TODO: put back in at some point??
-//        std::cout << "Server sending back " << ret << "ns in runtime" << std::endl;
-
-        cpulock.unlock();
-
-//        std::cout << req->runtime_remaining << std::endl;
-
-        //TEST
-//        ret += 3*slice; //see what happens
-        res->rsrc_amnt = ret;   //set bw we're returning
-
-////        res->rsrc_amnt = req->rsrc_amnt; //TODO: this just gives back what was asked for!
-//        flag++;
-        res->request = 0;       //set to give back
-        return __ALLOC_SUCCESS__;
-    }
-    else {
-        cpulock.unlock();
-        //TODO: Throttle here
-        res->rsrc_amnt = 0;
-        res->request = 0;
-        return __ALLOC_FAILED__;
-    }
-    */
 }
 
 int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd) {
@@ -155,6 +151,9 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, c
     }
     auto *sc = _ec->create_new_sc(req->cgroup_id, ip, fd, req->rsrc_amnt, req->request);
     int ret = _ec->insert_sc(*sc);
+    _ec->incr_total_cpu(sc->sc_get_quota());
+    _ec->update_fair_cpu_share();
+    std::cout << "fair share: " << ec_get_fair_cpu_share() << std::endl;
     std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
     res->request = 0; //giveback (or send back)
     return ret;

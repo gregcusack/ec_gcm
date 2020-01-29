@@ -40,10 +40,10 @@ namespace ec {
 
         ContainerId* get_c_id() {return &c_id;}
         int get_fd() { return fd; }
-        int64_t sc_get_quota() { return cpu.get_quota(); }
+        uint64_t sc_get_quota() { return cpu.get_quota(); }
         uint32_t sc_get_throttled() { return cpu.get_throttled(); }
 
-        void sc_set_quota(int64_t _quota) { cpu.set_quota(_quota); }
+        void sc_set_quota(uint64_t _quota) { cpu.set_quota(_quota); }
         void sc_set_throttled(uint32_t _throttled) { cpu.set_throttled(_throttled); }
 
         uint32_t sc_get_throttle_increase(uint32_t _throttled) { return cpu.get_throttle_increase(_throttled); }
