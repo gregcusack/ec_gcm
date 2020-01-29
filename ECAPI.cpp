@@ -70,7 +70,8 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
         iss >> pod_name_uint64t;
 
         msg_t *init_cont_msg = new msg_t;
-        init_cont_msg->client_ip = om::net::ip4_addr::reverse_byte_order(om::net::ip4_addr::from_string("192.168.6.10"));
+        //init_cont_msg->client_ip = om::net::ip4_addr::reverse_byte_order(om::net::ip4_addr::from_string("192.168.6.10"));
+        init_cont_msg->client_ip = om::net::ip4_addr::from_string("192.168.6.10");
         init_cont_msg->cgroup_id = 0;
         init_cont_msg->req_type = 4;
         init_cont_msg->rsrc_amnt = 0;
@@ -95,12 +96,16 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
             return -2;
         }
         rx_resp = (msg_t *) rx_buffer;
-        std::cout << "response from agent (client ip, request type, rsrc_amnt): " << rx_resp->client_ip << "," << rx_resp->req_type << ", " <<  rx_resp->rsrc_amnt << std::endl;
-        if (rx_resp->req_type == init_cont_msg->req_type && rx_resp->rsrc_amnt == 1) {
-            std::cout << "[deploy error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
-            return -3;
-        }
+        std::cout << "response from agent (client ip, request type, cont_pid): " << rx_resp->client_ip << "," << rx_resp->req_type << ", " <<  rx_resp->rsrc_amnt << std::endl;
+        // if (rx_resp->req_type == init_cont_msg->req_type && rx_resp->rsrc_amnt == 1) {
+        //     std::cout << "[deploy error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
+        //     return -3;
+        // }
 
+        // Add PID of the container to the _ec map..
+        // int pid_int; 
+        // sscanf(std::to_string(rx_resp->rsrc_amnt), "%d", &pid_int); 
+        // _ec->insert_pid(pid_int);
     }
     return 0;
 }

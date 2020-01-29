@@ -61,13 +61,26 @@ ec::GlobalCloudManager::~GlobalCloudManager() {
 }
 
 void ec::GlobalCloudManager::run(std::string app_name, std::vector<std::string> app_images) {
+
+    std::thread threads[32];
+    //app_thread_args *args;
+    int32_t num_of_cli = 0;
+
     for(const auto &s : servers) {
         if(fork() == 0) {
             std::cout << "[child] pid: " << getpid() << ", [parent] pid: " <<  getppid() << std::endl;
             std::cout << "server_id: " << s.second->get_server_id() << std::endl;
+            
+            // Spin up 2 threads here: 1 for the server listening on events
+            s.second->initialize();
+            std::thread t1(&ec::Server::serve, s.second);
 
-            s.second->initialize(app_name, app_images);
-            s.second->serve();
+            // Another to deploy the application
+            std::thread t2(&ec::Server::deploy_application, s.second, app_name, app_images);
+
+            t2.join();
+            t1.join();
+
         }
         else {
             continue;

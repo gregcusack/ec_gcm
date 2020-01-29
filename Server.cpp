@@ -9,7 +9,7 @@ ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, uint16_t _port
     agent_clients({}), manager(nullptr) {}
 
 
-void ec::Server::initialize(std::string app_name, std::vector<std::string> app_images) {
+void ec::Server::initialize() {
     int32_t addrlen, opt = 1;
     if((server_socket.sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         std::cout << "[ERROR]: Server socket creation failed in server: " << server_id << std::endl;
@@ -50,12 +50,6 @@ void ec::Server::initialize(std::string app_name, std::vector<std::string> app_i
     }
     server_initialized = true; //server setup can run now
     
-    // And this is where we can actually now "deploy" the distributed containers 
-    // instead of the current model of waiting for them to be created on the hosts
-    for (int i=0; i<app_images.size(); i++) {
-        int cont_create = manager->create_ec(app_name, app_images[i]);
-        std::cout << "Created elastic container status: " << cont_create << " for app: " << app_name << " with image: " << app_images[i] <<std::endl;
-    }
 }
 
 void ec::Server::serve() {
@@ -76,6 +70,8 @@ void ec::Server::serve() {
     cliaddr_len = sizeof(server_socket.addr);
     std::cout << "[dbg]: Max socket descriptor is: " << max_sd << std::endl;
 
+    //std::cout << "[dgb]: All PIDs for the _ec reference: " << std::endl;
+    
     while(true) {
         FD_SET(server_socket.sock_fd, &readfds);
 //        std::cout << "[dgb]: In while loop waiting for server socket event. EC Server id: " << _ec->get_manager_id() << std::endl;
@@ -103,6 +99,18 @@ void ec::Server::serve() {
         }
     }
 
+}
+
+void ec::Server::deploy_application(std::string app_name, std::vector<std::string> app_images){
+    // And this is where we can actually now "deploy" the distributed containers 
+    // instead of the current model of waiting for them to be created on the hosts
+    if (manager == NULL) {
+        std::cout << "error in finding manager reference.."  << std::endl;
+    }
+    for (int i=0; i<app_images.size(); i++) {
+        int cont_create = manager->create_ec(app_name, app_images[i]);
+        std::cout << "Created elastic container status: " << cont_create << " for app: " << app_name << " with image: " << app_images[i] <<std::endl;
+    }
 }
 
 void ec::Server::handle_client_reqs(void *args) {

@@ -31,7 +31,9 @@ namespace ec {
     public:
         Server(uint32_t server_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
         ~Server() = default;
-        void initialize(std::string app_name, std::vector<std::string> app_images);
+        void initialize();
+
+        void deploy_application(std::string app_name, std::vector<std::string> app_images);
 
         struct server_t {
             int32_t sock_fd;

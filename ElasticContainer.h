@@ -99,6 +99,9 @@ namespace ec {
         SubContainer* create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd);
         int insert_sc(SubContainer &_sc);
 
+        // int insert_pid(int pid);
+        // std::vector<int> get_pids();
+
         //CPU
 
         //MEM
@@ -110,6 +113,8 @@ namespace ec {
     private:
         uint32_t ec_id;
         subcontainer_map subcontainers;
+
+ //       std::vector<std::int> pids;
 
         //agents
         //TODO: this may need to be a map

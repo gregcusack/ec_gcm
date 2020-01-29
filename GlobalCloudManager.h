@@ -15,6 +15,7 @@
 #include "Agents/Agent.h"
 #include "ElasticContainer.h"
 #include "om.h"
+#include <thread>
 
 //std::mutex eclock;
 
@@ -33,6 +34,12 @@ namespace ec {
 
         const server_map& get_servers() {return servers;}
         const Server& get_server(uint32_t server_id) const;
+
+        struct app_thread_args {
+            app_thread_args()              = default;
+            std::string app_name           = nullptr;
+            std::vector<std::string> *app_images = nullptr;
+        };
 
     private:
         ip4_addr                gcm_ip;
