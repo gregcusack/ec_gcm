@@ -21,11 +21,33 @@ int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
     auto sc_rt_remaining = req->runtime_remaining;
     uint32_t throttle_incr = sc->sc_get_thr_incr_and_set_thr(req->request);
 
+//    if(ec_get_overrun() > 0 && sc_quota > ec_get_fair_cpu_share()) {
+//        std::cout << "overrun" << std::endl;
+//        uint64_t amnt_share_over = sc_quota - ec_get_fair_cpu_share();
+//        sc->sc_set_quota(ec_get_fair_cpu_share());
+//        ec_decr_overrun(amnt_share_over);
+//    }
     if(ec_get_overrun() > 0 && sc_quota > ec_get_fair_cpu_share()) {
         std::cout << "overrun" << std::endl;
         uint64_t amnt_share_over = sc_quota - ec_get_fair_cpu_share();
-        sc->sc_set_quota(ec_get_fair_cpu_share());
-        ec_decr_overrun(amnt_share_over);
+        uint64_t new_quota, to_sub, overrun_sub;
+        uint64_t overrun = ec_get_overrun();
+        //subtract back to fair share or remove slice if overrun > slice and amnt_fair_shair > overrun
+        /*
+         * Get back to fair share OR reduce quota by slice. depends on overrun size.
+         * don't want to subtract more than we're overrun
+         */
+        if(amnt_share_over >= ec_get_cpu_slice()) {
+            to_sub = std::min(overrun, ec_get_cpu_slice()); //
+        }
+        else {
+            to_sub = std::min(overrun, amnt_share_over);
+        }
+        new_quota = sc_quota - to_sub;
+        overrun_sub = to_sub;
+
+        sc->sc_set_quota(new_quota);
+        ec_decr_overrun(overrun_sub);
     }
     else if(throttle_incr > 0 && sc_quota < ec_get_fair_cpu_share()) {   //throttled but don't have fair share
         std::cout << "throt and less than fair share" << std::endl;
@@ -38,11 +60,26 @@ int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
             sc_quota = sc->sc_get_quota();
         }
         if(sc_quota < ec_get_fair_cpu_share()) { //not enough in unalloc_rt to get back to fair share, even out
-            std::cout << "reset to fair share" << std::endl;
-            uint64_t extra_rt = ec_get_fair_cpu_share() - sc_quota;
-            sc->sc_set_quota(ec_get_fair_cpu_share()); //just set to fair share
-            ec_incr_overrun(extra_rt);
+            amnt_share_lacking = ec_get_fair_cpu_share() - sc_quota;
+            uint64_t overrun, new_quota;
+            //check if we can add slice and not go over fair share
+            if(amnt_share_lacking > ec_get_cpu_slice()) {
+                new_quota = sc_quota + ec_get_cpu_slice();
+                overrun = ec_get_cpu_slice();
+            }
+            else { //if we add a slice, we will exceed fair share
+                new_quota = sc_quota + amnt_share_lacking;
+                overrun = amnt_share_lacking;
+            }
+            sc->sc_set_quota(new_quota);
+            ec_incr_overrun(overrun);
         }
+//        if(sc_quota < ec_get_fair_cpu_share()) { //not enough in unalloc_rt to get back to fair share, even out
+//            std::cout << "reset to fair share" << std::endl;
+//            uint64_t extra_rt = ec_get_fair_cpu_share() - sc_quota;
+//            sc->sc_set_quota(ec_get_fair_cpu_share()); //just set to fair share
+//            ec_incr_overrun(extra_rt);
+//        }
     }
     else if(throttle_incr > 0 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
         std::cout << "throttle. try give alloc" << std::endl;
