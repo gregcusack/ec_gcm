@@ -95,6 +95,12 @@ json::value ec::ElasticContainer::generate_pod_json(const std::string pod_name, 
     metadata[U("labels")] = metadata_label;
 
     pod[U("metadata")] = metadata;
+/*
+    json::value nodeSelector;
+    nodeSelector[U("node-role.kubernetes.io/master")] = json::value::string(U(""));
+
+    pod[U("nodeSelector")] = nodeSelector;*/
+
 
     // Now we worry about the specs..
     json::value cont1;
