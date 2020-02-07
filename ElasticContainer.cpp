@@ -145,8 +145,8 @@ int ec::ElasticContainer::deploy_pod(const json::value pod_json) {
     })
     .wait();
 
-    std::cout << "JSON Response: " << std::endl;
-    std::cout << json_return.serialize() << std::endl;
+    //std::cout << "JSON Response: " << std::endl;
+    //std::cout << json_return.serialize() << std::endl;
 
     // Prerit Todo: Is there anyway to tell from k8s right away if the Pod Failed at deployment? Look into this..
     // If so, return -1 for a failed pod deployment

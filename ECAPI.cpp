@@ -35,19 +35,14 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     
     // PreritO Todo: Expand support for msg_struct to send strings and not just uints
     std::string pod_name = app_name+"-"+app_image; 
-    uint64_t pod_name_uint64;
-    char* end;
-    pod_name_uint64 = strtoull( pod_name.c_str(), &end,10 );
 
     char rx_buffer[2048] = {0};
     int ret;
-    msg_t* rx_resp;
 
     for (const auto &agentClient : ec_agent_clients) {
-        // std::cout << "Agent IP" << agentClient->get_agent_ip() << std::endl;
         // Step 1: Generate a JSON file for each Pod definition
         json::value json_output = _ec->generate_pod_json(pod_name, app_image);
-        std::cout << "JSON File output: " << json_output << std::endl;
+        // std::cout << "JSON File output: " << json_output << std::endl;
         // Step 2: Communicate with K8 REST API to deploy the pod on that agent
         //         This is where we might have to deal with some way to correspond the agent ip and k8 node name..
         //         so we can deploy to that specific node. (testing with one node in k8s cluster doesn't face this issue)
@@ -64,48 +59,53 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
         //         Once the container actually establishes a connection to the GCM, the container will send it's own init 
         //         message to the server which will call: handle_add_cgroup_to_ec
         
-        // This needs to be changed when we implement sending strings across in the correct way..
-        int pod_name_uint64t;
-        std::istringstream iss (pod_name);
-        iss >> pod_name_uint64t;
+        msg_struct::ECMessage init_msg;
+        init_msg.set_client_ip("192.168.6.10");
+        init_msg.set_req_type(4);
+        init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
+        init_msg.set_cgroup_id(0);
 
-        msg_t *init_cont_msg = new msg_t;
-        //init_cont_msg->client_ip = om::net::ip4_addr::reverse_byte_order(om::net::ip4_addr::from_string("192.168.6.10"));
-        init_cont_msg->client_ip = om::net::ip4_addr::from_string("192.168.6.10");
-        init_cont_msg->cgroup_id = 0;
-        init_cont_msg->req_type = 4;
-        init_cont_msg->rsrc_amnt = 0;
-        init_cont_msg->request = 1;
-        init_cont_msg->cont_name = pod_name_uint64t;
+        int tx_size = init_msg.ByteSizeLong()+4;
+        char* tx_buf = new char[tx_size];
+        google::protobuf::io::ArrayOutputStream arrayOut(tx_buf, tx_size);
+        google::protobuf::io::CodedOutputStream codedOut(&arrayOut);
+        codedOut.WriteVarint32(init_msg.ByteSizeLong());
+        init_msg.SerializeToCodedStream(&codedOut);
 
-        if (app_image == "nginx"){
-            init_cont_msg->runtime_remaining = 1;
-        } else if (app_image == "redis") {
-            init_cont_msg->runtime_remaining = 2;
-        } else {
-            init_cont_msg->runtime_remaining = 1;
-        }
-
-        if (write(agentClient->get_socket(), (char *) init_cont_msg, sizeof(*init_cont_msg)) < 0) {
+        std::cout << "Message length is: " << tx_size << std::endl; 
+        if (write(agentClient->get_socket(), (void*) tx_buf, tx_size) < 0) {
             std::cout << "[ERROR]: In Deploy_Container. Error in writing to agent_clients socket: " << std::endl;
             return -1;
         }
+
         ret = read(agentClient->get_socket(), rx_buffer, sizeof(rx_buffer));
         if (ret <= 0) {
             std::cout << "[ERROR]: GCM. Can't read from socket after deploying container" << std::endl;
             return -2;
         }
-        rx_resp = (msg_t *) rx_buffer;
-        std::cout << "response from agent (client ip, request type, cont_pid): " << rx_resp->client_ip << "," << rx_resp->req_type << ", " <<  rx_resp->rsrc_amnt << std::endl;
-        // if (rx_resp->req_type == init_cont_msg->req_type && rx_resp->rsrc_amnt == 1) {
-        //     std::cout << "[deploy error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
-        //     return -3;
-        // }
+        
+        msg_struct::ECMessage rx_msg;
+
+        google::protobuf::uint32 size;
+        google::protobuf::io::ArrayInputStream ais(rx_buffer,4);
+        CodedInputStream coded_input(&ais);
+        coded_input.ReadVarint32(&size); //Decode the HDR and get the size
+        google::protobuf::io::ArrayInputStream arrayIn(rx_buffer, size);
+        google::protobuf::io::CodedInputStream codedIn(&arrayIn);
+        codedIn.ReadVarint32(&size);
+        google::protobuf::io::CodedInputStream::Limit msgLimit = codedIn.PushLimit(size);
+        rx_msg.ParseFromCodedStream(&codedIn);
+        codedIn.PopLimit(msgLimit);
+
+        std::cout << "response from agent: request type, container name, Container_PID (unsigned -1 means error): " << rx_msg.req_type() << ", " <<  rx_msg.payload_string() << ", " <<  rx_msg.rsrc_amnt()  << std::endl;
+        
+        if ( rx_msg.rsrc_amnt() == (uint64_t) -1 ) {
+            std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
+            return -3;
+        }
 
         // Add PID of the container to the _ec map..
-        // int pid_int; 
-        // sscanf(std::to_string(rx_resp->rsrc_amnt), "%d", &pid_int); 
-        // _ec->insert_pid(pid_int);
+        // _ec->insert_pid(rx_msg.rsrc_amnt());
     }
     return 0;
 }
@@ -157,7 +157,6 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
     int ret = _ec->insert_sc(*sc);
     // And so once a subcontainer is created and added to the appropriate distributed container,
     // we can now create a map to link the container_id and cgroup_id - this is the place to do that..
-
     
     std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
     res->request = 0; //giveback (or send back)

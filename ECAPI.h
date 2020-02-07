@@ -14,9 +14,16 @@
 #include <iostream>
 #include <functional> //for std::hash
 #include <string>
+#include "proto/msg.pb.h"
+#include <google/protobuf/message.h>
+#include <google/protobuf/descriptor.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 
 #define __FAILED__ -1
 
+using namespace google::protobuf::io;
 
 namespace ec {
     class ECAPI {

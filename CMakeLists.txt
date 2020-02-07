@@ -4,8 +4,14 @@ project(ec_gcm)
 set(CMAKE_CXX_STANDARD 17)
 set(PTHREAD_LIB pthread)
 
+include(FindProtobuf)
+
+find_package(Protobuf REQUIRED)
 find_package(cpprestsdk REQUIRED)
 find_package(Boost REQUIRED system)
+
+add_subdirectory(proto)
+include_directories(${PROTOBUF_INCLUDE_DIR})
 
 add_executable(ec_gcm main.cpp
         ElasticContainer.h              ElasticContainer.cpp
@@ -23,6 +29,7 @@ add_executable(ec_gcm main.cpp
         stats/global/mem_g.h            stats/global/mem_g.cpp
         Manager.h                       Manager.cpp
         Agents/AgentClient.h            Agents/AgentClient.cpp
+        proto/msg.pb.h                  proto/msg.pb.cc     
         )
 
 add_executable(tester tests/run_test.cpp
@@ -35,4 +42,4 @@ add_executable(loop_test tests/run_continuous.cpp
         om.h
         )
 
-target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY})
+target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY})

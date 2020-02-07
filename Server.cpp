@@ -109,7 +109,7 @@ void ec::Server::deploy_application(std::string app_name, std::vector<std::strin
     }
     for (int i=0; i<app_images.size(); i++) {
         int cont_create = manager->create_ec(app_name, app_images[i]);
-        std::cout << "Created elastic container status: " << cont_create << " for app: " << app_name << " with image: " << app_images[i] <<std::endl;
+        // std::cout << "Created elastic container status: " << cont_create << " for app: " << app_name << " with image: " << app_images[i] <<std::endl;
     }
 }
 

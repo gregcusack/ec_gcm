@@ -19,7 +19,8 @@ The CloudLab cluster is setup in the following manner: One GCM master node and t
     2. `git checkout ftr_k8s_integration_cont_creation `
   * #### Install Required Libraries
     The GCM requires a couple of libraries/dependencies to work correctly. Most notably - an updated cmake package, and the c++restsdk. 
-    1. Install cmake via the following commands. Note that instructions for this were pulled from this [source](https://askubuntu.com/questions/355565/how-do-i-install-the-latest-version-of-cmake-from-the-command-line)
+    
+    ##### 1. Install cmake via the following commands. Note that instructions for this were pulled from this [source](https://askubuntu.com/questions/355565/how-do-i-install-the-latest-version-of-cmake-from-the-command-line)
     ``` 
     version=3.16
     build=2
@@ -32,7 +33,7 @@ The CloudLab cluster is setup in the following manner: One GCM master node and t
     sudo make -j$(nproc)
     sudo make install
     ```
-    2. Install [CPPRestSDK](https://github.com/microsoft/cpprestsdk). Instructions were pulled from [here](https://github.com/microsoft/cpprestsdk/wiki/How-to-build-for-Linux) 
+    ##### 2. Install [CPPRestSDK](https://github.com/microsoft/cpprestsdk). Instructions were pulled from [here](https://github.com/microsoft/cpprestsdk/wiki/How-to-build-for-Linux) 
     ```
     sudo apt-get update
     sudo apt-get install g++ git libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev openssl libssl-dev ninja-build
@@ -52,15 +53,18 @@ The CloudLab cluster is setup in the following manner: One GCM master node and t
     ```
     sudo ninja install
     ```
-    3. Install Ansible to deploy Agents on the different hosts. More detailed instructions can be found [here](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-ansible-on-ubuntu)
+
+    ##### 3. Install [Google Protobuf](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md) Compiler
+  
+    ##### 4. Install Ansible to deploy Agents on the different hosts. More detailed instructions can be found [here](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-ansible-on-ubuntu)
     ```
     sudo apt update
     sudo apt install software-properties-common
     sudo apt-add-repository --yes --update ppa:ansible/ansible
     sudo apt install ansible
     ```
-    4. Install [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
-    5. Install Kubernetes: A more detailed instructional guide can be found [here](https://blog.sourcerer.io/a-kubernetes-quick-start-for-people-who-know-just-enough-about-docker-to-get-by-71c5933b4633)
+    ##### 5. Install [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+    ##### 6. Install Kubernetes: A more detailed instructional guide can be found [here](https://blog.sourcerer.io/a-kubernetes-quick-start-for-people-who-know-just-enough-about-docker-to-get-by-71c5933b4633)
       * `sudo apt-get update && sudo apt-get install -y apt-transport-https`
       * `sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -`
       * Create/edit the file: /etc/apt/sources.list.d/kubernetes.list to add `deb http://apt.kubernetes.io/ kubernetes-xenial main`
