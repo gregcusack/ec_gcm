@@ -9,5 +9,8 @@
 	"images": [
 		"nginx",
 		"redis"	
+	],
+	"yaml_path" : [
+		"k8-yaml/"
 	]
 }

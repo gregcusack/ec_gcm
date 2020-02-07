@@ -21,10 +21,10 @@ int main(int argc, char* argv[]){
         return 1;
     }
     std::string jsonFile = argv[1];
-    std::vector<std::string>    agent_ips{"192.168.6.8"};//), "127.0.0.1", "127.0.0.1"};
+    std::vector<std::string>    agent_ips{"127.0.0.1"};//), "127.0.0.1", "127.0.0.1"};
     std::vector<uint16_t>       server_ports{4444};
 
-    auto *gcm = new ec::GlobalCloudManager("192.168.6.10", GCM_PORT, agent_ips, server_ports);
+    auto *gcm = new ec::GlobalCloudManager("127.0.0.1", GCM_PORT, agent_ips, server_ports);
 
     /* Here, we'll parse the input JSON file and then pass the specifics 
        into the server object
@@ -35,7 +35,7 @@ int main(int argc, char* argv[]){
                 i.e. if we have two agents running and 2 images, we should create 4 pods in total, right? (confirm this)
        Todo: change the server-first architecture to the manager-first architecture
     */
-
+    std::cout<<"[dbg] this is the json file: " <<jsonFile << std::endl;
     json::value val;                                          // JSON read from input file
     try {
         ifstream_t      file_stream(jsonFile);                                // filestream of working file
