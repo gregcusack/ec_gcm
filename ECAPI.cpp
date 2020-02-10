@@ -58,8 +58,9 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     for (const auto &agentClient : ec_agent_clients) {
         // std::cout << "Agent IP" << agentClient->get_agent_ip() << std::endl;
         // Step 1: Generate a JSON file for each Pod definition
+        std::cout << "Generating k8s JSON " << std::endl;
         json::value json_output = _ec->generate_pod_json(pod_name, app_image);
-        std::cout << "JSON File output: " << json_output << std::endl;
+        //std::cout << "JSON File output: " << json_output << std::endl;
         // Step 2: Communicate with K8 REST API to deploy the pod on that agent
         //         This is where we might have to deal with some way to correspond the agent ip and k8 node name..
         //         so we can deploy to that specific node. (testing with one node in k8s cluster doesn't face this issue)
@@ -83,7 +84,7 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
 
         msg_t *init_cont_msg = new msg_t;
         //init_cont_msg->client_ip = om::net::ip4_addr::reverse_byte_order(om::net::ip4_addr::from_string("192.168.6.10"));
-        init_cont_msg->client_ip = om::net::ip4_addr::from_string("127.0.0.1");
+        init_cont_msg->client_ip = om::net::ip4_addr::from_string("192.168.6.10");
         init_cont_msg->cgroup_id = 0;
         init_cont_msg->req_type = 4;
         init_cont_msg->rsrc_amnt = 0;
@@ -98,10 +99,12 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
             init_cont_msg->runtime_remaining = 1;
         }
 
+        std::cout << "Sending message to Agent Client with socket:  " << std::endl;
         if (write(agentClient->get_socket(), (char *) init_cont_msg, sizeof(*init_cont_msg)) < 0) {
             std::cout << "[ERROR]: In Deploy_Container. Error in writing to agent_clients socket: " << std::endl;
             return -1;
         }
+
         ret = read(agentClient->get_socket(), rx_buffer, sizeof(rx_buffer));
         if (ret <= 0) {
             std::cout << "[ERROR]: GCM. Can't read from socket after deploying container" << std::endl;

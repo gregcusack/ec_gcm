@@ -8,7 +8,7 @@ ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t serv
             : Server(server_counts, gcm_ip, server_port, agents)
 {
     //init server
-    //initialize();
+    initialize();
 
     //TODO: this is temporary. should be fixed. there is no need to have 2 instance of agentClients
     agent_clients = agent_clients_;
@@ -18,7 +18,7 @@ ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t serv
 
 void ec::Manager::start(std::string app_name, std::vector<std::string> app_images) {
     //A thread to listen for subcontainers' events
-    //std::thread event_handler_thread(&ec::Server::serve, this);
+    std::thread event_handler_thread(&ec::Server::serve, this);
     //TODO: temporary. don't need 2 IDs.
     manager_id = server_id;
     // Another thread to deploy the application
@@ -28,7 +28,7 @@ void ec::Manager::start(std::string app_name, std::vector<std::string> app_image
 
     application_deployment_thread.join();
     application_thread.join();
-    //event_handler_thread.join();
+    event_handler_thread.join();
 }
 
 int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
