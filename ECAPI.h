@@ -101,7 +101,7 @@ namespace ec {
         //TODO: implement these here in a class that inherits from manager
         virtual int handle_add_cgroup_to_ec(const msg_t *req, msg_t *res, uint32_t ip, int fd) = 0;
         //CPU
-        virtual int handle_cpu_req(const msg_t *req, msg_t *res) = 0;
+        virtual int handle_cpu_usage_report(const msg_t *req, msg_t *res) = 0;
 //        int handle_slice_req(const msg_t *req, msg_t *res, int clifd);
 
         //MEMORY

@@ -40,7 +40,7 @@ int ec::ECAPI::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int cl
             ret = handle_mem_req(req, res, clifd);
             break;
         case _CPU_:
-            ret = handle_cpu_req(req, res);
+            ret = handle_cpu_usage_report(req, res);
             break;
         case _INIT_:
             ret = handle_add_cgroup_to_ec(req, res, host_ip, clifd);
