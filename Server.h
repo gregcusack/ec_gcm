@@ -11,20 +11,22 @@
 #include <string>
 #include "types/msg.h"
 #include "Agents/Agent.h"
-#include "ECAPI.h"
-#include "Manager.h"
+//#include "ECAPI.h"
+//#include "Manager.h"
 #include "Agents/AgentClient.h"
 //#include "ElasticContainer.h"
 #include "om.h"
+#include "types/types.h"
 
 
 #define __MAX_CLIENT__ 30
 #define __BUFFSIZE__ 1024
 #define __FAILED__ -1
+#define __ALLOC_SUCCESS__ 1
 //#define __ALLOC_FAILED__ 0
 #define __QUOTA__ 50000
 
-using namespace utility;                    // Common utilities like string conversions
+//using namespace utility;                    // Common utilities like string conversions
 
 namespace ec {
     class Server {
@@ -32,8 +34,6 @@ namespace ec {
         Server(uint32_t server_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
         ~Server() = default;
         void initialize();
-
-        void deploy_application(std::string app_name, std::vector<std::string> app_images);
 
         struct server_t {
             int32_t sock_fd;
@@ -48,7 +48,7 @@ namespace ec {
         void serve();
 
         void handle_client_reqs(void *clifd);
-
+        virtual int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) = 0;
         //TODO: make return values error codes and pass struct via "msg_res"
 //        int handle_req(const msg_t *req, msg_t *res, serv_thread_args* args);
 
@@ -67,16 +67,20 @@ namespace ec {
         int init_agent_connections();
     
     private:
-        uint32_t server_id;
+
         ip4_addr ip_address;
         uint16_t port;
         std::vector<Agent *> agents;
-        std::vector<AgentClient *> agent_clients;
-        ECAPI *manager;
+
+        //ECAPI *manager;
         struct server_t server_socket;
 
         bool server_initialized;
         uint32_t num_of_cli;
+
+    protected:
+        std::vector<AgentClient *> agent_clients_;
+        uint32_t server_id;
     };
 }
 

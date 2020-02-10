@@ -23,11 +23,13 @@ namespace ec {
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
     public:
 //        ECAPI(uint32_t _ec_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
-        ECAPI(uint32_t _ec_id, std::vector<AgentClient *> &_agents);
+        ECAPI(){}
+        ECAPI(uint32_t _ec_id);
         ~ECAPI();
         //creates _ec and server and connects them
 //        void build_manager_handler();
         int create_ec(std::string app_name, std::string app_image);
+        void deploy_application(std::string app_name, std::vector<std::string> app_images);
 
         [[nodiscard]] const ElasticContainer& get_elastic_container() const;
 
@@ -53,6 +55,7 @@ namespace ec {
         //MEM
         uint64_t ec_get_memory_available() { return _ec->get_memory_available(); }
         uint64_t ec_get_memory_slice() { return _ec->get_memory_slice(); }
+        uint64_t get_memory_limit_in_bytes(ec::SubContainer::ContainerId &container_id);
 
 
         //AGENTS
@@ -86,7 +89,7 @@ namespace ec {
 
         //MISC
 //        int handle_req(const char *buff_in, char *buff_out, uint32_t host_ip, int clifd);
-        int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd);
+        virtual int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) = 0;
 
 
         //TODO: implement these here in a class that inherits from manager
@@ -104,13 +107,14 @@ namespace ec {
          */
 
     private:
-        uint32_t manager_id;
+
         ElasticContainer *_ec;
 
         //passed by reference from GlobalCloudManager
-	    std::vector<AgentClient *> agent_clients;
 
-
+    protected:
+        uint32_t manager_id;
+        std::vector<AgentClient *> agent_clients;
 
     };
 }

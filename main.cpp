@@ -38,8 +38,8 @@ int main(int argc, char* argv[]){
     std::cout<<"[dbg] this is the json file: " <<jsonFile << std::endl;
     json::value val;                                          // JSON read from input file
     try {
-        ifstream_t      file_stream(jsonFile);                                // filestream of working file
-        stringstream_t  stream;                                          // string stream for holding JSON read from file
+        utility::ifstream_t      file_stream(jsonFile);                                // filestream of working file
+        utility::stringstream_t  stream;                                          // string stream for holding JSON read from file
         if (file_stream) {                                                    
             stream << file_stream.rdbuf();                                         // stream results of reading from file stream into string stream
             file_stream.close();                                              // close the filestream

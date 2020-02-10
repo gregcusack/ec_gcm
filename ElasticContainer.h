@@ -47,6 +47,7 @@ namespace ec {
 //    struct Server;
     class ElasticContainer {
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
+    using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
     public:
         explicit ElasticContainer(uint32_t _ec_id);
         ElasticContainer(uint32_t _ec_id, std::vector<AgentClient*> &_agent_clients);
@@ -61,6 +62,7 @@ namespace ec {
         uint32_t get_ec_id() { return ec_id; }
         const subcontainer_map &get_subcontainers() {return subcontainers;}
         const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id);
+        const AgentClient* get_corres_agent(SubContainer::ContainerId &container_id){return sc_agent_map[container_id];}
 
         //CPU
         uint64_t get_rt_remaining() { return _cpu.get_runtime_remaining(); }
@@ -113,6 +115,7 @@ namespace ec {
     private:
         uint32_t ec_id;
         subcontainer_map subcontainers;
+        subcontainer_agent_map sc_agent_map;
 
  //       std::vector<std::int> pids;
 
