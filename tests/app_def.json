@@ -1,5 +1,5 @@
 {
-	"name": "12345",
+	"name": "app1",
 	"specs": {
 		"mem": 20,
 		"cpu": 1.5,
@@ -7,10 +7,6 @@
 		"net": 10
 	},
 	"images": [
-		"nginx",
-		"redis"	
-	],
-	"yaml_path" : [
-		"k8-yaml/"
+		"nginx"
 	]
 }

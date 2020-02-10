@@ -74,7 +74,8 @@ void ec::Server::serve() {
     
     while(true) {
         FD_SET(server_socket.sock_fd, &readfds);
-//        std::cout << "[dgb]: In while loop waiting for server socket event. EC Server id: " << _ec->get_manager_id() << std::endl;
+        std::cout << "[dgb]: Value for readfds" << readfds.fds_bits << std::endl;
+        std::cout << "[dgb]: Value for max_sd" << max_sd << std::endl;
 
         select_rv = select(max_sd, &readfds, nullptr, nullptr, nullptr);
 
