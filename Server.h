@@ -18,7 +18,7 @@
 
 
 #define __MAX_CLIENT__ 30
-#define __BUFFSIZE__ 1024
+#define __BUFFSIZE__ 48
 #define __FAILED__ -1
 //#define __ALLOC_FAILED__ 0
 #define __QUOTA__ 50000

@@ -4,6 +4,8 @@
 
 #include "Manager.h"
 
+#include <chrono>
+
 int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
     if(req == nullptr || res == nullptr) {
         std::cout << "req or res == null in handle_cpu_req()" << std::endl;
@@ -12,23 +14,34 @@ int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
     std::mutex cpulock;
     if(req->req_type != _CPU_) { return __ALLOC_FAILED__; }
 
+    auto t1 = std::chrono::high_resolution_clock::now();
     cpulock.lock();
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
     auto sc = ec_get_sc_for_update(sc_id);
     auto sc_quota = sc->sc_get_quota();
     auto sc_quota_rx = req->rsrc_amnt;
+    if(sc_quota != sc_quota_rx) {
+        std::cout << "QUOTA MISMATCH (rx, in_gcm): (" << sc_quota_rx << ", " << sc_quota << ")" << std::endl;
+    }
 
+//    auto sc_quota = req->rsrc_amnt;
+//    std::cout << "rx quota: " << sc_quota << std::endl;
     auto sc_rt_remaining = req->runtime_remaining;
     uint32_t throttle_incr = sc->sc_get_thr_incr_and_set_thr(req->request);
+    std::cout << "get overrun. " << ec_get_overrun() << std::endl;
 
+    /* TODO: uncomment this whole block
+     * container has more than fair cpu share and gcm has overallocated rt. reduce rt.
+     */
 //    if(ec_get_overrun() > 0 && sc_quota > ec_get_fair_cpu_share()) {
 //        std::cout << "overrun" << std::endl;
 //        uint64_t amnt_share_over = sc_quota - ec_get_fair_cpu_share();
 //        sc->sc_set_quota(ec_get_fair_cpu_share());
 //        ec_decr_overrun(amnt_share_over);
 //    }
+
     if(ec_get_overrun() > 0 && sc_quota > ec_get_fair_cpu_share()) {
-        std::cout << "overrun" << std::endl;
+        std::cout << "overrun. sc: " << *sc->get_c_id() << std::endl;
         uint64_t amnt_share_over = sc_quota - ec_get_fair_cpu_share();
         uint64_t new_quota, to_sub, overrun_sub;
         uint64_t overrun = ec_get_overrun();
@@ -49,17 +62,27 @@ int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
         sc->sc_set_quota(new_quota);
         ec_decr_overrun(overrun_sub);
     }
+    /* TODO: uncomment this whole block
+     * Give back rt to container that is throttle and has less than it's fair share
+     */
     else if(throttle_incr > 0 && sc_quota < ec_get_fair_cpu_share()) {   //throttled but don't have fair share
-        std::cout << "throt and less than fair share" << std::endl;
+        std::cout << "throt and less than fair share. sc: " << *sc->get_c_id() << std::endl;
         uint64_t amnt_share_lacking = ec_get_fair_cpu_share() - sc_quota;
+        std::cout << "amnt_share_lacking: " << amnt_share_lacking << std::endl;
         if(ec_get_cpu_unallocated_rt() > 0) {
-            std::cout << "give back some unalloc_Rt" << std::endl;
+            //TODO: take min of to_Add and slice. don't full reset
+            std::cout << "give back some unalloc_Rt. sc: " << *sc->get_c_id() << std::endl;
             uint64_t to_add = std::min(ec_get_cpu_unallocated_rt(), amnt_share_lacking);
-            sc->sc_set_quota(to_add);
+            std::cout << "to_Add: " << to_add << std::endl;
+            sc->sc_set_quota(sc_quota + to_add);
+//            sc->sc_set_quota(to_add);
             ec_decr_unallocated_rt(to_add);
             sc_quota = sc->sc_get_quota();
+            std::cout << "new_quota: " << sc_quota << std::endl;
+            std::cout << "ec_get_unalloc_rt: " << ec_get_cpu_unallocated_rt() << std::endl;
         }
         if(sc_quota < ec_get_fair_cpu_share()) { //not enough in unalloc_rt to get back to fair share, even out
+            std::cout << "not enough in unalloc rt. give back slice or overrun.. sc: " << *sc->get_c_id() << std::endl;
             amnt_share_lacking = ec_get_fair_cpu_share() - sc_quota;
             uint64_t overrun, new_quota;
             //check if we can add slice and not go over fair share
@@ -81,14 +104,21 @@ int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
 //            ec_incr_overrun(extra_rt);
 //        }
     }
+    //TODO: change back to else if
+    /*
+     * Container gets throttle and there is available rt. Give slice to container
+     */
     else if(throttle_incr > 0 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
-        std::cout << "throttle. try give alloc" << std::endl;
+        std::cout << "throttle. try get alloc. sc:  " << *sc->get_c_id() << std::endl;
         auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), ec_get_cpu_slice());
         ec_decr_unallocated_rt(extra_rt);
         sc->sc_set_quota(sc_quota + extra_rt);
     }
+    /*
+     * container does not use all of its runtime. give extra rt to unallocated_rt pool
+     */
     else if(sc_rt_remaining > ec_get_cpu_slice()) { //greater than 5ms unused rt?
-        std::cout << "extra rt > slice size" << std::endl;
+        std::cout << "extra rt > slice size. sc: " << *sc->get_c_id() << std::endl;
         uint64_t new_quota = sc_quota - sc_rt_remaining + ec_get_cpu_slice();
 
         std::cout << "new, old, rt_remain, slice: (" << new_quota << "," << sc_quota << "," << sc_rt_remaining << "," << ec_get_cpu_slice() << ")" << std::endl;
@@ -96,11 +126,19 @@ int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
         std::cout << "old quota, new quota: (" << sc_quota << ", " << sc->sc_get_quota() << ")" << std::endl;
         ec_incr_unallocated_rt(sc_quota - sc->sc_get_quota()); //unalloc_rt <-- old quota - new quota
     }
-    std::cout << "unalloc rt: " << ec_get_cpu_unallocated_rt() << std::endl;
-    std::cout << "returning quota: " << sc->sc_get_quota() << std::endl;
+    else {
+        std::cout << "No need to change quota for ec: " << *sc->get_c_id() << std::endl;
+        std::cout << "quota, nr_throttle_dif, rt_remaining: (" << sc_quota << ", " << throttle_incr << ", " << sc_rt_remaining << std::endl;
+    }
+    std::cout << "unalloc rt: " << ec_get_cpu_unallocated_rt() << ". sc: " << *sc->get_c_id() << std::endl;
+    std::cout << "returning quota: " << sc->sc_get_quota() << ". sc: " << *sc->get_c_id() << std::endl;
     res->rsrc_amnt = sc->sc_get_quota();
     res->request = 0;
     cpulock.unlock();
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+    std::cout << "time to alloc: " << time_span.count() << "\n------------" << std::endl;
+
     return __ALLOC_SUCCESS__;
 
 }

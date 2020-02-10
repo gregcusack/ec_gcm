@@ -31,6 +31,13 @@ void ec::Server::initialize() {
         exit(EXIT_FAILURE);
     }
 
+    int flag = 1;
+    int result = setsockopt(server_socket.sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+    if(result != 0) {
+        std::cout << "[ERROR]: setsockopt failed!" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
     if(listen(server_socket.sock_fd, 3) < 0) {
         std::cout << "[ERROR]: EC Server id: " << server_id << ". Listening on socket failed" << std::endl;
         exit(EXIT_FAILURE);
