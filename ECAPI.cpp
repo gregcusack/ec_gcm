@@ -99,7 +99,6 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
             init_cont_msg->runtime_remaining = 1;
         }
 
-        std::cout << "Sending message to Agent Client with socket:  " << std::endl;
         if (write(agentClient->get_socket(), (char *) init_cont_msg, sizeof(*init_cont_msg)) < 0) {
             std::cout << "[ERROR]: In Deploy_Container. Error in writing to agent_clients socket: " << std::endl;
             return -1;
@@ -145,7 +144,15 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
     }
     // This is where we see the connection be initiated by a container on some node  
     auto *sc = _ec->create_new_sc(cgroup_id, ip, fd);
+    std::cout << "[dbg]: HERE" << std::endl;
+    
+    if (sc == NULL) {
+        std::cout << "ERROR. res == null in handle_add_cgroup_to_ec()" << std::endl;
+        return __ALLOC_FAILED__;
+    }
     int ret = _ec->insert_sc(*sc);
+    std::cout << "[dbg]: HERE2" << std::endl;
+
     // And so once a subcontainer is created and added to the appropriate distributed container,
     // we can now create a map to link the container_id and cgroup_id - this is the place to do that..
 
@@ -163,12 +170,12 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(ec::SubContainer::ContainerId &con
     struct msg_t* _req = new struct msg_t;
     uint64_t ret = 0;
     //initialize request body
-    _req->cgroup_id = container_id.cgroup_id;
-    //TODO: change to enumeration
-    _req->req_type = 5; //MEM_LIMIT_IN_BYTES
+    // _req->cgroup_id = 10;
+    // //TODO: change to enumeration
+    // _req->req_type = 5; //MEM_LIMIT_IN_BYTES
 
-    ret = _ec->get_corres_agent(container_id)->send_request(_req)[0];
-    delete(_req);
+    // ret = _ec->get_corres_agent(container_id)->send_request(_req)[0];
+    // delete(_req);
     return ret;
 
 }

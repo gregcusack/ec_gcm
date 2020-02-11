@@ -84,7 +84,7 @@ void ec::GlobalCloudManager::run(std::string app_name, std::vector<std::string> 
             //t2.join();
             //t1.join();
 
-            mngr->start(app_name, app_images);
+            s.second->start(app_name, app_images);
 
         }
         else {

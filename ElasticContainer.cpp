@@ -22,6 +22,7 @@ ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient 
 
     //test
     flag = 0;
+    subcontainers = subcontainer_map();
 
 }
 
@@ -44,7 +45,10 @@ int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
         //TODO: should delete sc
         return __ALLOC_FAILED__;
     }
+    std::cout << "Before inserting subcontainer.." << std::endl;
     subcontainers.insert({*(_sc.get_c_id()), &_sc});
+    std::cout << "after inserting subcontainer.." << std::endl;
+
     return __ALLOC_SUCCESS__;
 }
 

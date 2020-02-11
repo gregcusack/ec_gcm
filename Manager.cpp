@@ -19,15 +19,16 @@ ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t serv
 void ec::Manager::start(std::string app_name, std::vector<std::string> app_images) {
     //A thread to listen for subcontainers' events
     std::thread event_handler_thread(&ec::Server::serve, this);
-    //TODO: temporary. don't need 2 IDs.
-    manager_id = server_id;
-    // Another thread to deploy the application
+    // //TODO: temporary. don't need 2 IDs.
+    // manager_id = server_id;
+    // // Another thread to deploy the application
+    // sleep(10);
     std::thread application_deployment_thread(&ec::ECAPI::deploy_application, this, app_name, app_images);
-    //Another thread to run a management application
+    // //Another thread to run a management application
     std::thread application_thread(&ec::Manager::run, this);
 
-    application_deployment_thread.join();
     application_thread.join();
+    application_deployment_thread.join();
     event_handler_thread.join();
 }
 
@@ -152,7 +153,6 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
         std::cout << "req or res == null in handle_req()" << std::endl;
         exit(EXIT_FAILURE);
     }
-
     uint64_t ret = __FAILED__;
 
     switch(req -> req_type) {
@@ -163,6 +163,7 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
             ret = handle_cpu_req(req, res);
             break;
         case _INIT_:
+            std::cout << "In INIT CASE" <<std::endl;
             ret = handle_add_cgroup_to_ec(res, req->cgroup_id, host_ip, clifd);
             break;
         default:
@@ -173,8 +174,8 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
 
 void ec::Manager::run(){
     ec::SubContainer::ContainerId x ;
+    std::cout << "In Manager Run" << std::endl;
     while(true){
-
         sleep(5);
         std::cout << get_memory_limit_in_bytes(x);
 

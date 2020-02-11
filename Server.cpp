@@ -78,10 +78,10 @@ void ec::Server::serve() {
         FD_SET(server_socket.sock_fd, &readfds);
 //        std::cout << "[dgb]: In while loop waiting for server socket event. EC Server id: " << _ec->get_manager_id() << std::endl;
         //std::cout << "[dbg] serve: serve readfds: " << &readfds. << std::endl;
-        std::cerr<< "[dgb] an event NOT happened on the server socket. "<< std::endl;
+        std::cerr<< "[dgb] an event HAS NOT happened on the server socket. "<< std::endl;
         select_rv = select(max_sd, &readfds, nullptr, nullptr, nullptr);
 
-        std::cerr<< "[dgb] an event happened on the server socket. "<< std::endl;
+        std::cerr<< "[dgb] an event HAS happened on the server socket. "<< std::endl;
 
         if(FD_ISSET(server_socket.sock_fd, &readfds)) {
             if((clifd = accept(server_socket.sock_fd, (struct sockaddr *)&server_socket.addr, (socklen_t*)&cliaddr_len)) > 0) {
