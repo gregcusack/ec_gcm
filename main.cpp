@@ -48,7 +48,6 @@ int main(int argc, char* argv[]){
     }
     catch (web::json::json_exception excep) {
         std::cout << "ERROR Parsing JSON file: ";
-        std::cout << excep.what();
         return 1;
     }
 

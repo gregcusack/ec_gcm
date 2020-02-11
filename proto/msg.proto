@@ -1,0 +1,12 @@
+syntax = "proto2";
+package msg_struct;
+
+message ECMessage {
+    optional string client_ip = 1;
+    optional int32 cgroup_id = 2;
+    optional int32 req_type = 3;
+    optional int32 rsrc_amnt = 4;
+    optional int32 request = 5;
+    optional int32 runtime_remaining = 6; 
+    optional string payload_string = 16;
+}

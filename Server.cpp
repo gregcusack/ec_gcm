@@ -104,8 +104,6 @@ void ec::Server::serve() {
 
 }
 
-
-
 void ec::Server::handle_client_reqs(void *args) {
     ssize_t num_bytes;
     uint64_t ret;

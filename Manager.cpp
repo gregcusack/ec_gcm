@@ -26,8 +26,8 @@ void ec::Manager::start(std::string app_name, std::vector<std::string> app_image
     std::thread application_deployment_thread(&ec::ECAPI::deploy_application, this, app_name, app_images);
     // //Another thread to run a management application
     std::thread application_thread(&ec::Manager::run, this);
-
     application_thread.join();
+    
     application_deployment_thread.join();
     event_handler_thread.join();
 }
