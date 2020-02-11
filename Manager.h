@@ -26,6 +26,7 @@ namespace ec {
         struct reclaim_msg {
             uint16_t cgroup_id;
             uint32_t is_mem;
+            uint64_t _quota;
             //...maybe it needs more things
         };
 

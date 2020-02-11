@@ -49,6 +49,9 @@ namespace ec {
         uint32_t sc_get_throttle_increase(uint32_t _throttled) { return cpu.get_throttle_increase(_throttled); }
         uint32_t sc_get_thr_incr_and_set_thr(uint32_t _throttled);
 
+        int get_counter() { return counter; }
+        void incr_counter() { counter++; }
+
 
     private:
         ContainerId c_id;
@@ -56,6 +59,8 @@ namespace ec {
 
         local::stats::cpu cpu;
         local::stats::mem mem;
+
+        int counter;
 
 
     };
