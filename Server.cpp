@@ -53,7 +53,6 @@ void ec::Server::initialize() {
 }
 
 void ec::Server::serve() {
-    std::cerr << "[dbg] Server::serve function begins!" << std::endl;
     if(!server_initialized) {
         std::cout << "ERROR: Server has not been initialized! Must call initialize() before serve()" << std::endl;
         exit(EXIT_FAILURE);
@@ -62,8 +61,6 @@ void ec::Server::serve() {
     //test if server_socket struct valid here somehow
     fd_set readfds;
     int32_t max_sd, sd, cliaddr_len, clifd, select_rv;
-//    int32_t num_of_cli = 0;
-    std::cout << "[dbg] Server::serve(): line 65" << std:: endl;
     std::thread threads[__MAX_CLIENT__];
     serv_thread_args *args;
     FD_ZERO(&readfds);
@@ -76,12 +73,7 @@ void ec::Server::serve() {
     
     while(true) {
         FD_SET(server_socket.sock_fd, &readfds);
-//        std::cout << "[dgb]: In while loop waiting for server socket event. EC Server id: " << _ec->get_manager_id() << std::endl;
-        //std::cout << "[dbg] serve: serve readfds: " << &readfds. << std::endl;
-        std::cerr<< "[dgb] an event HAS NOT happened on the server socket. "<< std::endl;
         select_rv = select(max_sd, &readfds, nullptr, nullptr, nullptr);
-
-        std::cerr<< "[dgb] an event HAS happened on the server socket. "<< std::endl;
 
         if(FD_ISSET(server_socket.sock_fd, &readfds)) {
             if((clifd = accept(server_socket.sock_fd, (struct sockaddr *)&server_socket.addr, (socklen_t*)&cliaddr_len)) > 0) {
@@ -89,7 +81,7 @@ void ec::Server::serve() {
                 args = new serv_thread_args();
                 args->clifd = clifd;
                 args->cliaddr = &server_socket.addr;
-                std::cout << "server rx connection from clifd: " << clifd << std::endl;
+                // std::cout << "server rx connection from clifd: " << clifd << std::endl;
 //                std::cout << "num_cli: " << num_of_cli << std::endl;
                 threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)args);
 //                threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)&clifd);
@@ -163,7 +155,7 @@ int ec::Server::init_agent_connections() {
         }
 
         agent_clients_.push_back(new AgentClient(ag, sockfd));
-        std::cout << "agent_clients sockfd: " << sockfd << ", " << agent_clients_[agent_clients_.size() - 1]->get_socket() << std::endl;
+        std::cout << "[dbg] agent_clients sockfd: " << sockfd << ", " << agent_clients_[agent_clients_.size() - 1]->get_socket() << std::endl;
     }
     return num_connections == agent_clients_.size();
 

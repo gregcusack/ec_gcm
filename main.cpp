@@ -35,7 +35,6 @@ int main(int argc, char* argv[]){
                 i.e. if we have two agents running and 2 images, we should create 4 pods in total, right? (confirm this)
        Todo: change the server-first architecture to the manager-first architecture
     */
-    std::cout<<"[dbg] this is the json file: " <<jsonFile << std::endl;
     json::value val;                                          // JSON read from input file
     try {
         utility::ifstream_t      file_stream(jsonFile);                                // filestream of working file
@@ -78,7 +77,7 @@ int main(int argc, char* argv[]){
     for(const auto &i : server_ports) {
         gcm->create_server();
     }
-    std::cout << "num servers: " << gcm->get_servers().size() << std::endl;
+    std::cout << "[dbg] num servers: " << gcm->get_servers().size() << std::endl;
 
     gcm->run(app_name, app_images_strings);
 

@@ -17,7 +17,7 @@ void ec::ECAPI::deploy_application(std::string app_name, std::vector<std::string
     }*/
     for (int i=0; i<app_images.size(); i++) {
         int cont_create = create_ec(app_name, app_images[i]);
-        std::cout << "Created elastic container status: " << cont_create << " for app: " << app_name << " with image: " << app_images[i] <<std::endl;
+        std::cout << "[Deploy Application Log] Created elastic container status: " << cont_create << " for app: " << app_name << " with image: " << app_images[i] <<std::endl;
     }
 }
 
@@ -45,15 +45,13 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     std::vector<AgentClient *> ec_agent_clients = _ec->get_agent_clients();
     int pod_creation;
     
-    // PreritO Todo: Expand support for msg_struct to send strings and not just uints
     std::string pod_name = app_name+"-"+app_image; 
 
-    char rx_buffer[2048] = {0};
     int ret;
 
     for (const auto &agentClient : ec_agent_clients) {
         // Step 1: Generate a JSON file for each Pod definition
-        std::cout << "Generating k8s JSON " << std::endl;
+        std::cout << "[K8s LOG] Generating K8s Definition File " << std::endl;
         json::value json_output = _ec->generate_pod_json(pod_name, app_image);
         //std::cout << "JSON File output: " << json_output << std::endl;
         // Step 2: Communicate with K8 REST API to deploy the pod on that agent
@@ -85,33 +83,32 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
         codedOut.WriteVarint32(init_msg.ByteSizeLong());
         init_msg.SerializeToCodedStream(&codedOut);
 
-        std::cout << "Message length is: " << tx_size << std::endl; 
+        std::cout << "[EC Init] Sending Message to Agent at IP: " << agentClient->get_agent_ip()  << " with message of length: " << tx_size << std::endl; 
         if (write(agentClient->get_socket(), (void*) tx_buf, tx_size) < 0) {
             std::cout << "[ERROR]: In Deploy_Container. Error in writing to agent_clients socket: " << std::endl;
             return -1;
         }
-
-        ret = read(agentClient->get_socket(), rx_buffer, sizeof(rx_buffer));
+        char rx_buffer[2048];
+        bzero(rx_buffer, 2048);
+        ret = read(agentClient->get_socket(), rx_buffer, 2048);
         if (ret <= 0) {
             std::cout << "[ERROR]: GCM. Can't read from socket after deploying container" << std::endl;
             return -2;
         }
-        
-        msg_struct::ECMessage rx_msg;
 
+        msg_struct::ECMessage rx_msg;
         google::protobuf::uint32 size;
         google::protobuf::io::ArrayInputStream ais(rx_buffer,4);
         CodedInputStream coded_input(&ais);
-        coded_input.ReadVarint32(&size); //Decode the HDR and get the size
+        coded_input.ReadVarint32(&size); 
         google::protobuf::io::ArrayInputStream arrayIn(rx_buffer, size);
         google::protobuf::io::CodedInputStream codedIn(&arrayIn);
         codedIn.ReadVarint32(&size);
         google::protobuf::io::CodedInputStream::Limit msgLimit = codedIn.PushLimit(size);
         rx_msg.ParseFromCodedStream(&codedIn);
         codedIn.PopLimit(msgLimit);
-
-        std::cout << "response from agent: request type, container name, Container_PID (unsigned -1 means error): " << rx_msg.req_type() << ", " <<  rx_msg.payload_string() << ", " <<  rx_msg.rsrc_amnt()  << std::endl;
         
+        std::cout << "[EC Init] Response from Agent: (Request_Type, Container Name, Container PID): (" << rx_msg.req_type() << ", " <<  rx_msg.payload_string() << ", " <<  rx_msg.rsrc_amnt() << ")" << std::endl;
         if ( rx_msg.rsrc_amnt() == (uint64_t) -1 ) {
             std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
             return -3;
@@ -143,19 +140,15 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
     }
     // This is where we see the connection be initiated by a container on some node  
     auto *sc = _ec->create_new_sc(cgroup_id, ip, fd);
-    std::cout << "[dbg]: HERE" << std::endl;
     
     if (sc == NULL) {
-        std::cout << "ERROR. res == null in handle_add_cgroup_to_ec()" << std::endl;
+        std::cerr << "[ERROR] Unable to create new sc object: Line 147" << std::endl;
         return __ALLOC_FAILED__;
     }
     int ret = _ec->insert_sc(*sc);
-    std::cout << "[dbg]: HERE2" << std::endl;
 
     // And so once a subcontainer is created and added to the appropriate distributed container,
     // we can now create a map to link the container_id and cgroup_id - this is the place to do that..
-    
-    std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
     res->request = 0; //giveback (or send back)
     return ret;
 }

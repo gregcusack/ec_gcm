@@ -12,7 +12,6 @@ ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t serv
 
     //TODO: this is temporary. should be fixed. there is no need to have 2 instance of agentClients
     agent_clients = agent_clients_;
-    std::cout<<"[dbg] Manager constructor: line 15" << std:: endl;
 
 }
 
@@ -163,7 +162,6 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
             ret = handle_cpu_req(req, res);
             break;
         case _INIT_:
-            std::cout << "In INIT CASE" <<std::endl;
             ret = handle_add_cgroup_to_ec(res, req->cgroup_id, host_ip, clifd);
             break;
         default:
@@ -174,7 +172,7 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
 
 void ec::Manager::run(){
     ec::SubContainer::ContainerId x ;
-    std::cout << "In Manager Run" << std::endl;
+    std::cerr << "[MANAGER RUN THREAD] In Manager Run" << std::endl;
     while(true){
         sleep(5);
         std::cout << get_memory_limit_in_bytes(x);

@@ -15,8 +15,8 @@ ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient 
     _mem = global::stats::mem();
     _cpu = global::stats::cpu();
 
-    std::cout << "runtime_remaining on init: " << _cpu.get_runtime_remaining() << std::endl;
-    std::cout << "memory_available on init: " << _mem.get_mem_available() << std::endl;
+    std::cout << "[Elastic Container Log] runtime_remaining on init: " << _cpu.get_runtime_remaining() << std::endl;
+    std::cout << "[Elastic Container Log] memory_available on init: " << _mem.get_mem_available() << std::endl;
 
     test_file.open("test_file.txt", std::ios_base::app);
 
@@ -45,9 +45,7 @@ int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
         //TODO: should delete sc
         return __ALLOC_FAILED__;
     }
-    std::cout << "Before inserting subcontainer.." << std::endl;
     subcontainers.insert({*(_sc.get_c_id()), &_sc});
-    std::cout << "after inserting subcontainer.." << std::endl;
 
     return __ALLOC_SUCCESS__;
 }
@@ -136,7 +134,7 @@ json::value ec::ElasticContainer::generate_pod_json(const std::string pod_name, 
 }
 
 int ec::ElasticContainer::deploy_pod(const json::value pod_json) {
-    std::cout << "Sending k8s a request to create Pod.."  << std::endl;
+    std::cout << "[K8s Log] Sending k8s a request to create Pod.."  << std::endl;
 
     json::value json_return;
     // Assumes that there's a k8s proxy running on localhost, port 8000
@@ -155,7 +153,7 @@ int ec::ElasticContainer::deploy_pod(const json::value pod_json) {
     })
     .wait();
 
-    std::cout << "k8s API responded " << std::endl;
+    std::cout << "[K8s Log] Received K8s API response" << std::endl;
     //std::cout << json_return.serialize() << std::endl;
 
     // Prerit Todo: Is there anyway to tell from k8s right away if the Pod Failed at deployment? Look into this..
