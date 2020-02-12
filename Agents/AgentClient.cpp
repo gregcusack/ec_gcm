@@ -20,7 +20,7 @@ std::vector<uint64_t > ec::AgentClient::send_request(struct ec::msg_t* _req) con
         ret.push_back( ((msg_t*)buff) -> rsrc_amnt);
         std::cerr << "[dbg] send_request: it seems we read s.th from the agent\n";
     }
-
+    std::cerr << "[dbg] Out of loop\n";
 
     return ret;
 }

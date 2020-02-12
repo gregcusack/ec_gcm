@@ -55,72 +55,85 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     int ret;
     msg_t* rx_resp;
 
-    for (const auto &agentClient : ec_agent_clients) {
-        // std::cout << "Agent IP" << agentClient->get_agent_ip() << std::endl;
-        // Step 1: Generate a JSON file for each Pod definition
-        std::cout << "Generating k8s JSON " << std::endl;
-        json::value json_output = _ec->generate_pod_json(pod_name, app_image);
-        //std::cout << "JSON File output: " << json_output << std::endl;
-        // Step 2: Communicate with K8 REST API to deploy the pod on that agent
-        //         This is where we might have to deal with some way to correspond the agent ip and k8 node name..
-        //         so we can deploy to that specific node. (testing with one node in k8s cluster doesn't face this issue)
-        
-        pod_creation = _ec->deploy_pod(json_output);
-        if (pod_creation != 0) {
-            std::cout << "[k8s deploy error]:  Error in creating a Pod via k8s.. Exiting" << std::endl;
-            return -1;
-        }
-        
-        // Step 3: Instruct the Agent to look for this container and call sys_connect on it
-        //         Note that the following code simply waits for a response from Agent on the status of running sys_connect 
-        //         i.e. this is where we can use RPC 
-        //         Once the container actually establishes a connection to the GCM, the container will send it's own init 
-        //         message to the server which will call: handle_add_cgroup_to_ec
-        
-        // This needs to be changed when we implement sending strings across in the correct way..
-        int pod_name_uint64t;
-        std::istringstream iss (pod_name);
-        iss >> pod_name_uint64t;
+    // std::cout << "Agent IP" << agentClient->get_agent_ip() << std::endl;
 
-        msg_t *init_cont_msg = new msg_t;
-        //init_cont_msg->client_ip = om::net::ip4_addr::reverse_byte_order(om::net::ip4_addr::from_string("192.168.6.10"));
-        init_cont_msg->client_ip = om::net::ip4_addr::from_string("127.0.0.1");
-        init_cont_msg->cgroup_id = 0;
-        init_cont_msg->req_type = 4;
-        init_cont_msg->rsrc_amnt = 0;
-        init_cont_msg->request = 1;
-        init_cont_msg->cont_name = pod_name_uint64t;
-
-        if (app_image == "nginx"){
-            init_cont_msg->runtime_remaining = 1;
-        } else if (app_image == "redis") {
-            init_cont_msg->runtime_remaining = 2;
-        } else {
-            init_cont_msg->runtime_remaining = 1;
-        }
-
-        if (write(agentClient->get_socket(), (char *) init_cont_msg, sizeof(*init_cont_msg)) < 0) {
-            std::cout << "[ERROR]: In Deploy_Container. Error in writing to agent_clients socket: " << std::endl;
-            return -1;
-        }
-
-        ret = read(agentClient->get_socket(), rx_buffer, sizeof(rx_buffer));
-        if (ret <= 0) {
-            std::cout << "[ERROR]: GCM. Can't read from socket after deploying container" << std::endl;
-            return -2;
-        }
-        rx_resp = (msg_t *) rx_buffer;
-        std::cout << "response from agent (client ip, request type, cont_pid): " << rx_resp->client_ip << "," << rx_resp->req_type << ", " <<  rx_resp->rsrc_amnt << std::endl;
-        // if (rx_resp->req_type == init_cont_msg->req_type && rx_resp->rsrc_amnt == 1) {
-        //     std::cout << "[deploy error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
-        //     return -3;
-        // }
-
-        // Add PID of the container to the _ec map..
-        // int pid_int; 
-        // sscanf(std::to_string(rx_resp->rsrc_amnt), "%d", &pid_int); 
-        // _ec->insert_pid(pid_int);
+    // Step 1: Generate a JSON file for each Pod definition
+    std::cout << "Generating k8s JSON " << std::endl;
+    json::value json_output = _ec->generate_pod_json(pod_name, app_image);
+    //std::cout << "JSON File output: " << json_output << std::endl;
+    // Step 2: Communicate with K8 REST API to deploy the pod on that agent
+    //         This is where we might have to deal with some way to correspond the agent ip and k8 node name..
+    //         so we can deploy to that specific node. (testing with one node in k8s cluster doesn't face this issue)
+    
+    pod_creation = _ec->deploy_pod(json_output);
+    if (pod_creation != 0) {
+        std::cout << "[k8s deploy error]:  Error in creating a Pod via k8s.. Exiting" << std::endl;
+        return -1;
     }
+    
+    
+    // Step 3: Instruct the Agent to look for this container and call sys_connect on it
+    //         Note that the following code simply waits for a response from Agent on the status of running sys_connect 
+    //         i.e. this is where we can use RPC 
+    //         Once the container actually establishes a connection to the GCM, the container will send it's own init 
+    //         message to the server which will call: handle_add_cgroup_to_ec
+    
+    // Get the Node name here from k8s API so that we get the IP and communicate with that appropriately:
+    
+    std::vector<std::string> node_names = _ec->get_nodes_with_pod(pod_name);
+    std::vector<std::string> node_ips = _ec->get_nodes_ips(node_names);
+    
+    //for (const auto &agentClient : ec_agent_clients) {
+    for (const auto node_ip : node_ips) {
+        // Get the Agent with this node ip first..
+        for (const auto &agentClient : ec_agent_clients) {
+            if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
+                
+                int pod_name_uint64t;
+                std::istringstream iss (pod_name);
+                iss >> pod_name_uint64t;
+
+                msg_t *init_cont_msg = new msg_t;
+                //init_cont_msg->client_ip = om::net::ip4_addr::reverse_byte_order(om::net::ip4_addr::from_string("192.168.6.10"));
+                init_cont_msg->client_ip = om::net::ip4_addr::from_string("128.105.144.138");
+                init_cont_msg->cgroup_id = 0;
+                init_cont_msg->req_type = 4;
+                init_cont_msg->rsrc_amnt = 0;
+                init_cont_msg->request = 1;
+                init_cont_msg->cont_name = pod_name_uint64t;
+
+                if (app_image == "nginx"){
+                    init_cont_msg->runtime_remaining = 1;
+                } else if (app_image == "redis") {
+                    init_cont_msg->runtime_remaining = 2;
+                } else {
+                    init_cont_msg->runtime_remaining = 1;
+                }
+
+                if (write(agentClient->get_socket(), (char *) init_cont_msg, sizeof(*init_cont_msg)) < 0) {
+                    std::cout << "[ERROR]: In Deploy_Container. Error in writing to agent_clients socket: " << std::endl;
+                    return -1;
+                }
+
+                ret = read(agentClient->get_socket(), rx_buffer, sizeof(rx_buffer));
+                if (ret <= 0) {
+                    std::cout << "[ERROR]: GCM. Can't read from socket after deploying container" << std::endl;
+                    return -2;
+                }
+                rx_resp = (msg_t *) rx_buffer;
+                std::cout << "response from agent (client ip, request type, cont_id): " << rx_resp->client_ip << "," << rx_resp->req_type << ", " <<  rx_resp->rsrc_amnt << std::endl;
+                // if (rx_resp->req_type == init_cont_msg->req_type && rx_resp->rsrc_amnt == 1) {
+                //     std::cout << "[deploy error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
+                //     return -3;
+                // }
+                
+            } else {
+                continue;
+            }
+        }
+    }
+
+    
     return 0;
 }
 
@@ -151,15 +164,24 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
         return __ALLOC_FAILED__;
     }
     int ret = _ec->insert_sc(*sc);
-    std::cout << "[dbg]: HERE2" << std::endl;
+    std::cout << "[dbg]: IP from container -  " << ip << std::endl;
 
     // And so once a subcontainer is created and added to the appropriate distributed container,
     // we can now create a map to link the container_id and cgroup_id - this is the place to do that..
-
     
     std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
+    std::vector<AgentClient *> ec_agent_clients = _ec->get_agent_clients();
+    auto agent_ip = sc->get_c_id()->server_ip;
+    for (const auto &agentClient : ec_agent_clients) {
+        if (agentClient->get_agent_ip() == agent_ip) {
+            _ec->add_to_agent_map(*sc->get_c_id(), agentClient);
+        } else {
+            continue;
+        }
+    }
     res->request = 0; //giveback (or send back)
     return ret;
+
 }
 
 void ec::ECAPI::ec_decrement_memory_available(uint64_t mem_to_reduce) {

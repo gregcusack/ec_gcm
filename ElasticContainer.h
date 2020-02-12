@@ -81,6 +81,9 @@ namespace ec {
          *******************************************************
          **/
 
+        //MISC
+        int add_to_agent_map(SubContainer::ContainerId id, AgentClient* client) { sc_agent_map.insert({id, client}); }
+
         //CPU
         void set_ec_period(int64_t _period)  { _cpu.set_period(_period); }   //will need to update maanger too
         void set_quota(int64_t _quota) { _cpu.set_quota(_quota); }
@@ -111,6 +114,8 @@ namespace ec {
         //K8s
         json::value generate_pod_json(const std::string pod_name, const std::string app_image);
         int deploy_pod(const json::value pod_json);
+        std::vector<std::string> get_nodes_with_pod(std::string pod_name);
+        std::vector<std::string> get_nodes_ips(const std::vector<std::string> node_names);
 
     private:
         uint32_t ec_id;
