@@ -84,7 +84,7 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
 
         msg_t *init_cont_msg = new msg_t;
         //init_cont_msg->client_ip = om::net::ip4_addr::reverse_byte_order(om::net::ip4_addr::from_string("192.168.6.10"));
-        init_cont_msg->client_ip = om::net::ip4_addr::from_string("192.168.6.10");
+        init_cont_msg->client_ip = om::net::ip4_addr::from_string("127.0.0.1");
         init_cont_msg->cgroup_id = 0;
         init_cont_msg->req_type = 4;
         init_cont_msg->rsrc_amnt = 0;
@@ -166,15 +166,15 @@ void ec::ECAPI::ec_decrement_memory_available(uint64_t mem_to_reduce) {
     _ec->ec_decrement_memory_available(mem_to_reduce);
 }
 
-uint64_t ec::ECAPI::get_memory_limit_in_bytes(ec::SubContainer::ContainerId &container_id) {
+uint64_t ec::ECAPI::get_memory_limit_in_bytes(ec::SubContainer::ContainerId container_id) {
     struct msg_t* _req = new struct msg_t;
     uint64_t ret = 0;
     //initialize request body
-    // _req->cgroup_id = 10;
+    _req->cgroup_id = container_id.cgroup_id;
     // //TODO: change to enumeration
-    // _req->req_type = 5; //MEM_LIMIT_IN_BYTES
-
-    // ret = _ec->get_corres_agent(container_id)->send_request(_req)[0];
+    _req->req_type = 5; //MEM_LIMIT_IN_BYTES
+    std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
+    ret = _ec->get_corres_agent(container_id)->send_request(_req)[0];
     // delete(_req);
     return ret;
 

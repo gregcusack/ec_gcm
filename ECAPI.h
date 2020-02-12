@@ -55,7 +55,7 @@ namespace ec {
         //MEM
         uint64_t ec_get_memory_available() { return _ec->get_memory_available(); }
         uint64_t ec_get_memory_slice() { return _ec->get_memory_slice(); }
-        uint64_t get_memory_limit_in_bytes(ec::SubContainer::ContainerId &container_id);
+        uint64_t get_memory_limit_in_bytes(ec::SubContainer::ContainerId container_id);
 
 
         //AGENTS
@@ -106,15 +106,10 @@ namespace ec {
          * HANDLERS
          */
 
-    private:
-
-        ElasticContainer *_ec;
-
-        //passed by reference from GlobalCloudManager
-
     protected:
         uint32_t manager_id;
         std::vector<AgentClient *> agent_clients;
+        ElasticContainer *_ec;
 
     };
 }
