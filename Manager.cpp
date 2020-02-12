@@ -12,6 +12,7 @@ ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t serv
 
     //TODO: this is temporary. should be fixed. there is no need to have 2 instance of agentClients
     agent_clients = agent_clients_;
+    std::cout<<"[dbg] Manager constructor: agent socket file descriptor is: " << agent_clients[0]->get_socket() << std:: endl;
 
 }
 
@@ -24,10 +25,10 @@ void ec::Manager::start(std::string app_name, std::vector<std::string> app_image
     // sleep(10);
     std::thread application_deployment_thread(&ec::ECAPI::deploy_application, this, app_name, app_images);
     // //Another thread to run a management application
+    application_deployment_thread.join();
+    std::cerr<<"[dbg] manager::just before running the app thread\n";
     std::thread application_thread(&ec::Manager::run, this);
     application_thread.join();
-    
-    application_deployment_thread.join();
     event_handler_thread.join();
 }
 
@@ -171,12 +172,16 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
 }
 
 void ec::Manager::run(){
-    ec::SubContainer::ContainerId x ;
-    std::cerr << "[MANAGER RUN THREAD] In Manager Run" << std::endl;
+    //ec::SubContainer::ContainerId x ;
+    std::cout << "[dbg] In Manager Run function" << std::endl;
     while(true){
-        sleep(5);
-        std::cout << get_memory_limit_in_bytes(x);
-
+        std::cout << "[dbg] manager::run: for loop\n";
+        for(auto sc_ : _ec->get_subcontainers()){
+            std::cout << "=================================================================================================\n";
+            std::cout << "[READ API] the memory limit in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
+            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << std::endl;
+            sleep(3);
+        }
     }
 }
 
