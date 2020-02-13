@@ -95,7 +95,7 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
 
                 msg_t *init_cont_msg = new msg_t;
                 //init_cont_msg->client_ip = om::net::ip4_addr::reverse_byte_order(om::net::ip4_addr::from_string("192.168.6.10"));
-                init_cont_msg->client_ip = om::net::ip4_addr::from_string("127.0.0.1");
+                init_cont_msg->client_ip = om::net::ip4_addr::from_string("128.105.144.138");
                 init_cont_msg->cgroup_id = 0;
                 init_cont_msg->req_type = 4;
                 init_cont_msg->rsrc_amnt = 0;
