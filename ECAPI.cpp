@@ -179,19 +179,23 @@ void ec::ECAPI::ec_decrement_memory_available(uint64_t mem_to_reduce) {
 }
 
 uint64_t ec::ECAPI::get_memory_limit_in_bytes(ec::SubContainer::ContainerId container_id) {
-    struct msg_t* _req = new struct msg_t;
+    
     uint64_t ret = 0;
+
     //initialize request body
-    _req->cgroup_id = container_id.cgroup_id;
-    // //TODO: change to enumeration
-    _req->req_type = 5; //MEM_LIMIT_IN_BYTES
+    msg_struct::ECMessage msg_req;
+    msg_req.set_req_type(5); //MEM_LIMIT_IN_BYTES 
+    msg_req.set_cgroup_id(container_id.cgroup_id);
+    msg_req.set_payload_string("test");
+
     std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
     std::cerr << "[dbg] Getting the agent clients: " << _ec->get_agent_clients()[0]->get_socket() << std::endl;
     AgentClient* temp = _ec->get_corres_agent(container_id);
     if(temp == NULL)
         std::cerr << "[dbg] temp is NULL" << std::endl;
+    
     std::cerr << "[dbg] temp sockfd is : " << temp->get_socket() << std::endl;
-    ret = temp->send_request(_req)[0];
+    ret = temp->send_request(msg_req)[0];
     // delete(_req);
     return ret;
 
