@@ -179,7 +179,7 @@ void ec::Manager::run(){
     //ec::SubContainer::ContainerId x ;
     std::cout << "[dbg] In Manager Run function" << std::endl;
     while(true){
-        std::cout << "[dbg] manager::run: for loop\n";
+        //std::cout << "[dbg] manager::run: for loop\n";
         for(auto sc_ : _ec->get_subcontainers()){
             std::cout << "=================================================================================================\n";
             std::cout << "[READ API] the memory limit in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;

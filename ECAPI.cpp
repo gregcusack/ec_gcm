@@ -82,20 +82,20 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     
     std::vector<std::string> node_names = _ec->get_nodes_with_pod(pod_name);
     std::vector<std::string> node_ips = _ec->get_nodes_ips(node_names);
-    
+    std::cerr << "[dbg] node ips are: " << node_ips[0] << std::endl;
     //for (const auto &agentClient : ec_agent_clients) {
     for (const auto node_ip : node_ips) {
         // Get the Agent with this node ip first..
         for (const auto &agentClient : ec_agent_clients) {
             if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
-                
+                std::cout << "[dbg] it comes into loop in deploy application\n";
                 int pod_name_uint64t;
                 std::istringstream iss (pod_name);
                 iss >> pod_name_uint64t;
 
                 msg_t *init_cont_msg = new msg_t;
                 //init_cont_msg->client_ip = om::net::ip4_addr::reverse_byte_order(om::net::ip4_addr::from_string("192.168.6.10"));
-                init_cont_msg->client_ip = om::net::ip4_addr::from_string("128.105.144.138");
+                init_cont_msg->client_ip = om::net::ip4_addr::from_string("127.0.0.1");
                 init_cont_msg->cgroup_id = 0;
                 init_cont_msg->req_type = 4;
                 init_cont_msg->rsrc_amnt = 0;
@@ -173,12 +173,16 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
     std::vector<AgentClient *> ec_agent_clients = _ec->get_agent_clients();
     auto agent_ip = sc->get_c_id()->server_ip;
     for (const auto &agentClient : ec_agent_clients) {
+        std::cerr << "[dbg] Agent client ip: " << agentClient-> get_agent_ip() << std::endl;
+        std::cerr << "[dbg] Agent ip: " << agent_ip << std::endl;
         if (agentClient->get_agent_ip() == agent_ip) {
             _ec->add_to_agent_map(*sc->get_c_id(), agentClient);
         } else {
             continue;
         }
     }
+    std::cerr << "[dbg] Agent client map in the elastic container ? " << ec_agent_clients[0]->get_agent_ip() << " " << ec_agent_clients[0]->get_socket() << std::endl;
+
     res->request = 0; //giveback (or send back)
     return ret;
 
@@ -196,7 +200,12 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(ec::SubContainer::ContainerId cont
     // //TODO: change to enumeration
     _req->req_type = 5; //MEM_LIMIT_IN_BYTES
     std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
-    ret = _ec->get_corres_agent(container_id)->send_request(_req)[0];
+    std::cerr << "[dbg] Getting the agent clients: " << _ec->get_agent_clients()[0]->get_socket() << std::endl;
+    AgentClient* temp = _ec->get_corres_agent(container_id);
+    if(temp == NULL)
+        std::cerr << "[dbg] temp is NULL" << std::endl;
+    std::cerr << "[dbg] temp sockfd is : " << temp->get_socket() << std::endl;
+    ret = temp->send_request(_req)[0];
     // delete(_req);
     return ret;
 

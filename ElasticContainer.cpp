@@ -23,7 +23,7 @@ ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient 
     //test
     flag = 0;
     subcontainers = subcontainer_map();
-
+    sc_agent_map = subcontainer_agent_map();
 }
 
 ec::SubContainer *ec::ElasticContainer::create_new_sc(const uint32_t cgroup_id, const uint32_t host_ip, const int sockfd) {

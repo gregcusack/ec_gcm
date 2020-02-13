@@ -21,10 +21,10 @@ int main(int argc, char* argv[]){
         return 1;
     }
     std::string jsonFile = argv[1];
-    std::vector<std::string>    agent_ips{"128.105.144.137"};//), "127.0.0.1", "127.0.0.1"};
+    std::vector<std::string>    agent_ips{"10.0.2.15"};//), "127.0.0.1", "127.0.0.1"};
     std::vector<uint16_t>       server_ports{4444};
 
-    auto *gcm = new ec::GlobalCloudManager("128.105.144.138", GCM_PORT, agent_ips, server_ports);
+    auto *gcm = new ec::GlobalCloudManager("127.0.0.1", GCM_PORT, agent_ips, server_ports);
 
     /* Here, we'll parse the input JSON file and then pass the specifics 
        into the server object
