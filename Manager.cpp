@@ -26,6 +26,7 @@ void ec::Manager::start(std::string app_name, std::vector<std::string> app_image
     std::thread application_deployment_thread(&ec::ECAPI::deploy_application, this, app_name, app_images);
     // //Another thread to run a management application
     application_deployment_thread.join();
+
     std::cerr<<"[dbg] manager::just before running the app thread\n";
     std::thread application_thread(&ec::Manager::run, this);
     application_thread.join();
@@ -175,7 +176,7 @@ void ec::Manager::run(){
     //ec::SubContainer::ContainerId x ;
     std::cout << "[dbg] In Manager Run function" << std::endl;
     while(true){
-        std::cout << "[dbg] manager::run: for loop\n";
+        //std::cout << "[dbg] manager::run: for loop\n";
         for(auto sc_ : _ec->get_subcontainers()){
             std::cout << "=================================================================================================\n";
             std::cout << "[READ API] the memory limit in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
