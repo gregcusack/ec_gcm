@@ -54,7 +54,19 @@ The CloudLab cluster is setup in the following manner: One GCM master node and t
     sudo ninja install
     ```
 
-    ##### 3. Install [Google Protobuf](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md) Compiler
+    ##### 3. Install the [Google Protobuf](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md) Compiler. i.e installation commands are as follows but for more detailed installation instructions, use the github link
+    ```
+    sudo apt-get install autoconf automake libtool curl make g++ unzip
+    git clone https://github.com/protocolbuffers/protobuf.git
+    cd protobuf
+    git submodule update --init --recursive
+    ./autogen.sh
+    ./configure
+     sudo make
+     sudo make check
+     sudo make install
+     sudo ldconfig # refresh shared library cache.
+    ```
   
     ##### 4. Install Ansible to deploy Agents on the different hosts. More detailed instructions can be found [here](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-ansible-on-ubuntu)
     ```
