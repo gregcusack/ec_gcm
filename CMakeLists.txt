@@ -22,7 +22,7 @@ add_executable(ec_gcm main.cpp
         stats/global/mem_g.h            stats/global/mem_g.cpp
         Manager.h                       Manager.cpp
         Agents/AgentClient.h            Agents/AgentClient.cpp
-        )
+        stats/window/Window.h stats/window/Window_impl.h)
 
 add_executable(tester tests/run_test.cpp
         types/msg.cpp                   types/msg.h

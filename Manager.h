@@ -9,6 +9,9 @@
 #include "Agents/AgentClient.h"
 #include <cstdint>
 
+#define likely(x)       __builtin_expect((x),1)
+#define unlikely(x)     __builtin_expect((x),0)
+
 namespace ec {
     class Manager : public ECAPI {
     public:
@@ -22,6 +25,8 @@ namespace ec {
 
         int handle_add_cgroup_to_ec(const msg_t *req, msg_t *res, uint32_t ip, int fd) override;
 
+        int set_sc_quota(SubContainer *sc, uint64_t _quota);
+
 
         struct reclaim_msg {
             uint16_t cgroup_id;
@@ -30,6 +35,7 @@ namespace ec {
             //...maybe it needs more things
         };
 
+    private:
 
 
 

@@ -22,6 +22,7 @@ ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient 
 
     //test
     flag = 0;
+    subcontainers = subcontainer_map();
 
 }
 
@@ -45,7 +46,7 @@ const ec::SubContainer &ec::ElasticContainer::get_subcontainer(ec::SubContainer:
 ec::SubContainer *ec::ElasticContainer::get_sc_for_update(ec::SubContainer::ContainerId &container_id) {
     auto itr = subcontainers.find(container_id);
     if(itr == subcontainers.end()) {
-        std::cout << "ERROR: No EC with manager_id: " << ec_id << ". Exiting...." << std::endl;
+        std::cout << "ERROR: No EC with manager_id: " << ec_id << ". Exiting...(sc for update)." << std::endl;
         std::exit(EXIT_FAILURE);
     }
     return itr->second;

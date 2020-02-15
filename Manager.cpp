@@ -16,6 +16,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 
     auto t1 = std::chrono::high_resolution_clock::now();
     cpulock.lock();
+    std::cout << "cg id: " << req->cgroup_id << std::endl;
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
     auto sc = ec_get_sc_for_update(sc_id);
     sc->incr_counter();
@@ -26,57 +27,49 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     int ret;
     char buffer[__BUFF_SIZE__] = {0};
     uint64_t rx_buff;
+    double thr_mean = 0;
+    uint64_t rt_mean = 0;
 
     std::cout << "rx: (quota, rt_remaining, throttled): (" << quota << ", " << rt_remaining << ", " << throttled << ")" << std::endl;
+    //TODO: when we change quota, we need to flush the window
+    if(likely(!sc->get_set_quota_flag())) {
+        rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
+        thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
+    } else {
+        rt_mean = sc->get_cpu_stats()->get_rt_mean();
+        thr_mean = sc->get_cpu_stats()->get_thr_mean();
+        sc->set_quota_flag(false);
+    }
 
+    std::cout << "rt_mean: " << rt_mean << std::endl;
+    std::cout << "thr_mean: " << thr_mean << std::endl;
+
+//
+//    if(throttle_incr > 0 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
+//        std::cout << "throttle. try get alloc. sc:  " << *sc->get_c_id() << std::endl;
+//        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), ec_get_cpu_slice());
+//        ec_decr_unallocated_rt(extra_rt);
+//        sc->sc_set_quota(sc_quota + extra_rt);
+//    }
 
     if(req_count % 100 == 0 && req_count % 200 != 0) {
-        auto ip = sc_id.server_ip;
-        std::cout << "# clients (%100): " << get_agent_clients().size() << std::endl;
-        for(const auto &agentClient : get_agent_clients()) {
-            if(agentClient->get_agent_ip() == ip) {
-                auto *reclaim_req = new reclaim_msg;
-                reclaim_req->cgroup_id = sc_id.cgroup_id;
-                reclaim_req->is_mem = 0;
-                reclaim_req->_quota = 20000000;
-                std::cout << "reclaim msg size: " << sizeof(*reclaim_req) << std::endl;
-                if(write(agentClient->get_socket(), (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
-                    std::cout << "[ERROR]: GCM EC Manager id: " << get_manager_id() << ". Failed writing to agent_clients socket (resize)"
-                              << std::endl;
-                }
-                ret = read(agentClient->get_socket(), buffer, sizeof(buffer));
-                if(ret <= 0) {
-                    std::cout << "[ERROR]: GCM. Can't read from socket to resize quota" << std::endl;
-                }
-                else {
-                    std::cout << "successfully resized quota to 20000000!" << std::endl;
-                }
-            }
+        ret = set_sc_quota(sc, 20000000);
+        if(ret <= 0) {
+            std::cout << "[ERROR]: GCM. Can't read from socket to resize quota. ret: " << ret << std::endl;
+        }
+        else {
+            sc->set_quota_flag(true);
+            std::cout << "successfully resized quota to: " << 20000000 << "!" << std::endl;
         }
     }
     else if(req_count % 200 == 0) {
-        auto ip = sc_id.server_ip;
-        std::cout << "# clients (%200): " << get_agent_clients().size() << std::endl;
-        for(const auto &agentClient : get_agent_clients()) {
-            if(agentClient->get_agent_ip() == ip) {
-                auto *reclaim_req = new reclaim_msg;
-                reclaim_req->cgroup_id = sc_id.cgroup_id;
-                reclaim_req->is_mem = 0;
-                reclaim_req->_quota = 50000000;
-                std::cout << "reclaim msg size: " << sizeof(*reclaim_req) << std::endl;
-                if(write(agentClient->get_socket(), (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
-                    std::cout << "[ERROR]: GCM EC Manager id: " << get_manager_id() << ". Failed writing to agent_clients socket (resize)"
-                              << std::endl;
-                }
-                ret = read(agentClient->get_socket(), buffer, sizeof(buffer));
-                if(ret <= 0) {
-                    std::cout << "[ERROR]: GCM. Can't read from socket to resize quota to 50000000" << std::endl;
-                }
-                else {
-                    std::cout << "successfully resized quota!" << std::endl;
-                }
-
-            }
+        ret = set_sc_quota(sc, 50000000);
+        if(ret <= 0) {
+            std::cout << "[ERROR]: GCM. Can't read from socket to resize quota. ret: " << ret << std::endl;
+        }
+        else {
+            sc->set_quota_flag(true);
+            std::cout << "successfully resized quota to: " << 50000000 << "!" << std::endl;
         }
     }
 
@@ -299,5 +292,33 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, c
     res->request = 0; //giveback (or send back)
     return ret;
 }
+
+int ec::Manager::set_sc_quota(ec::SubContainer *sc, uint64_t _quota) {
+    if(!sc) {
+        std::cout << "sc == NULL in manager set_sc_quota()" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    int ret = 0;
+    char buffer[__BUFF_SIZE__] = {0};
+    auto ip = sc->get_c_id()->server_ip;
+    std::cout << "# clients (%100): " << get_agent_clients().size() << std::endl;
+    for(const auto &agentClient : get_agent_clients()) {
+        if(agentClient->get_agent_ip() == ip) {
+            auto *reclaim_req = new reclaim_msg;
+            reclaim_req->cgroup_id = sc->get_c_id()->cgroup_id;
+            reclaim_req->is_mem = 0;
+            reclaim_req->_quota = _quota;
+            std::cout << "reclaim msg size: " << sizeof(*reclaim_req) << std::endl;
+            if(write(agentClient->get_socket(), (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
+                std::cout << "[ERROR]: GCM EC Manager id: " << get_manager_id() << ". Failed writing to agent_clients socket (resize)"
+                          << std::endl;
+            }
+            ret = read(agentClient->get_socket(), buffer, sizeof(buffer));
+            return ret;
+        }
+    }
+    return -1;
+}
+
 
 

@@ -52,6 +52,12 @@ namespace ec {
         int get_counter() { return counter; }
         void incr_counter() { counter++; }
 
+        local::stats::cpu *get_cpu_stats() { return &cpu; }
+        local::stats::mem *get_mem_stats() { return &mem; }
+
+        bool get_set_quota_flag() { return cpu.get_set_quota_flag(); }
+        void set_quota_flag(bool val) { cpu.set_set_quota_flag(val); }
+
 
     private:
         ContainerId c_id;
