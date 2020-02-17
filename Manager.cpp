@@ -21,7 +21,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     auto sc = ec_get_sc_for_update(sc_id);
     sc->incr_counter();
     auto req_count = sc->get_counter();
-    auto quota = req->rsrc_amnt;
+    auto rx_quota = req->rsrc_amnt;
     auto rt_remaining = req->runtime_remaining;
     auto throttled = req->request;
     int ret;
@@ -30,7 +30,8 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     double thr_mean = 0;
     uint64_t rt_mean = 0;
 
-    std::cout << "rx: (quota, rt_remaining, throttled): (" << quota << ", " << rt_remaining << ", " << throttled << ")" << std::endl;
+    std::cout << "------------------------------" << std::endl;
+    std::cout << "rx: (quota, rt_remaining, throttled): (" << rx_quota << ", " << rt_remaining << ", " << throttled << ")" << std::endl;
     //TODO: when we change quota, we need to flush the window
     if(likely(!sc->get_set_quota_flag())) {
         rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
@@ -40,38 +41,78 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         thr_mean = sc->get_cpu_stats()->get_thr_mean();
         sc->set_quota_flag(false);
     }
-
     std::cout << "rt_mean: " << rt_mean << std::endl;
     std::cout << "thr_mean: " << thr_mean << std::endl;
+    std::cout << "cpu_unalloc: " << ec_get_cpu_unallocated_rt() << std::endl;
+
+
+    if(thr_mean >= 0.6 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
+        std::cout << "throttle. try get alloc. sc:  " << *sc->get_c_id() << std::endl;
+        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)((1 - thr_mean) * ec_get_cpu_slice()));
+        std::cout << "extra_rt: " << extra_rt << std::endl;
+        if(extra_rt > 0) {
+            ec_decr_unallocated_rt(extra_rt);
+            ret = set_sc_quota(sc, rx_quota + extra_rt);
+            if(ret <= 0) {
+                std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (incr). ret: " << ret << std::endl;
+            }
+            else {
+                sc->set_quota_flag(true);
+                std::cout << "successfully resized quota to: " << rx_quota + extra_rt << "!" << std::endl;
+            }
+        }
+        else {
+            std::cout << "extra_rt == 0: " << extra_rt << std::endl;
+        }
+
+    }
+    else if(rt_mean > rx_quota * 0.2) { //greater than 20% of quota unused
+        std::cout << "rt_mean > 20% of quota. sc: " << *sc->get_c_id() << std::endl;
+        uint64_t new_quota = rx_quota * (1 - 0.2); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
+        new_quota = std::max(ec_get_cpu_slice(), new_quota);
+        if(new_quota != rx_quota) {
+            std::cout << "new, old, rt_remain: (" << new_quota << "," << rx_quota << "," << rt_mean << ")" << std::endl;
+            ret = set_sc_quota(sc, new_quota); //give back what was used + 5ms
+            if(ret <= 0) {
+                std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (incr). ret: " << ret << std::endl;
+            }
+            else {
+                sc->set_quota_flag(true);
+                std::cout << "successfully resized quota to: " << new_quota << "!" << std::endl;
+            }
+            std::cout << "old quota, new quota: (" << rx_quota << ", " << new_quota << ")" << std::endl;
+            ec_incr_unallocated_rt(rx_quota - new_quota); //unalloc_rt <-- old quota - new quota
+        }
+        else {
+            std::cout << "new_quota == old_quota: " << new_quota << std::endl;
+        }
+    }
+    else {
+        std::cout << "DO NOTHING" << std::endl;
+    }
+
 
 //
-//    if(throttle_incr > 0 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
-//        std::cout << "throttle. try get alloc. sc:  " << *sc->get_c_id() << std::endl;
-//        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), ec_get_cpu_slice());
-//        ec_decr_unallocated_rt(extra_rt);
-//        sc->sc_set_quota(sc_quota + extra_rt);
+//    if(req_count % 100 == 0 && req_count % 200 != 0) {
+//        ret = set_sc_quota(sc, 20000000);
+//        if(ret <= 0) {
+//            std::cout << "[ERROR]: GCM. Can't read from socket to resize quota. ret: " << ret << std::endl;
+//        }
+//        else {
+//            sc->set_quota_flag(true);
+//            std::cout << "successfully resized quota to: " << 20000000 << "!" << std::endl;
+//        }
 //    }
-
-    if(req_count % 100 == 0 && req_count % 200 != 0) {
-        ret = set_sc_quota(sc, 20000000);
-        if(ret <= 0) {
-            std::cout << "[ERROR]: GCM. Can't read from socket to resize quota. ret: " << ret << std::endl;
-        }
-        else {
-            sc->set_quota_flag(true);
-            std::cout << "successfully resized quota to: " << 20000000 << "!" << std::endl;
-        }
-    }
-    else if(req_count % 200 == 0) {
-        ret = set_sc_quota(sc, 50000000);
-        if(ret <= 0) {
-            std::cout << "[ERROR]: GCM. Can't read from socket to resize quota. ret: " << ret << std::endl;
-        }
-        else {
-            sc->set_quota_flag(true);
-            std::cout << "successfully resized quota to: " << 50000000 << "!" << std::endl;
-        }
-    }
+//    else if(req_count % 200 == 0) {
+//        ret = set_sc_quota(sc, 50000000);
+//        if(ret <= 0) {
+//            std::cout << "[ERROR]: GCM. Can't read from socket to resize quota. ret: " << ret << std::endl;
+//        }
+//        else {
+//            sc->set_quota_flag(true);
+//            std::cout << "successfully resized quota to: " << 50000000 << "!" << std::endl;
+//        }
+//    }
 
 
 

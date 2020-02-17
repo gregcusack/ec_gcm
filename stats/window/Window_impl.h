@@ -22,7 +22,7 @@ K ec::Window<T,K>::update_stats(K element) {
 //        mean += inc;
     }
     else {
-        std::cout << "prev mean: " << mean << std::endl;
+        std::cout << "prev mean: " << (T) mean << std::endl;
         K meanInc = ((K) element - (K) popped) / ((K) winsize);
         mean += meanInc;
         std::cout << "p_elapsed, winsize, mean, element, popped: (" << periods_elapsed << "," << winsize << "," << (T)mean

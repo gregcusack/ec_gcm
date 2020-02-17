@@ -6,7 +6,7 @@
 
 ec::global::stats::cpu::cpu()
     : quota(100000000), period(100000000),
-    slice_size(5000000), runtime_remaining(100000000),
+    slice_size(10000000), runtime_remaining(100000000),
     unallocated_rt(0), total_cpu(0), overrun(0) {}
 
 ec::global::stats::cpu::cpu(uint64_t _period, int64_t _quota, uint64_t _slice_size)
