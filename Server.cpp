@@ -61,6 +61,8 @@ void ec::Server::serve() {
     //test if server_socket struct valid here somehow
     fd_set readfds;
     int32_t max_sd, sd, cliaddr_len, clifd, select_rv;
+    int32_t num_of_cli = 0;
+
     std::thread threads[__MAX_CLIENT__];
     serv_thread_args *args;
     FD_ZERO(&readfds);
@@ -108,7 +110,7 @@ void ec::Server::handle_client_reqs(void *args) {
     bzero(buff_in, __BUFFSIZE__);
     while((num_bytes = read(client_fd, buff_in, __BUFFSIZE__)) > 0 ) {
         auto *req = reinterpret_cast<msg_t*>(buff_in);
-        //req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
+        // req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
         auto *res = new msg_t(*req);
         ret = handle_req(req, res, om::net::ip4_addr::reverse_byte_order(req->client_ip).to_uint32(), arguments->clifd);
         if(ret == __ALLOC_SUCCESS__) {  //TODO: fix this.

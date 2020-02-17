@@ -163,6 +163,9 @@ Finally, we are at the point where we can create a kubernetes cluster. We can ac
   ...
   kubeadm join 192.168.6.8:6443 --token 8f849s.j7fdp3v7s3p2fb9s..
   ```
+
+  #### 2(a). Note that if you want a one node cluster setup (i.e to test on localhost), you have to untaint the master node to be able to run pods. In order to do this, you don't have to use the kubeadm join command and instead issue the following command on the master node:
+  `kubectl taint nodes --all node-role.kubernetes.io/master-`  
     
   ### Worker Nodes
   1. To join the cluster that the master node is advertising, use the `kubeadm join ...` command that the master node spits out as part of the last step
