@@ -46,9 +46,9 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     std::cout << "cpu_unalloc: " << ec_get_cpu_unallocated_rt() << std::endl;
 
 
-    if(thr_mean >= 0.6 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
+    if(thr_mean >= 0.2 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
         std::cout << "throttle. try get alloc. sc:  " << *sc->get_c_id() << std::endl;
-        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)((1 - thr_mean) * ec_get_cpu_slice()));
+        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)((thr_mean) * ec_get_cpu_slice()));
         std::cout << "extra_rt: " << extra_rt << std::endl;
         if(extra_rt > 0) {
             ec_decr_unallocated_rt(extra_rt);

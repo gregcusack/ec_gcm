@@ -8,7 +8,7 @@
 #include <cstdint>
 #include "../window/Window.h"
 
-#define __WINDOW_STAT_SIZE_ 10
+#define __WINDOW_STAT_SIZE_ 5
 
 namespace ec {
     namespace local {
