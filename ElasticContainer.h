@@ -28,6 +28,7 @@
 
 #define __ALLOC_FAILED__ -2
 #define __ALLOC_SUCCESS__ 1
+#define __ALLOC_INIT__ 2
 #define __BUFF_SIZE__ 1024
 #define _CPU_ 0
 #define _MEM_ 1

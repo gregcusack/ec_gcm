@@ -46,7 +46,7 @@ const ec::SubContainer &ec::ElasticContainer::get_subcontainer(ec::SubContainer:
 ec::SubContainer *ec::ElasticContainer::get_sc_for_update(ec::SubContainer::ContainerId &container_id) {
     auto itr = subcontainers.find(container_id);
     if(itr == subcontainers.end()) {
-        std::cout << "ERROR: No EC with manager_id: " << ec_id << ". Exiting...(sc for update)." << std::endl;
+        std::cout << "ERROR: For EC: " << ec_id << ", no subcontainer with container_id: " << container_id << ". Exiting...(sc for update)." << std::endl;
         std::exit(EXIT_FAILURE);
     }
     return itr->second;
@@ -59,7 +59,7 @@ int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
         return __ALLOC_FAILED__;
     }
     subcontainers.insert({*(_sc.get_c_id()), &_sc});
-    return __ALLOC_SUCCESS__;
+    return __ALLOC_INIT__;
 }
 
 uint64_t ec::ElasticContainer::refill_runtime() {

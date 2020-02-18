@@ -37,6 +37,8 @@ namespace ec {
                 uint64_t get_rt_mean() { return rt_winstats.get_mean(); }
                 uint32_t get_thr_mean() { return th_winstats.get_mean(); }
 
+                void flush() { rt_winstats.flush(); th_winstats.flush(); }
+
             private:
                 uint64_t quota;
                 uint64_t period;

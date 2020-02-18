@@ -2,6 +2,8 @@
 // Created by greg on 2/12/20.
 //
 
+#include "Window.h"
+
 template<typename T, typename K>
 ec::Window<T,K>::Window(uint32_t _winsize)
     : winsize(_winsize), winstat(_winsize, 0), mean(0),
@@ -59,5 +61,14 @@ void ec::Window<T,K>::update_trend() {
 
     trend = (winsize * sum_x_ind - sum_x*sum_ind) / div;
     offset = (sum_ind - trend * sum_x) / winsize;
+}
+
+template<typename T, typename K>
+void ec::Window<T, K>::flush() {
+    std::fill(winstat.begin(), winstat.end(), 0);
+    mean = 0;
+    trend = 0;
+    offset = 0;
+    popped = 0;
 }
 

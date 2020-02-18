@@ -109,7 +109,7 @@ void ec::Server::serve() {
 void ec::Server::handle_client_reqs(void *args) {
     ssize_t num_bytes;
     uint64_t ret;
-    char buff_in[__BUFFSIZE__];
+    char buff_in[__BUFFSIZE__] = {0};
 //    char *buff_out;
     auto *arguments = reinterpret_cast<serv_thread_args*>(args);
     int client_fd = arguments->clifd;
@@ -122,20 +122,30 @@ void ec::Server::handle_client_reqs(void *args) {
         auto *res = new msg_t(*req);
 //        std::cout << "received: " << *req << std::endl;
         ret = manager->handle_req(req, res, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
-//        std::cout << "Sending back: " << *res << std::endl;
-        if(ret == __ALLOC_SUCCESS__) {  //TODO: fix this.
+//        if(ret != __ALLOC_SUCCESS__) {
+//            std::cout << "[ERROR]: handle_req() failed!" << std::endl;
+//            break;
+//        }
+        //        std::cout << "Sending back: " << *res << std::endl;
+        if(ret == __ALLOC_INIT__) {  //TODO: fix this.
             if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                     std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
                     break;
             }
         }
-        else {
-            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
-                std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket. Part 2" << std::endl;
-                break;
-            }
-//            break;
+        else if(ret == __ALLOC_FAILED__) {
+            std::cout << "[ERROR]: handle_req() failed!" << std::endl;
+            break;
         }
+//        else {
+//            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
+//                std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket. Part 2" << std::endl;
+//                break;
+//            }
+////            break;
+//        }
+        delete res;
+//        delete req;
     }
 }
 

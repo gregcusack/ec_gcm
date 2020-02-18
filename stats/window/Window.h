@@ -20,6 +20,7 @@ namespace ec {
 
         K insert(K element);
         K get_mean() { return mean; }
+        void flush();
 
     private:
         K update_stats(K element);
