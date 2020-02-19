@@ -20,7 +20,7 @@ void ec::Manager::start(std::string app_name, std::vector<std::string> app_image
     //A thread to listen for subcontainers' events
     std::thread event_handler_thread(&ec::Server::serve, this);
     // //TODO: temporary. don't need 2 IDs.
-    // manager_id = server_id;
+    manager_id = server_id;
     // // Another thread to deploy the application
     // sleep(10);
     std::thread application_deployment_thread(&ec::ECAPI::deploy_application, this, app_name, app_images);

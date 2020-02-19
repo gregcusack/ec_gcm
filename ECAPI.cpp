@@ -72,7 +72,7 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
             if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
 
                 msg_struct::ECMessage init_msg;
-                init_msg.set_client_ip("192.168.6.10");
+                init_msg.set_client_ip("10.0.2.15");
                 init_msg.set_req_type(4);
                 init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
                 init_msg.set_cgroup_id(0);
@@ -199,6 +199,23 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(ec::SubContainer::ContainerId cont
     // delete(_req);
     return ret;
 
+}
+
+bool ec::ECAPI::resize_memory_limit_in_bytes(ec::SubContainer::ContainerId container_id, uint64_t new_mem_limit) {
+    uint64_t ret = 0;
+    msg_struct::ECMessage msg_req;
+    msg_req.set_req_type(6); //RESIZE_MEM_LIMIT
+    msg_req.set_cgroup_id(container_id.cgroup_id);
+    msg_req.set_payload_string("test");
+    msg_req.set_rsrc_amnt(new_mem_limit);
+
+    AgentClient* temp = _ec->get_corres_agent(container_id);
+
+    if(temp == NULL)
+        std::cerr << "[dbg] temp is NULL" << std::endl;
+    
+    ret = temp->send_request(msg_req)[0];
+    return ret == 0 ? true : false;
 }
 
 

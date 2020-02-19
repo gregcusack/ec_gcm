@@ -87,6 +87,8 @@ namespace ec {
         void ec_decrement_memory_available(uint64_t mem_to_reduce);
         uint64_t ec_set_memory_available(uint64_t mem) { return _ec->ec_set_memory_available(mem); }
 
+        bool resize_memory_limit_in_bytes(ec::SubContainer::ContainerId container_idm, uint64_t new_mem_limit);
+
         /**
          *******************************************************
          * EVENTS
