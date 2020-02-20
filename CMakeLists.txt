@@ -13,6 +13,7 @@ find_package(Boost REQUIRED system)
 add_subdirectory(proto)
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
+
 add_executable(ec_gcm main.cpp
         ElasticContainer.h              ElasticContainer.cpp
         SubContainer.h                  SubContainer.cpp
@@ -29,6 +30,7 @@ add_executable(ec_gcm main.cpp
         stats/global/mem_g.h            stats/global/mem_g.cpp
         Manager.h                       Manager.cpp
         Agents/AgentClient.h            Agents/AgentClient.cpp    
+        jsonSDK/include/JSONFacade.h    jsonSDK/src/JSONFacade.cpp
         )
 
 add_executable(tester tests/run_test.cpp

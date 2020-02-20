@@ -72,7 +72,7 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
             if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
 
                 msg_struct::ECMessage init_msg;
-                init_msg.set_client_ip("192.168.6.10");
+                init_msg.set_client_ip("128.105.144.138");
                 init_msg.set_req_type(4);
                 init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
                 init_msg.set_cgroup_id(0);
