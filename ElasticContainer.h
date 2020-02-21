@@ -18,18 +18,18 @@
 #include <fstream>
 
 #include <cpprest/http_client.h>
-#include <cpprest/json.h> // JSON library
+#include <cpprest/json.h> 
 
 #include "types/msg.h"
 #include "types/k_msg.h"
+
 #include "SubContainer.h"
 #include "Agents/AgentClient.h"
 #include "om.h"
 #include "stats/global/mem_g.h"
 #include "stats/global/cpu_g.h"
-//#include "Server.h"
 
-using namespace web;                        // Common features like URIs, JSON.
+using namespace web;
 
 #define __ALLOC_FAILED__ -2
 #define __ALLOC_SUCCESS__ 1
@@ -112,7 +112,6 @@ namespace ec {
         //MEM
 
         //K8s
-        json::value generate_pod_json(const std::string pod_name, const std::string app_image);
         int deploy_pod(const json::value pod_json);
         std::vector<std::string> get_nodes_with_pod(std::string pod_name);
         std::vector<std::string> get_nodes_ips(const std::vector<std::string> node_names);

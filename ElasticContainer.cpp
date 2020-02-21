@@ -78,61 +78,6 @@ ec::ElasticContainer::~ElasticContainer() {
 
 //K8s Helper Functions
 
-json::value ec::ElasticContainer::generate_pod_json(const std::string pod_name, const std::string app_image) {
-    std::string container_name = pod_name;
-    // Create a JSON object (the pod)
-    json::value pod;
-    pod[U("kind")] = json::value::string(U("Pod"));
-    pod[U("apiVersion")] = json::value::string(U("v1"));
-
-    // Create a JSON object (the metadata)
-    json::value metadata;
-    metadata[U("namespace")] = json::value::string(U("default"));
-    metadata[U("name")] = json::value::string(U(container_name));
-
-    // Create a JSON object (the metadata label)
-    json::value metadata_label;
-    metadata_label[U("name")] = json::value::string(U(container_name));
-
-    metadata[U("labels")] = metadata_label;
-
-    pod[U("metadata")] = metadata;
-/*
-    json::value nodeSelector;
-    nodeSelector[U("node-role.kubernetes.io/master")] = json::value::string(U(""));
-
-    pod[U("nodeSelector")] = nodeSelector;*/
-
-
-    // Now we worry about the specs..
-    json::value cont1;
-    cont1[U("name")] = json::value::string(U(container_name));
-    // Default image is nginx
-    cont1[U("image")] = json::value::string(U(app_image));
-
-    json::value cont1_port;
-    cont1_port[U("containerPort")] = json::value::number(U(80));
-
-    json::value ports;
-    ports[0] = cont1_port;
-    cont1[U("ports")] = ports;
-
-    // Create the items array
-    json::value containers;
-    containers[0] = cont1;
-
-    json::value cont;
-    cont[U("containers")] = containers;
-
-    pod[U("spec")] = cont;
-
-    // Write the current JSON value to a stream with the native platform character width
-    utility::stringstream_t stream;
-    pod.serialize(stream);
-
-    return pod;
-}
-
 int ec::ElasticContainer::deploy_pod(const json::value pod_json) {
     std::cout << "[K8s Log] Sending k8s a request to create Pod.."  << std::endl;
 

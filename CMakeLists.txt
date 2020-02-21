@@ -14,12 +14,11 @@ add_subdirectory(proto)
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 
-add_executable(ec_gcm main.cpp
+add_executable(ec_gcm                   main.cpp
         ElasticContainer.h              ElasticContainer.cpp
         SubContainer.h                  SubContainer.cpp
         ECAPI.h                         ECAPI.cpp
         GlobalCloudManager.h            GlobalCloudManager.cpp
-        #Server.cpp                     Server.h
         types/msg.h                     types/msg.cpp
         types/types.h                   types/k_msg.h
         Server.h                        Server.cpp

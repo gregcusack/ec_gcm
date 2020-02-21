@@ -35,20 +35,22 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     // Step 1: Create a Pod on each of the nodes running an agent
     std::vector<AgentClient *> ec_agent_clients = _ec->get_agent_clients();
     int pod_creation;
-    
-    std::string pod_name = app_name+"-"+app_image; 
-
     int ret;
 
     // Step 1: Generate a JSON file for each Pod definition
+    std::string pod_name = app_name + "-" + app_image;
+    
     std::cout << "[K8s LOG] Generating K8s Definition File " << std::endl;
-    json::value json_output = _ec->generate_pod_json(pod_name, app_image);
-    //std::cout << "JSON File output: " << json_output << std::endl;
+    JSONFacade jsonFacade;
+    auto jsonOutput = jsonFacade.createK8PodDef(app_name, app_image);
+
+    std::cout << "JSON File output: " << jsonOutput << std::endl;
     // Step 2: Communicate with K8 REST API to deploy the pod on that agent
     //         This is where we might have to deal with some way to correspond the agent ip and k8 node name..
     //         so we can deploy to that specific node. (testing with one node in k8s cluster doesn't face this issue)
     
-    pod_creation = _ec->deploy_pod(json_output);
+    /*
+    pod_creation = _ec->deploy_pod(jsonOutput);
     if (pod_creation != 0) {
         std::cout << "[k8s deploy error]:  Error in creating a Pod via k8s.. Exiting" << std::endl;
         return -1;
@@ -72,7 +74,7 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
             if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
 
                 msg_struct::ECMessage init_msg;
-                init_msg.set_client_ip("128.105.144.138");
+                init_msg.set_client_ip("192.168.6.10");
                 init_msg.set_req_type(4);
                 init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
                 init_msg.set_cgroup_id(0);
@@ -120,7 +122,7 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
         }        
     }
 
-    
+    */
     return 0;
 }
 

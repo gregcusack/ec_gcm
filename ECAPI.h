@@ -7,13 +7,14 @@
 
 #include "ElasticContainer.h"
 #include "types/msg.h"
-#include "types/msg.h"
 #include "Agents/Agent.h"
 #include "Agents/AgentClient.h"
 #include "om.h"
 #include <iostream>
 #include <functional> //for std::hash
 #include <string>
+
+#include "jsonSDK/include/JSONFacade.h"
 #include "proto/msg.pb.h"
 #include <google/protobuf/message.h>
 #include <google/protobuf/descriptor.h>
