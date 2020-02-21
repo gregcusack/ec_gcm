@@ -104,17 +104,9 @@ namespace ec {
         SubContainer* create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd);
         int insert_sc(SubContainer &_sc);
 
-        // int insert_pid(int pid);
-        // std::vector<int> get_pids();
-
         //CPU
 
         //MEM
-
-        //K8s
-        int deploy_pod(const json::value pod_json);
-        std::vector<std::string> get_nodes_with_pod(std::string pod_name);
-        std::vector<std::string> get_nodes_ips(const std::vector<std::string> node_names);
 
     private:
         uint32_t ec_id;

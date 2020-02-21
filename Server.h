@@ -26,8 +26,6 @@
 //#define __ALLOC_FAILED__ 0
 #define __QUOTA__ 50000
 
-//using namespace utility;                    // Common utilities like string conversions
-
 namespace ec {
     class Server {
     public:

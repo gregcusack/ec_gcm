@@ -10,11 +10,8 @@
 //}
 
 void ec::ECAPI::deploy_application(std::string app_name, std::vector<std::string> app_images){
-    // And this is where we can actually now "deploy" the distributed containers
-    // instead of the current model of waiting for them to be created on the hosts
-    /*if (manager == NULL) {
-        std::cout << "error in finding manager reference.."  << std::endl;
-    }*/
+    // Logic here: We need to call the create_ec function for as many container images there are
+    //             - i.e. an application can have multiple container images and each container image corresponds to an EC
     for (int i=0; i<app_images.size(); i++) {
         int cont_create = create_ec(app_name, app_images[i]);
         std::cout << "[Deploy Application Log] Created elastic container status: " << cont_create << " for app: " << app_name << " with image: " << app_images[i] <<std::endl;
@@ -24,7 +21,7 @@ void ec::ECAPI::deploy_application(std::string app_name, std::vector<std::string
 int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     _ec = new ElasticContainer(manager_id, agent_clients);      
 
-    /* This is the highest level of abstraction we want to provide to the end application developer. 
+    /* This is the highest level of abstraction provided to the end application developer. 
     
     Steps to create and deploy the "distributed container":
         1. Create a Pod deployment strategy
@@ -35,24 +32,20 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     // Step 1: Create a Pod on each of the nodes running an agent
     std::vector<AgentClient *> ec_agent_clients = _ec->get_agent_clients();
     int pod_creation;
-    int ret;
+    int res;
 
-    // Step 1: Generate a JSON file for each Pod definition
     std::string pod_name = app_name + "-" + app_image;
     
-    std::cout << "[K8s LOG] Generating K8s Definition File " << std::endl;
+    std::cout << "[DEPLOY LOG] Generating JSON Definition File " << std::endl;
     JSONFacade jsonFacade;
-    auto jsonOutput = jsonFacade.createK8PodDef(app_name, app_image);
-
-    std::cout << "JSON File output: " << jsonOutput << std::endl;
-    // Step 2: Communicate with K8 REST API to deploy the pod on that agent
-    //         This is where we might have to deal with some way to correspond the agent ip and k8 node name..
-    //         so we can deploy to that specific node. (testing with one node in k8s cluster doesn't face this issue)
+    auto jsonOutput = jsonFacade.createJSONPodDef(app_name, app_image);
     
-    /*
-    pod_creation = _ec->deploy_pod(jsonOutput);
+    // Step 2
+    std::cout << "[DEPLOY LOG] Deploying Containers " << std::endl;
+    DeployFacade deployment;
+    pod_creation = deployment.deployContainers(jsonOutput);
     if (pod_creation != 0) {
-        std::cout << "[k8s deploy error]:  Error in creating a Pod via k8s.. Exiting" << std::endl;
+        std::cout << "[DEPLOY ERROR]:  Error in deploying Containers.. Exiting" << std::endl;
         return -1;
     }
 
@@ -61,17 +54,18 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     //         i.e. this is where we can use RPC 
     //         Once the container actually establishes a connection to the GCM, the container will send it's own init 
     //         message to the server which will call: handle_add_cgroup_to_ec
-    
-    // Get the Node name here from k8s API so that we get the IP and communicate with that appropriately:
-    
-    std::vector<std::string> node_names = _ec->get_nodes_with_pod(pod_name);
-    std::vector<std::string> node_ips = _ec->get_nodes_ips(node_names);
-    std::cerr << "[dbg] node ips are: " << node_ips[0] << std::endl;
-    //for (const auto &agentClient : ec_agent_clients) {
+        
+    std::cout << "[K8s LOG] Getting Nodes" << std::endl;
+    std::vector<std::string> node_names = deployment.getNodesWithContainer(pod_name);
+    std::vector<std::string> node_ips = deployment.getNodeIPs(node_names);
+
+    // std::cerr << "[dbg] node ips are: " << node_ips[0] << std::endl;
     for (const auto node_ip : node_ips) {
         // Get the Agent with this node ip first..
         for (const auto &agentClient : ec_agent_clients) {
             if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
+
+                ProtoBufFacade protoFacade;
 
                 msg_struct::ECMessage init_msg;
                 init_msg.set_client_ip("192.168.6.10");
@@ -79,42 +73,18 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
                 init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
                 init_msg.set_cgroup_id(0);
 
-                int tx_size = init_msg.ByteSizeLong()+4;
-                char* tx_buf = new char[tx_size];
-                google::protobuf::io::ArrayOutputStream arrayOut(tx_buf, tx_size);
-                google::protobuf::io::CodedOutputStream codedOut(&arrayOut);
-                codedOut.WriteVarint32(init_msg.ByteSizeLong());
-                init_msg.SerializeToCodedStream(&codedOut);
-
-                std::cout << "[EC Init] Sending Message to Agent at IP: " << agentClient->get_agent_ip()  << " with message of length: " << tx_size << std::endl; 
-                if (write(agentClient->get_socket(), (void*) tx_buf, tx_size) < 0) {
-                    std::cout << "[ERROR]: In Deploy_Container. Error in writing to agent_clients socket: " << std::endl;
-                    return -1;
-                }
-                char rx_buffer[2048];
-                bzero(rx_buffer, 2048);
-                ret = read(agentClient->get_socket(), rx_buffer, 2048);
-                if (ret <= 0) {
-                    std::cout << "[ERROR]: GCM. Can't read from socket after deploying container" << std::endl;
-                    return -2;
+                res = protoFacade.sendMessage(agentClient->get_socket(), init_msg);
+                if(res < 0) {
+                    std::cout << "[ERROR]: create_ec() - Error in writing to agent_clients socket. " << std::endl;
+                    return __FAILED__;
                 }
 
                 msg_struct::ECMessage rx_msg;
-                google::protobuf::uint32 size;
-                google::protobuf::io::ArrayInputStream ais(rx_buffer,4);
-                CodedInputStream coded_input(&ais);
-                coded_input.ReadVarint32(&size); 
-                google::protobuf::io::ArrayInputStream arrayIn(rx_buffer, size);
-                google::protobuf::io::CodedInputStream codedIn(&arrayIn);
-                codedIn.ReadVarint32(&size);
-                google::protobuf::io::CodedInputStream::Limit msgLimit = codedIn.PushLimit(size);
-                rx_msg.ParseFromCodedStream(&codedIn);
-                codedIn.PopLimit(msgLimit);
-                
-                std::cout << "[EC Init] Response from Agent: (Request_Type, Container Name, Container PID): (" << rx_msg.req_type() << ", " <<  rx_msg.payload_string() << ", " <<  rx_msg.rsrc_amnt() << ")" << std::endl;
-                if ( rx_msg.rsrc_amnt() == (uint64_t) -1 ) {
+                rx_msg = protoFacade.recvMessage(agentClient->get_socket());
+
+                if (rx_msg.rsrc_amnt() == (uint64_t) -1 ) {
                     std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
-                    return -3;
+                    return __FAILED__;
                 }
             } else {
                 continue;
@@ -122,7 +92,7 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
         }        
     }
 
-    */
+    
     return 0;
 }
 

@@ -5,8 +5,6 @@
 #include "ElasticContainer.h"
 #include "SubContainer.h"
 #include "types/msg.h"
-//#include "jsonSDK/include/JSONFacade.h"
-
 
 #define GCM_PORT        8888             //Not sure if we need a port here tbh
 

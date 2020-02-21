@@ -10,7 +10,7 @@ find_package(Protobuf REQUIRED)
 find_package(cpprestsdk REQUIRED)
 find_package(Boost REQUIRED system)
 
-add_subdirectory(proto)
+add_subdirectory(protoBufSDK)
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 
@@ -30,6 +30,8 @@ add_executable(ec_gcm                   main.cpp
         Manager.h                       Manager.cpp
         Agents/AgentClient.h            Agents/AgentClient.cpp    
         jsonSDK/include/JSONFacade.h    jsonSDK/src/JSONFacade.cpp
+        deploySDK/include/DeployFacade.h    deploySDK/src/DeployFacade.cpp
+        protoBufSDK/include/ProtoBufFacade.h    protoBufSDK/src/ProtoBufFacade.cpp
         )
 
 add_executable(tester tests/run_test.cpp

@@ -1,3 +1,6 @@
+#ifndef JSON_FACADE_H
+#define JSON_FACADE_H
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -13,8 +16,6 @@ class JSONFacade {
         void parseGCMIPAddress();
         int parseFile(const std::string fileName);
 
-        std::string createK8PodDef(const std::string app_name, const std::string app_image);
-
         // Getters
         std::string getAppName() {
             return _app_name;
@@ -29,6 +30,11 @@ class JSONFacade {
             return _gcm_ip;
         }
 
+        std::string createJSONPodDef(const std::string app_name, const std::string app_image);
+        std::string postJSONRequest(const std::string url, const std::string jsonRequest);
+        std::string getJSONRequest(const std::string urlRequest);
+        std::vector<std::string> getNodesFromResponse(const std::string jsonResp);
+        std::string getNodeIPFromResponse(std::string jsonResp);
 
     private:
         web::json::value _val;
@@ -37,3 +43,5 @@ class JSONFacade {
         std::vector<std::string> _agent_ips; 
         std::string _gcm_ip;   
 };
+
+#endif //JSON_FACADE_H
