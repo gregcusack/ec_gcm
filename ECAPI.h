@@ -32,7 +32,7 @@ namespace ec {
         //creates _ec and server and connects them
 //        void build_manager_handler();
         int create_ec(std::string app_name, std::string app_image);
-        void deploy_application(std::string app_name, std::vector<std::string> app_images);
+        void deploy_application(const std::string app_name, const std::vector<std::string> app_images);
 
         [[nodiscard]] const ElasticContainer& get_elastic_container() const;
 

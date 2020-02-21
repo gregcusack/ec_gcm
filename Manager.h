@@ -20,7 +20,7 @@ namespace ec {
             uint64_t handle_reclaim_memory(int client_fd) override;
 
             int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd);
-            void start(std::string app_name, std::vector<std::string> app_images);
+            void start(const std::string app_name, const std::vector<std::string> app_images);
             virtual void run();
         struct reclaim_msg {
             uint16_t cgroup_id;

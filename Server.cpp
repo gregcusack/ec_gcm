@@ -11,6 +11,7 @@ ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, uint16_t _port
 
 void ec::Server::initialize() {
     int32_t addrlen, opt = 1;
+    num_of_cli = 0;
     if((server_socket.sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         std::cout << "[ERROR]: Server socket creation failed in server: " << server_id << std::endl;
         std::exit(EXIT_FAILURE);
@@ -61,7 +62,6 @@ void ec::Server::serve() {
     //test if server_socket struct valid here somehow
     fd_set readfds;
     int32_t max_sd, sd, cliaddr_len, clifd, select_rv;
-    int32_t num_of_cli = 0;
 
     std::thread threads[__MAX_CLIENT__];
     serv_thread_args *args;

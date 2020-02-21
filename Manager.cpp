@@ -16,7 +16,7 @@ ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t serv
 
 }
 
-void ec::Manager::start(std::string app_name, std::vector<std::string> app_images) {
+void ec::Manager::start(const std::string app_name, const std::vector<std::string> app_images) {
     //A thread to listen for subcontainers' events
     std::thread event_handler_thread(&ec::Server::serve, this);
     // //TODO: temporary. don't need 2 IDs.

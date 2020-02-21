@@ -61,9 +61,9 @@ ec::GlobalCloudManager::~GlobalCloudManager() {
     servers.clear();
 }
 
-void ec::GlobalCloudManager::run(std::string app_name, std::vector<std::string> app_images) {
+void ec::GlobalCloudManager::run(const std::string app_name, const std::vector<std::string> app_images) {
 
-    std::thread threads[32];
+    std::thread threads[__NUM_THREADS__];
     //app_thread_args *args;
     int32_t num_of_cli = 0;
 

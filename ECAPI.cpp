@@ -9,16 +9,17 @@
  //   // _ec = new ElasticContainer(manager_id, agent_clients);
 //}
 
-void ec::ECAPI::deploy_application(std::string app_name, std::vector<std::string> app_images){
+void ec::ECAPI::deploy_application(const std::string app_name, const std::vector<std::string> app_images){
     // Logic here: We need to call the create_ec function for as many container images there are
     //             - i.e. an application can have multiple container images and each container image corresponds to an EC
-    for (int i=0; i<app_images.size(); i++) {
-        int cont_create = create_ec(app_name, app_images[i]);
-        std::cout << "[Deploy Application Log] Created elastic container status: " << cont_create << " for app: " << app_name << " with image: " << app_images[i] <<std::endl;
+    int cont_create;
+    for (const auto &appImage : app_images) {
+        cont_create = create_ec(app_name, appImage);
+        std::cout << "[DEPLOY Log] Created elastic container status: " << cont_create << " for app: " << app_name << " with image: " << appImage <<std::endl;
     }
 }
 
-int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
+int ec::ECAPI::create_ec(const std::string app_name, const std::string app_image) {
     _ec = new ElasticContainer(manager_id, agent_clients);      
 
     /* This is the highest level of abstraction provided to the end application developer. 
