@@ -32,11 +32,11 @@ void ec::Server::initialize() {
     }
 
     int flag = 1;
-    int result = setsockopt(server_socket.sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
-    if(result != 0) {
-        std::cout << "[ERROR]: setsockopt failed!" << std::endl;
-        exit(EXIT_FAILURE);
-    }
+//    int result = setsockopt(server_socket.sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+//    if(result != 0) {
+//        std::cout << "[ERROR]: setsockopt failed!" << std::endl;
+//        exit(EXIT_FAILURE);
+//    }
 
     if(listen(server_socket.sock_fd, 3) < 0) {
         std::cout << "[ERROR]: EC Server id: " << server_id << ". Listening on socket failed" << std::endl;
@@ -118,9 +118,10 @@ void ec::Server::handle_client_reqs(void *args) {
     bzero(buff_in, __BUFFSIZE__);
     while((num_bytes = read(client_fd, buff_in, __BUFFSIZE__)) > 0 ) {
         auto *req = reinterpret_cast<msg_t*>(buff_in);
+//        std::cout << "bytes read: " << num_bytes << std::endl;
         req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
         auto *res = new msg_t(*req);
-//        std::cout << "received: " << *req << std::endl;
+        std::cout << "received: " << *req << std::endl;
         ret = manager->handle_req(req, res, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
 //        if(ret != __ALLOC_SUCCESS__) {
 //            std::cout << "[ERROR]: handle_req() failed!" << std::endl;

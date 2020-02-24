@@ -34,7 +34,7 @@ int ec::ECAPI::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int cl
     }
 
     uint64_t ret = __FAILED__;
-    std::cout << "Req rx: " << *req << std::endl;
+//    std::cout << "Req rx: " << *req << std::endl;
 
     switch(req -> req_type) {
         case _MEM_:
