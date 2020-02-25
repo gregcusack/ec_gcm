@@ -17,6 +17,9 @@
 #include <thread>
 #include <fstream>
 
+#include <cpprest/http_client.h>
+#include <cpprest/json.h> // JSON library
+
 #include "types/msg.h"
 #include "types/k_msg.h"
 #include "SubContainer.h"
@@ -25,6 +28,8 @@
 #include "stats/global/mem_g.h"
 #include "stats/global/cpu_g.h"
 //#include "Server.h"
+
+using namespace web;                        // Common features like URIs, JSON.
 
 #define __ALLOC_FAILED__ -2
 #define __ALLOC_SUCCESS__ 1
@@ -42,6 +47,7 @@ namespace ec {
 //    struct Server;
     class ElasticContainer {
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
+    using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
     public:
         explicit ElasticContainer(uint32_t _ec_id);
         ElasticContainer(uint32_t _ec_id, std::vector<AgentClient*> &_agent_clients);
@@ -56,6 +62,7 @@ namespace ec {
         uint32_t get_ec_id() { return ec_id; }
         const subcontainer_map &get_subcontainers() {return subcontainers;}
         const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id);
+        AgentClient* get_corres_agent(SubContainer::ContainerId &container_id){return sc_agent_map[container_id];}
 
         //CPU
         uint64_t get_rt_remaining() { return _cpu.get_runtime_remaining(); }
@@ -73,6 +80,9 @@ namespace ec {
          * SETTERS
          *******************************************************
          **/
+
+        //MISC
+        int add_to_agent_map(SubContainer::ContainerId id, AgentClient* client) { sc_agent_map.insert({id, client}); }
 
         //CPU
         void set_ec_period(int64_t _period)  { _cpu.set_period(_period); }   //will need to update maanger too
@@ -94,14 +104,25 @@ namespace ec {
         SubContainer* create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd);
         int insert_sc(SubContainer &_sc);
 
+        // int insert_pid(int pid);
+        // std::vector<int> get_pids();
+
         //CPU
 
         //MEM
 
+        //K8s
+        json::value generate_pod_json(const std::string pod_name, const std::string app_image);
+        int deploy_pod(const json::value pod_json);
+        std::vector<std::string> get_nodes_with_pod(std::string pod_name);
+        std::vector<std::string> get_nodes_ips(const std::vector<std::string> node_names);
 
     private:
         uint32_t ec_id;
         subcontainer_map subcontainers;
+        subcontainer_agent_map sc_agent_map;
+
+ //       std::vector<std::int> pids;
 
         //agents
         //TODO: this may need to be a map

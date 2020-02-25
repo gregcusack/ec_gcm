@@ -6,7 +6,7 @@
 
 ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents)
     : server_id(_server_id), ip_address(_ip_address), port(_port), agents(_agents), server_initialized(false),
-    agent_clients({}), manager(nullptr) {}
+    agent_clients_({}) {}
 
 
 void ec::Server::initialize() {
@@ -43,13 +43,13 @@ void ec::Server::initialize() {
         exit(EXIT_FAILURE);
     }
 
-    manager = new Manager(server_id, agent_clients);
-    if(manager == nullptr) {
-        std::cout << "ERROR: Server initialized without manager. " << std::endl;
-        exit(EXIT_FAILURE);
-    }
+//    manager = new Manager(server_id, agent_clients);
+//    if(manager == nullptr) {
+//        std::cout << "ERROR: Server initialized without manager. " << std::endl;
+//        exit(EXIT_FAILURE);
+//    }
     server_initialized = true; //server setup can run now
-
+    
 }
 
 void ec::Server::serve() {
@@ -61,7 +61,8 @@ void ec::Server::serve() {
     //test if server_socket struct valid here somehow
     fd_set readfds;
     int32_t max_sd, sd, cliaddr_len, clifd, select_rv;
-//    int32_t num_of_cli = 0;
+    int32_t num_of_cli = 0;
+
     std::thread threads[__MAX_CLIENT__];
     serv_thread_args *args;
     FD_ZERO(&readfds);
@@ -70,13 +71,11 @@ void ec::Server::serve() {
     cliaddr_len = sizeof(server_socket.addr);
     std::cout << "[dbg]: Max socket descriptor is: " << max_sd << std::endl;
 
+    //std::cout << "[dgb]: All PIDs for the _ec reference: " << std::endl;
+    
     while(true) {
         FD_SET(server_socket.sock_fd, &readfds);
-//        std::cout << "[dgb]: In while loop waiting for server socket event. EC Server id: " << _ec->get_manager_id() << std::endl;
-
         select_rv = select(max_sd, &readfds, nullptr, nullptr, nullptr);
-
-//        std::cout << "[dgb] an even happened on the server socket. EC Server id: " << _ec->get_manager_id() << std::endl;
 
         if(FD_ISSET(server_socket.sock_fd, &readfds)) {
             if((clifd = accept(server_socket.sock_fd, (struct sockaddr *)&server_socket.addr, (socklen_t*)&cliaddr_len)) > 0) {
@@ -84,7 +83,7 @@ void ec::Server::serve() {
                 args = new serv_thread_args();
                 args->clifd = clifd;
                 args->cliaddr = &server_socket.addr;
-                std::cout << "server rx connection from clifd: " << clifd << std::endl;
+                // std::cout << "server rx connection from clifd: " << clifd << std::endl;
 //                std::cout << "num_cli: " << num_of_cli << std::endl;
                 threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)args);
 //                threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)&clifd);
@@ -111,10 +110,9 @@ void ec::Server::handle_client_reqs(void *args) {
     bzero(buff_in, __BUFFSIZE__);
     while((num_bytes = read(client_fd, buff_in, __BUFFSIZE__)) > 0 ) {
         auto *req = reinterpret_cast<msg_t*>(buff_in);
-        req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
+        // req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
         auto *res = new msg_t(*req);
-        ret = manager->handle_req(req, res, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
-//        std::cout << "Sending back: " << *res << std::endl;
+        ret = handle_req(req, res, om::net::ip4_addr::reverse_byte_order(req->client_ip).to_uint32(), arguments->clifd);
         if(ret == __ALLOC_SUCCESS__) {  //TODO: fix this.
             if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                     std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
@@ -157,8 +155,11 @@ int ec::Server::init_agent_connections() {
             num_connections++;
         }
 
-        agent_clients.push_back(new AgentClient(ag, sockfd));
-        std::cout << "agent_clients sockfd: " << sockfd << ", " << agent_clients[agent_clients.size() - 1]->get_socket() << std::endl;
+        agent_clients_.push_back(new AgentClient(ag, sockfd));
+        std::cout << "[dbg] agent_clients sockfd: " << sockfd << ", " << agent_clients_[agent_clients_.size() - 1]->get_socket() << std::endl;
     }
-    return num_connections == agent_clients.size();
+    return num_connections == agent_clients_.size();
+
 }
+
+

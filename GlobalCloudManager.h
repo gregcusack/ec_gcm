@@ -15,24 +15,32 @@
 #include "Agents/Agent.h"
 #include "ElasticContainer.h"
 #include "om.h"
+#include <thread>
+#include "Manager.h"
 
 //std::mutex eclock;
 
 namespace ec {
     class GlobalCloudManager {
         using agents_ip_list = std::vector<std::string>;
-        using server_map = std::unordered_map<uint16_t, ec::Server*>;
+        using server_map = std::unordered_map<uint16_t, ec::Manager*>;
     public:
 //        GlobalCloudManager();
         GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<uint16_t> &_server_ports);
         ~GlobalCloudManager();
 
-        void run();
+        void run(std::string app_name, std::vector<std::string> app_images);
 
         uint32_t create_server();
 
         const server_map& get_servers() {return servers;}
-        const Server& get_server(uint32_t server_id) const;
+        const Manager& get_server(uint32_t server_id) const;
+
+        struct app_thread_args {
+            app_thread_args()              = default;
+            std::string app_name           = nullptr;
+            std::vector<std::string> *app_images = nullptr;
+        };
 
     private:
         ip4_addr                gcm_ip;
@@ -44,6 +52,9 @@ namespace ec {
 
         std::vector<Agent*>     agents;
         std::vector<uint16_t>   server_ports;
+
+        //API
+        Manager * mngr;
 
     };
 

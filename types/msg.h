@@ -22,10 +22,11 @@ namespace ec {
 
         om::net::ip4_addr   client_ip;      //ip SubContainer sending message is on
         uint32_t            cgroup_id;      //id of SubContainer on that Server
-        uint32_t                req_type;         //1: mem, 0: cpu, 2: init, 3: slice
+        uint32_t                req_type;         //0: cpu, 1: mem, 2: init, 3: slice, 4: create_cont
         uint64_t            rsrc_amnt;      //amount of resources (cpu/mem)
         uint32_t                request;        //1: request, 0: give back
         uint64_t            runtime_remaining;
+        uint64_t            cont_name;
 
         friend std::ostream& operator<<(std::ostream& os_, const msg_t& k) {
             return os_ << "msg_t: "

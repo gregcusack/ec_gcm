@@ -4,6 +4,35 @@
 
 #include "Manager.h"
 
+ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> agents )
+            : Server(server_counts, gcm_ip, server_port, agents)
+{
+    //init server
+    initialize();
+
+    //TODO: this is temporary. should be fixed. there is no need to have 2 instance of agentClients
+    agent_clients = agent_clients_;
+    std::cout<<"[dbg] Manager constructor: agent socket file descriptor is: " << agent_clients[0]->get_socket() << std:: endl;
+
+}
+
+void ec::Manager::start(std::string app_name, std::vector<std::string> app_images) {
+    //A thread to listen for subcontainers' events
+    std::thread event_handler_thread(&ec::Server::serve, this);
+    // //TODO: temporary. don't need 2 IDs.
+    // manager_id = server_id;
+    // // Another thread to deploy the application
+    // sleep(10);
+    std::thread application_deployment_thread(&ec::ECAPI::deploy_application, this, app_name, app_images);
+    // //Another thread to run a management application
+    application_deployment_thread.join();
+
+    std::cerr<<"[dbg] manager::just before running the app thread\n";
+    std::thread application_thread(&ec::Manager::run, this);
+    application_thread.join();
+    event_handler_thread.join();
+}
+
 int ec::Manager::handle_cpu_req(const ec::msg_t *req, ec::msg_t *res) {
     if(req == nullptr || res == nullptr) {
         std::cout << "req or res == null in handle_cpu_req()" << std::endl;
@@ -118,6 +147,43 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     }
     std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << reclaimed << std::endl;
     return reclaimed;
+}
+
+int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd){
+    if(req == nullptr || res == nullptr) {
+        std::cout << "req or res == null in handle_req()" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    uint64_t ret = __FAILED__;
+
+    switch(req -> req_type) {
+        case _MEM_:
+            ret = handle_mem_req(req, res, clifd);
+            break;
+        case _CPU_:
+            ret = handle_cpu_req(req, res);
+            break;
+        case _INIT_:
+            ret = handle_add_cgroup_to_ec(res, req->cgroup_id, host_ip, clifd);
+            break;
+        default:
+            std::cout << "[Error]: ECAPI: " << manager_id << ". Handling memory/cpu request failed!" << std::endl;
+    }
+    return ret;
+}
+
+void ec::Manager::run(){
+    //ec::SubContainer::ContainerId x ;
+    std::cout << "[dbg] In Manager Run function" << std::endl;
+    while(true){
+        //std::cout << "[dbg] manager::run: for loop\n";
+        for(auto sc_ : _ec->get_subcontainers()){
+            std::cout << "=================================================================================================\n";
+            std::cout << "[READ API] the memory limit in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
+            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << std::endl;
+            sleep(3);
+        }
+    }
 }
 
 
