@@ -32,6 +32,7 @@ add_executable(ec_gcm                   main.cpp
         jsonSDK/include/JSONFacade.h    jsonSDK/src/JSONFacade.cpp
         deploySDK/include/DeployFacade.h    deploySDK/src/DeployFacade.cpp
         protoBufSDK/include/ProtoBufFacade.h    protoBufSDK/src/ProtoBufFacade.cpp
+        cAdvisorSDK/include/cAdvisorFacade.h    cAdvisorSDK/src/cAdvisorFacade.cpp
         )
 
 add_executable(tester tests/run_test.cpp

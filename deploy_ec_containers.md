@@ -75,13 +75,18 @@ The CloudLab cluster is setup in the following manner: One GCM master node and t
     sudo apt-add-repository --yes --update ppa:ansible/ansible
     sudo apt install ansible
     ```
-    ##### 5. Install [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
-    ##### 6. Install Kubernetes: A more detailed instructional guide can be found [here](https://blog.sourcerer.io/a-kubernetes-quick-start-for-people-who-know-just-enough-about-docker-to-get-by-71c5933b4633)
+    ##### 5. Install YAML-CPP via:
+      * `sudo apt-get update`
+      * `sudo apt-get install libyaml-cpp-dev`
+      
+    ##### 6. Install [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+    ##### 7. Install Kubernetes: A more detailed instructional guide can be found [here](https://blog.sourcerer.io/a-kubernetes-quick-start-for-people-who-know-just-enough-about-docker-to-get-by-71c5933b4633)
       * `sudo apt-get update && sudo apt-get install -y apt-transport-https`
       * `sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -`
       * Create/edit the file: /etc/apt/sources.list.d/kubernetes.list to add `deb http://apt.kubernetes.io/ kubernetes-xenial main`
       * `sudo apt-get update`
       * `sudo apt-get install -y kubelet kubeadm kubectl`
+    
 
 
   * #### Build project using cmake

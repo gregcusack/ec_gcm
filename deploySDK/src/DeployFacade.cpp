@@ -18,6 +18,7 @@ std::vector<std::string> k8Facade::getNodesWithPod(std::string podName) {
 
     // Assumes that there's a k8s proxy running on localhost, port 8000
     std::string res;
+    // Todo: look for pod name with prefix instad of exact name
     res = jsonFacade.getJSONRequest("http://localhost:8000/api/v1/namespaces/default/pods/" + podName);
 
     resultNodes = jsonFacade.getNodesFromResponse(res);

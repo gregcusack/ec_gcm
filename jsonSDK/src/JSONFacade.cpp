@@ -172,7 +172,7 @@ std::vector<std::string> JSONFacade::getNodesFromResponse(const std::string json
     return output;
 }
 
-std::string JSONFacade::getNodeIPFromResponse(std::string jsonResp) {
+std::string JSONFacade::getNodeIPFromResponse(const std::string jsonResp) {
     web::json::value jsonResponse = web::json::value::parse(jsonResp);
     auto jsonval = jsonResponse.at(U("status")).at(U("addresses")).as_array();
     for (int i = 0; i < jsonval.size(); i++) {
@@ -182,3 +182,60 @@ std::string JSONFacade::getNodeIPFromResponse(std::string jsonResp) {
     }
     return NULL;
 }
+
+uint64_t JSONFacade::parseCAdvisorResponseLimits(const std::string jsonResp, const std::string type){
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    
+    if(jsonResponse.is_null()) {
+        std::cout << "Null";
+    }
+    if(jsonResponse.is_number()) {
+        std::cout << "number";
+    }
+    if(jsonResponse.is_integer()) {
+        std::cout << "int";
+    }
+    if(jsonResponse.is_double()) {
+        std::cout << "double";
+    }
+    if(jsonResponse.is_boolean()) {
+        std::cout << "bool";
+    }
+    if(jsonResponse.is_string ()) {
+        std::cout << "string";
+    }
+    if(jsonResponse.is_array()) {
+        std::cout << "array";
+    }
+    if(jsonResponse.is_object()) {
+        std::cout << "objc";
+    }
+    
+    //auto DataArray = jsonResponse.as_string();
+    // for (auto Iter = DataArray.begin(); Iter != DataArray.end(); ++Iter)
+    // {
+    //     auto& data = *Iter;
+    //     //auto dataObj = data.second.as_object();
+
+    //     // for (auto iterInner = dataObj.cbegin(); iterInner != dataObj.cend(); ++iterInner)
+    //     // {
+    //     //     auto &propertyName = iterInner->first;
+    //     //     auto &propertyValue = iterInner->second;
+
+    //     //     std::cout << "Property: " << propertyName << ", Value: " << 
+    //     //     propertyValue << std::endl;
+    //     // }
+    // }
+    // for(web::json::object::iterator itr = jsonval.begin(); itr != jsonval.end(); ++itr) {
+    //     // auto jsonval1 = itr->second.as_array();
+    //     // auto jsonvalMemArray = jsonval1.at(U("memory")).at(U("max_usage")).as_string();
+    //     // std::cout << jsonvalMemArray << std::endl;     
+    //     // for (web::json::object::iterator iter = jsonval1.begin(); iter != jsonval1.end(); ++iter) {
+    //     //     const utility::string_t &str = itr->first;
+    //     //     std::cout << str << std::endl;            
+    //     // }   
+    // }
+    return 1;
+
+}
+

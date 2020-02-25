@@ -37,10 +37,14 @@ namespace ec {
 
         ContainerId* get_c_id() {return &c_id;}
         int get_fd() { return fd; }
+        
+        void set_docker_id(std::string docker_id) { _docker_id = docker_id; }
+        std::string get_docker_id() { return _docker_id; }
 
     private:
         ContainerId c_id;
         int fd;
+        std::string _docker_id;
 
         local::stats::cpu cpu;
         local::stats::mem mem;

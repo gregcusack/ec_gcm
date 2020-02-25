@@ -65,9 +65,8 @@ int ec::ECAPI::create_ec(const std::string app_name, const std::string app_image
         // Get the Agent with this node ip first..
         for (const auto &agentClient : ec_agent_clients) {
             if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
-
+                // Send Message to Agent to call sysconnect on this container
                 ProtoBufFacade protoFacade;
-
                 msg_struct::ECMessage init_msg;
                 init_msg.set_client_ip("192.168.6.10");
                 init_msg.set_req_type(4);
@@ -87,13 +86,30 @@ int ec::ECAPI::create_ec(const std::string app_name, const std::string app_image
                     std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
                     return __FAILED__;
                 }
+
+                // This is where we need to find the subcontainer from the subcontainer_agent_map
+                auto result = std::find_if(
+                    _ec->get_subcontainer_agents().begin(),
+                    _ec->get_subcontainer_agents().end(),
+                    [agentClient](const auto& mo) {return mo.second == agentClient; });
+
+                if(result != _ec->get_subcontainer_agents().end()) {
+                    SubContainer::ContainerId cont_id = result->first;
+                    std::cout << "CONTAINER ID: " <<  cont_id << std::endl;
+                    SubContainer sc_tmp = _ec->get_subcontainer(cont_id);
+                    std::cout << "SUBCONTAINER ID FOUND: " <<  sc_tmp.get_c_id() << std::endl;
+                    std::string docker_id = rx_msg.payload_string();
+                    std::cout << "docker container id: " << docker_id << std::endl;
+                    sc_tmp.set_docker_id(docker_id);
+                } else {
+                    std::cout << "[deployment error]: Error in finding AgentClient in map " << std::endl;
+                    return __FAILED__;
+                }
             } else {
                 continue;
             }
         }        
     }
-
-    
     return 0;
 }
 
@@ -155,24 +171,37 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(ec::SubContainer::ContainerId cont
     
     uint64_t ret = 0;
 
-    //initialize request body
-    msg_struct::ECMessage msg_req;
-    msg_req.set_req_type(5); //MEM_LIMIT_IN_BYTES 
-    msg_req.set_cgroup_id(container_id.cgroup_id);
-    msg_req.set_payload_string("test");
+    // //initialize request body
+    // msg_struct::ECMessage msg_req;
+    // msg_req.set_req_type(5); //MEM_LIMIT_IN_BYTES 
+    // msg_req.set_cgroup_id(container_id.cgroup_id);
+    // msg_req.set_payload_string("test");
 
-    std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
-    std::cerr << "[dbg] Getting the agent clients: " << _ec->get_agent_clients()[0]->get_socket() << std::endl;
-    AgentClient* temp = _ec->get_corres_agent(container_id);
-    if(temp == NULL)
-        std::cerr << "[dbg] temp is NULL" << std::endl;
+    // std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
+    // std::cerr << "[dbg] Getting the agent clients: " << _ec->get_agent_clients()[0]->get_socket() << std::endl;
+    // AgentClient* temp = _ec->get_corres_agent(container_id);
+    // if(temp == NULL)
+    //     std::cerr << "[dbg] temp is NULL" << std::endl;
     
-    std::cerr << "[dbg] temp sockfd is : " << temp->get_socket() << std::endl;
-    ret = temp->send_request(msg_req)[0];
-    // delete(_req);
-    return ret;
+    // std::cerr << "[dbg] temp sockfd is : " << temp->get_socket() << std::endl;
+    // ret = temp->send_request(msg_req)[0];
+    // // delete(_req);
+    // return ret;
 
+    // This is where we'll use cAdvisor instead of the agent comm to get the mem limit
+    std::cout << "CONTAINER ID USED: " << container_id << std::endl;
+    std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
+    AgentClient* ac = _ec->get_corres_agent(container_id);
+    if(ac == NULL)
+         std::cerr << "[ERROR] NO AgentClient found for container id: " << container_id << std::endl;
+    SubContainer sc = _ec->get_subcontainer(container_id);
+
+    CAdvisor monitor_obj;
+    std::cout << "SUBCONTAINER ID: " << sc.get_c_id() << std::endl;
+    ret = monitor_obj.getContMemLimit(ac->get_agent_ip().to_string(), sc.get_docker_id());
+    return ret;
 }
+
 
 
 

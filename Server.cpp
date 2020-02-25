@@ -129,7 +129,7 @@ void ec::Server::handle_client_reqs(void *args) {
     }
 }
 
-int ec::Server::init_agent_connections() {
+bool ec::Server::init_agent_connections() {
     int sockfd, i;
     struct sockaddr_in servaddr;
     int num_connections = 0;

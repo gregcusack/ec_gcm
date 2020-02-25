@@ -8,7 +8,7 @@
 ec::SubContainer::SubContainer(uint32_t cgroup_id, uint32_t ip, int _fd)
     : fd(_fd), cpu(local::stats::cpu()), mem(local::stats::mem()) {
     c_id = ContainerId(cgroup_id, ip4_addr::from_net(ip));
-
+    
     cpu = local::stats::cpu();
     mem = local::stats::mem();
 

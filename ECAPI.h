@@ -18,12 +18,15 @@
 #include "deploySDK/include/DeployFacade.h"
 #include "protoBufSDK/include/ProtoBufFacade.h"
 #include "protoBufSDK/msg.pb.h"
+#include "cAdvisorSDK/include/cAdvisorFacade.h"
 
 #define __FAILED__ -1
 
 namespace ec {
     class ECAPI {
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
+    using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
+
     public:
 //        ECAPI(uint32_t _ec_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
         ECAPI(){}
@@ -47,6 +50,8 @@ namespace ec {
         //MISC
         uint32_t get_ec_id() { return _ec->get_ec_id(); }
         [[nodiscard]] const subcontainer_map  &get_subcontainers() const {return _ec->get_subcontainers(); }
+        [[nodiscard]] const subcontainer_agent_map  &get_subcontainer_agents() const {return _ec->get_subcontainer_agents(); }
+
         const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id) {return _ec->get_subcontainer(
                     container_id);}
 
@@ -108,6 +113,7 @@ namespace ec {
         /**
          * HANDLERS
          */
+
 
     protected:
         uint32_t manager_id;

@@ -34,8 +34,9 @@ class JSONFacade {
         std::string postJSONRequest(const std::string url, const std::string jsonRequest);
         std::string getJSONRequest(const std::string urlRequest);
         std::vector<std::string> getNodesFromResponse(const std::string jsonResp);
-        std::string getNodeIPFromResponse(std::string jsonResp);
+        std::string getNodeIPFromResponse(const std::string jsonResp);
 
+        uint64_t parseCAdvisorResponseLimits(const std::string jsonResp, const std::string type);
     private:
         web::json::value _val;
         std::string _app_name;
