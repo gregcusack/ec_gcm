@@ -175,12 +175,12 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
 void ec::Manager::run(){
     //ec::SubContainer::ContainerId x ;
     std::cout << "[dbg] In Manager Run function" << std::endl;
+    uint64_t new_mem = 30000;
     while(true){
         //std::cout << "[dbg] manager::run: for loop\n";
         for(auto sc_ : _ec->get_subcontainers()){
-            std::cout << "=================================================================================================\n";
-            std::cout << "[READ API] the memory limit in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
-            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << std::endl;
+            std::cout << "[dbg] resize maximum memory api is called: " << resize_memory_limit_in_bytes(sc_.first, new_mem) << std::endl;
+            new_mem += 2000;
             sleep(3);
         }
     }
