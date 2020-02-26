@@ -9,3 +9,10 @@ cmake_install.cmake
 ec_gcm
 loop_test
 tester
+proto/Makefile
+proto/CMakeFiles
+proto/cmake_install.cmake
+proto/CMakeCache.txt
+proto/msg.pb.cc
+proto/msg.pb.h
+minikube

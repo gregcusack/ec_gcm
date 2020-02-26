@@ -66,7 +66,7 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     std::vector<std::string> node_ips = _ec->get_nodes_ips(node_names);
     std::cerr << "[dbg] node ips are: " << node_ips[0] << std::endl;
     //for (const auto &agentClient : ec_agent_clients) {
-    for (const auto node_ip : node_ips) {
+    for (const auto &node_ip : node_ips) {
         // Get the Agent with this node ip first..
         for (const auto &agentClient : ec_agent_clients) {
             if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
@@ -190,9 +190,11 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(ec::SubContainer::ContainerId cont
 
     std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
     std::cerr << "[dbg] Getting the agent clients: " << _ec->get_agent_clients()[0]->get_socket() << std::endl;
-    AgentClient* temp = _ec->get_corres_agent(container_id);
-    if(temp == NULL)
+    auto temp = _ec->get_corres_agent(container_id);
+    if(!temp) {
         std::cerr << "[dbg] temp is NULL" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
     
     std::cerr << "[dbg] temp sockfd is : " << temp->get_socket() << std::endl;
     ret = temp->send_request(msg_req)[0];

@@ -13,6 +13,19 @@ find_package(Boost REQUIRED system)
 add_subdirectory(proto)
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
+add_custom_command(
+        OUTPUT
+        ${CMAKE_CURRENT_LIST_DIR}/proto/msg.pb.h
+        ${CMAKE_CURRENT_LIST_DIR}/proto/msg.pb.cc
+        MAIN_DEPENDENCY ${CMAKE_CURRENT_LIST_DIR}/proto/msg.proto
+        COMMAND ${PROTOBUF_PROTOC}
+        ARGS --proto_path=. --cpp_out=. msg.proto
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/proto)
+
+set(GCM_PROTO_SRC
+        proto/msg.pb.h
+        proto/msg.pb.cc)
+
 add_executable(ec_gcm main.cpp
         ElasticContainer.h              ElasticContainer.cpp
         SubContainer.h                  SubContainer.cpp
@@ -28,7 +41,8 @@ add_executable(ec_gcm main.cpp
         stats/global/cpu_g.h            stats/global/cpu_g.cpp
         stats/global/mem_g.h            stats/global/mem_g.cpp
         Manager.h                       Manager.cpp
-        Agents/AgentClient.h            Agents/AgentClient.cpp    
+        Agents/AgentClient.h            Agents/AgentClient.cpp
+        ${GCM_PROTO_SRC}
         )
 
 add_executable(tester tests/run_test.cpp
