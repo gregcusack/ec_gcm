@@ -315,8 +315,10 @@ int ec::Manager::set_sc_quota(ec::SubContainer *sc, uint64_t _quota) {
                 std::cout << "[ERROR]: GCM EC Manager id: " << get_manager_id() << ". Failed writing to agent_clients socket (resize)"
                           << std::endl;
             }
-            ret = read(agentClient->get_socket(), buffer, sizeof(buffer));
-            return ret;
+//            ret = read(agentClient->get_socket(), buffer, sizeof(buffer));
+//            return ret;
+            delete reclaim_req;
+            return 1;
         }
     }
     return -1;
