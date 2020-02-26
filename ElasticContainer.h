@@ -16,10 +16,6 @@
 #include <chrono>
 #include <thread>
 #include <fstream>
-
-#include <cpprest/http_client.h>
-#include <cpprest/json.h> 
-
 #include "types/msg.h"
 #include "types/k_msg.h"
 
@@ -28,8 +24,6 @@
 #include "om.h"
 #include "stats/global/mem_g.h"
 #include "stats/global/cpu_g.h"
-
-using namespace web;
 
 #define __ALLOC_FAILED__ -2
 #define __ALLOC_SUCCESS__ 1
@@ -103,6 +97,9 @@ namespace ec {
         //MISC
         SubContainer* create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd);
         int insert_sc(SubContainer &_sc);
+
+        // int insert_pid(int pid);
+        // std::vector<int> get_pids();
 
         //CPU
 

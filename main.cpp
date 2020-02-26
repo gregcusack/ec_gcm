@@ -5,6 +5,8 @@
 #include "ElasticContainer.h"
 #include "SubContainer.h"
 #include "types/msg.h"
+#include <cpprest/http_client.h>
+#include <cpprest/json.h> // JSON library
 
 #define GCM_PORT        8888             //Not sure if we need a port here tbh
 
@@ -33,6 +35,8 @@ int main(int argc, char* argv[]){
 
     auto *gcm = new ec::GlobalCloudManager(gcm_ip, GCM_PORT, agent_ips, server_ports);
 
+    // }
+    
     for(const auto &i : server_ports) {
         gcm->create_server();
     }
