@@ -42,8 +42,10 @@ add_executable(ec_gcm main.cpp
         stats/global/mem_g.h            stats/global/mem_g.cpp
         Manager.h                       Manager.cpp
         Agents/AgentClient.h            Agents/AgentClient.cpp
-        ${GCM_PROTO_SRC}
-        )
+        stats/window/Window.h           stats/window/Window_impl.h
+        ${GCM_PROTO_SRC})
+
+
 
 add_executable(tester tests/run_test.cpp
         types/msg.cpp                   types/msg.h

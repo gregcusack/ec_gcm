@@ -136,38 +136,36 @@ ec::ECAPI::~ECAPI() {
     delete _ec;
 }
 
-
-int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const uint32_t ip, int fd) {
-    if(!res) {
-        std::cout << "ERROR. res == null in handle_add_cgroup_to_ec()" << std::endl;
+int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, const uint32_t ip, int fd) {
+    if(!req || !res) {
+        std::cout << "ERROR. res or req == null in handle_add_cgroup_to_ec()" << std::endl;
         return __ALLOC_FAILED__;
     }
     // This is where we see the connection be initiated by a container on some node  
-    auto *sc = _ec->create_new_sc(cgroup_id, ip, fd);
-    
-    if (sc == NULL) {
+    auto *sc = _ec->create_new_sc(req->cgroup_id, ip, fd, req->rsrc_amnt, req->request); //update with throttle and quota
+    if (!sc) {
         std::cerr << "[ERROR] Unable to create new sc object: Line 147" << std::endl;
         return __ALLOC_FAILED__;
     }
-    int ret = _ec->insert_sc(*sc);
-    std::cout << "[dbg]: IP from container -  " << ip << std::endl;
 
+    int ret = _ec->insert_sc(*sc);
+    _ec->incr_total_cpu(sc->sc_get_quota());
+    _ec->update_fair_cpu_share();
+    std::cout << "fair share: " << ec_get_fair_cpu_share() << std::endl;
+
+    std::cout << "[dbg]: IP from container -  " << ip << std::endl;
     // And so once a subcontainer is created and added to the appropriate distributed container,
     // we can now create a map to link the container_id and cgroup_id - this is the place to do that..
-    
     std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
-    std::vector<AgentClient *> ec_agent_clients = _ec->get_agent_clients();
     auto agent_ip = sc->get_c_id()->server_ip;
-    for (const auto &agentClient : ec_agent_clients) {
+    for (const auto &agentClient : _ec->get_agent_clients()) {
         std::cerr << "[dbg] Agent client ip: " << agentClient-> get_agent_ip() << std::endl;
         std::cerr << "[dbg] Agent ip: " << agent_ip << std::endl;
         if (agentClient->get_agent_ip() == agent_ip) {
             _ec->add_to_agent_map(*sc->get_c_id(), agentClient);
-        } else {
-            continue;
         }
     }
-    std::cerr << "[dbg] Agent client map in the elastic container ? " << ec_agent_clients[0]->get_agent_ip() << " " << ec_agent_clients[0]->get_socket() << std::endl;
+    std::cerr << "[dbg] Agent client map in the elastic container ? " << _ec->get_agent_clients()[0]->get_agent_ip() << " " << _ec->get_agent_clients()[0]->get_socket() << std::endl;
 
     res->request = 0; //giveback (or send back)
     return ret;

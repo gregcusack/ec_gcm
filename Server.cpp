@@ -31,6 +31,13 @@ void ec::Server::initialize() {
         exit(EXIT_FAILURE);
     }
 
+    int flag = 1;
+//    int result = setsockopt(server_socket.sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+//    if(result != 0) {
+//        std::cout << "[ERROR]: setsockopt failed!" << std::endl;
+//        exit(EXIT_FAILURE);
+//    }
+
     if(listen(server_socket.sock_fd, 3) < 0) {
         std::cout << "[ERROR]: EC Server id: " << server_id << ". Listening on socket failed" << std::endl;
         exit(EXIT_FAILURE);
@@ -43,11 +50,6 @@ void ec::Server::initialize() {
         exit(EXIT_FAILURE);
     }
 
-//    manager = new Manager(server_id, agent_clients);
-//    if(manager == nullptr) {
-//        std::cout << "ERROR: Server initialized without manager. " << std::endl;
-//        exit(EXIT_FAILURE);
-//    }
     server_initialized = true; //server setup can run now
     
 }
@@ -101,7 +103,7 @@ void ec::Server::serve() {
 void ec::Server::handle_client_reqs(void *args) {
     ssize_t num_bytes;
     uint64_t ret;
-    char buff_in[__BUFFSIZE__];
+    char buff_in[__BUFFSIZE__] = {0};
 //    char *buff_out;
     auto *arguments = reinterpret_cast<serv_thread_args*>(args);
     int client_fd = arguments->clifd;
@@ -110,22 +112,22 @@ void ec::Server::handle_client_reqs(void *args) {
     bzero(buff_in, __BUFFSIZE__);
     while((num_bytes = read(client_fd, buff_in, __BUFFSIZE__)) > 0 ) {
         auto *req = reinterpret_cast<msg_t*>(buff_in);
-        // req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
+        req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
         auto *res = new msg_t(*req);
-        ret = handle_req(req, res, om::net::ip4_addr::reverse_byte_order(req->client_ip).to_uint32(), arguments->clifd);
-        if(ret == __ALLOC_SUCCESS__) {  //TODO: fix this.
-            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
-                    std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
-                    break;
-            }
-        }
-        else {
-            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
-                std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket. Part 2" << std::endl;
+        std::cout << "received: " << *req << std::endl;
+        ret = handle_req(req, res, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
+
+        if(ret == __ALLOC_INIT__) {  //TODO: fix this.
+            if (write(client_fd, (const char *) &*res, sizeof(*res)) < 0) {
+                std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
                 break;
             }
-//            break;
         }
+        else if(ret == __ALLOC_FAILED__) {
+            std::cout << "[ERROR]: handle_req() failed!" << std::endl;
+            break;
+        }
+        delete res;
     }
 }
 

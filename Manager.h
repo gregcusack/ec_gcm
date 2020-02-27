@@ -10,21 +10,30 @@
 //#include "Agents/AgentClient.h"
 #include <cstdint>
 
+#define likely(x)       __builtin_expect((x),1)
+#define unlikely(x)     __builtin_expect((x),0)
+
 namespace ec {
     class Manager : public ECAPI, public Server {
-        public:
-            Manager(uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> agents);
-            int handle_cpu_req(const msg_t *req, msg_t *res) override;
+    public:
+        //TODO: initialize ECAPI and SERVER here?
+        Manager(uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> agents);
+//        Manager(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients) : ECAPI(_ec_id, _agent_clients) {};
 
-            int handle_mem_req(const msg_t *req, msg_t *res, int clifd) override;
-            uint64_t handle_reclaim_memory(int client_fd) override;
+        int handle_cpu_usage_report(const msg_t *req, msg_t *res) override;
+        int set_sc_quota(SubContainer *sc, uint64_t _quota) override;
 
-            int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd);
-            void start(std::string app_name, std::vector<std::string> app_images);
-            virtual void run();
+        int handle_mem_req(const msg_t *req, msg_t *res, int clifd) override;
+        uint64_t handle_reclaim_memory(int client_fd) override;
+
+        int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) override;
+        void start(std::string app_name, std::vector<std::string> app_images);
+        virtual void run();
+
         struct reclaim_msg {
             uint16_t cgroup_id;
             uint32_t is_mem;
+            uint64_t _quota;
             //...maybe it needs more things
         };
 

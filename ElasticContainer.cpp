@@ -5,10 +5,10 @@
 #include "ElasticContainer.h"
 
 
-ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id) {}
+ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id), fair_cpu_share(0) {}
 
 ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients)
-    : ec_id(_ec_id), agent_clients(_agent_clients) {
+    : ec_id(_ec_id), agent_clients(_agent_clients), fair_cpu_share(0) {
 
     //TODO: change num_agents to however many servers we have. IDK how to set it rn.
 
@@ -18,16 +18,17 @@ ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient 
     std::cout << "[Elastic Container Log] runtime_remaining on init: " << _cpu.get_runtime_remaining() << std::endl;
     std::cout << "[Elastic Container Log] memory_available on init: " << _mem.get_mem_available() << std::endl;
 
-    test_file.open("test_file.txt", std::ios_base::app);
-
-    //test
-    flag = 0;
     subcontainers = subcontainer_map();
     sc_agent_map = subcontainer_agent_map();
+
 }
 
 ec::SubContainer *ec::ElasticContainer::create_new_sc(const uint32_t cgroup_id, const uint32_t host_ip, const int sockfd) {
     return new SubContainer(cgroup_id, host_ip, sockfd);
+}
+
+ec::SubContainer *ec::ElasticContainer::create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd, uint64_t quota, uint32_t nr_throttled) {
+    return new SubContainer(cgroup_id, host_ip, sockfd, quota, nr_throttled);
 }
 
 const ec::SubContainer &ec::ElasticContainer::get_subcontainer(ec::SubContainer::ContainerId &container_id) {
@@ -39,6 +40,15 @@ const ec::SubContainer &ec::ElasticContainer::get_subcontainer(ec::SubContainer:
     return *itr->second;
 }
 
+ec::SubContainer *ec::ElasticContainer::get_sc_for_update(ec::SubContainer::ContainerId &container_id) {
+    auto itr = subcontainers.find(container_id);
+    if(itr == subcontainers.end()) {
+        std::cout << "ERROR: For EC: " << ec_id << ", no subcontainer with container_id: " << container_id << ". Exiting...(sc for update)." << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    return itr->second;
+}
+
 int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
     if (subcontainers.find(*_sc.get_c_id()) != subcontainers.end()) {
         std::cout << "This SubContainer already exists! Can't allocate identical one!" << std::endl;
@@ -46,8 +56,7 @@ int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
         return __ALLOC_FAILED__;
     }
     subcontainers.insert({*(_sc.get_c_id()), &_sc});
-
-    return __ALLOC_SUCCESS__;
+    return __ALLOC_INIT__;
 }
 
 // int ec::ElasticContainer::int insert_pid(int pid){
@@ -204,7 +213,7 @@ std::vector<std::string> ec::ElasticContainer::get_nodes_ips(const std::vector<s
 
     json::value json_return;
     // Assumes that there's a k8s proxy running on localhost, port 8000
-    for (auto node : node_names) {
+    for (const auto &node : node_names) {
         web::http::client::http_client client("http://localhost:8000/api/v1/nodes/" + node);
 
         //std::cout << "[K8s RESPONSE]" << std::endl;
@@ -233,4 +242,9 @@ std::vector<std::string> ec::ElasticContainer::get_nodes_ips(const std::vector<s
     }
 
     return result;
+}
+
+void ec::ElasticContainer::update_fair_cpu_share() {
+    std::cout << "update fair share. (tot_cpu, # subconts): (" << _cpu.get_total_cpu() << ", " << subcontainers.size() << ")" << std::endl;
+    fair_cpu_share = (uint64_t)(_cpu.get_total_cpu() / subcontainers.size());
 }
