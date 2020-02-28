@@ -208,7 +208,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //            std::cout << "new, old, rt_remain: (" << new_quota << "," << rx_quota << "," << rt_mean << ")" << std::endl;
             ret = set_sc_quota(sc, new_quota); //give back what was used + 5ms
             if(ret <= 0) {
-                std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (incr). ret: " << ret << std::endl;
+                std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (decr). ret: " << ret << std::endl;
             }
             else {
                 sc->set_quota_flag(true);
@@ -315,8 +315,9 @@ int ec::Manager::set_sc_quota(ec::SubContainer *sc, uint64_t _quota) {
     int ret = 0;
     char buffer[__BUFF_SIZE__] = {0};
     auto ip = sc->get_c_id()->server_ip;
-    std::cout << "# clients (%100): " << get_agent_clients().size() << std::endl;
+    std::cout << "# cliernts (%100): " << get_agent_clients().size() << std::endl;
     for(const auto &agentClient : get_agent_clients()) {
+        std::cout << "agentclient ip: " << agentClient->get_agent_ip() << std::endl;
         if(agentClient->get_agent_ip() == ip) {
             auto *reclaim_req = new reclaim_msg;
             reclaim_req->cgroup_id = sc->get_c_id()->cgroup_id;
