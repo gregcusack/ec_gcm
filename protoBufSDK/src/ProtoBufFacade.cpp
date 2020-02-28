@@ -1,6 +1,6 @@
 #include "../include/ProtoBufFacade.h"
 
-int ec::Facade::ProtoBufFacade::ProtoBuf::sendMessage(const int &sock_fd, const msg_struct::ECMessage &msg){
+int ec::Facade::ProtoBufFacade::ProtoBuf::sendMessage(const int &sock_fd, const struct msg_struct::ECMessage &msg){
     int tx_size = msg.ByteSizeLong()+4;
     char* tx_buf = new char[tx_size];
     google::protobuf::io::ArrayOutputStream arrayOut(tx_buf, tx_size);
@@ -15,7 +15,7 @@ int ec::Facade::ProtoBufFacade::ProtoBuf::sendMessage(const int &sock_fd, const 
     return tx_size;
 }
 
-void ec::Facade::ProtoBufFacade::ProtoBuf::recvMessage(const int &sock_fd, msg_struct::ECMessage &rx_msg) {
+void ec::Facade::ProtoBufFacade::ProtoBuf::recvMessage(const int &sock_fd, struct msg_struct::ECMessage &rx_msg) {
     char rx_buffer[__BUFFSIZE__];
     bzero(rx_buffer, __BUFFSIZE__);
     int res;

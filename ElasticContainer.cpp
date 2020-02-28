@@ -46,7 +46,6 @@ int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
         return __ALLOC_FAILED__;
     }
     subcontainers.insert({*(_sc.get_c_id()), &_sc});
-
     return __ALLOC_SUCCESS__;
 }
 
