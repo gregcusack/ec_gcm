@@ -4,7 +4,7 @@
 
 #include "Manager.h"
 
-ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> agents )
+ec::Manager::Manager( uint32_t &server_counts, ec::ip4_addr &gcm_ip, uint16_t &server_port, std::vector<Agent *> &agents )
             : Server(server_counts, gcm_ip, server_port, agents)
 {
     //init server
@@ -145,7 +145,7 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     return reclaimed;
 }
 
-int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd){
+int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t &host_ip, int &clifd){
     if(req == nullptr || res == nullptr) {
         std::cout << "req or res == null in handle_req()" << std::endl;
         exit(EXIT_FAILURE);
