@@ -11,9 +11,9 @@ namespace ec {
         namespace DeployFacade {
             class k8Facade {
                 public:
-                    int deployPod(const std::string &jsonString);
-                    void getNodesWithPod(const std::string &podName, std::vector<std::string> &resultNodes);
-                    void getNodeIPs(const std::vector<std::string> &nodeNames, std::vector<std::string> &nodeIPs);
+                    static int deployPod(const std::string &jsonString);
+                    static void getNodesWithPod(const std::string &podName, std::vector<std::string> &resultNodes);
+                    static void getNodeIPs(const std::vector<std::string> &nodeNames, std::vector<std::string> &nodeIPs);
             };
         }
     }

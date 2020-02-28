@@ -22,8 +22,8 @@ namespace ec {
         namespace ProtoBufFacade {
             class ProtoBuf {
             public:
-                int sendMessage(const int &sock_fd, const struct msg_struct::ECMessage &msg);
-                void recvMessage(const int &sock_fd,  struct msg_struct::ECMessage &rx_msg);
+                static int sendMessage(const int &sock_fd, const struct msg_struct::ECMessage &msg);
+                static void recvMessage(const int &sock_fd,  struct msg_struct::ECMessage &rx_msg);
             };
         }
     }

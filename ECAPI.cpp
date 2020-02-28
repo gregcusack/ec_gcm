@@ -157,7 +157,7 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(const ec::SubContainer::ContainerI
     AgentClient* temp = _ec->get_corres_agent(container_id);
     if(temp == NULL)
         std::cerr << "[dbg] temp is NULL" << std::endl;
-    ret = temp->send_request(msg_req)[0];
+    ret = temp->send_request(msg_req);
     return ret;
 }
 

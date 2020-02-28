@@ -9,13 +9,11 @@ ec::AgentClient::AgentClient(const ec::Agent *_agent, int _sockfd)
 
 }
 
-std::vector<uint64_t > ec::AgentClient::send_request(const struct msg_struct::ECMessage &msg) const {
+uint64_t ec::AgentClient::send_request(const struct msg_struct::ECMessage &msg) const {
     int status;    
     ec::Facade::ProtoBufFacade::ProtoBuf message;
     status = message.sendMessage(sockfd_new, msg);
     msg_struct::ECMessage rx_msg;
     message.recvMessage(sockfd_new, rx_msg);
-    std::vector<uint64_t> ret;
-    ret.push_back(rx_msg.rsrc_amnt()); 
-    return ret;
+    return rx_msg.rsrc_amnt();
 }

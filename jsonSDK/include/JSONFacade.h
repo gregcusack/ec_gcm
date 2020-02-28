@@ -26,11 +26,11 @@ namespace ec {
                 const std::vector<std::string> &getAgentIPs() {return _agent_ips;}
                 const std::string &getGCMIP() {return _gcm_ip;}
 
-                void createJSONPodDef(const std::string &app_name, const std::string &app_image, std::string &response);
-                void postJSONRequest(const std::string &url, const std::string &jsonRequest, std::string &jsonResp);
-                void getJSONRequest(const std::string &urlRequest, std::string &jsonResp);
-                void getNodesFromResponse(const std::string &jsonResp, std::vector<std::string> &resultNodes);
-                void getNodeIPFromResponse(const std::string &jsonResp, std::string &tmp_ip);
+                static void createJSONPodDef(const std::string &app_name, const std::string &app_image, std::string &response);
+                static void postJSONRequest(const std::string &url, const std::string &jsonRequest, std::string &jsonResp);
+                static void getJSONRequest(const std::string &urlRequest, std::string &jsonResp);
+                static void getNodesFromResponse(const std::string &jsonResp, std::vector<std::string> &resultNodes);
+                static void getNodeIPFromResponse(const std::string &jsonResp, std::string &tmp_ip);
 
             private:
                 web::json::value _val;
