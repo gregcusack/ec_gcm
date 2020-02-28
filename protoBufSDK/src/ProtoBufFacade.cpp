@@ -1,6 +1,6 @@
 #include "../include/ProtoBufFacade.h"
 
-int ProtoBufFacade::sendMessage(int sock_fd, msg_struct::ECMessage msg){
+int ec::Facade::ProtoBufFacade::ProtoBuf::sendMessage(const int &sock_fd, const msg_struct::ECMessage &msg){
     int tx_size = msg.ByteSizeLong()+4;
     char* tx_buf = new char[tx_size];
     google::protobuf::io::ArrayOutputStream arrayOut(tx_buf, tx_size);
@@ -15,7 +15,7 @@ int ProtoBufFacade::sendMessage(int sock_fd, msg_struct::ECMessage msg){
     return tx_size;
 }
 
-msg_struct::ECMessage ProtoBufFacade::recvMessage(int sock_fd) {
+void ec::Facade::ProtoBufFacade::ProtoBuf::recvMessage(const int &sock_fd, msg_struct::ECMessage &rx_msg) {
     char rx_buffer[__BUFFSIZE__];
     bzero(rx_buffer, __BUFFSIZE__);
     int res;
@@ -25,7 +25,6 @@ msg_struct::ECMessage ProtoBufFacade::recvMessage(int sock_fd) {
         std::cout << "[PROTOBUF ERROR]: Can't read from socket" << std::endl;
     }
 
-    msg_struct::ECMessage rx_msg;
     google::protobuf::uint32 size;
     google::protobuf::io::ArrayInputStream ais(rx_buffer,4);
     CodedInputStream coded_input(&ais);
@@ -37,5 +36,4 @@ msg_struct::ECMessage ProtoBufFacade::recvMessage(int sock_fd) {
     google::protobuf::io::CodedInputStream::Limit msgLimit = codedIn.PushLimit(size);
     rx_msg.ParseFromCodedStream(&codedIn);
     codedIn.PopLimit(msgLimit);
-    return rx_msg;
 }

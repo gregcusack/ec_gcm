@@ -16,14 +16,14 @@ ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t serv
 
 }
 
-void ec::Manager::start(const std::string app_name, const std::vector<std::string> app_images) {
+void ec::Manager::start(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip) {
     //A thread to listen for subcontainers' events
     std::thread event_handler_thread(&ec::Server::serve, this);
     // //TODO: temporary. don't need 2 IDs.
     // manager_id = server_id;
     // // Another thread to deploy the application
     // sleep(10);
-    std::thread application_deployment_thread(&ec::ECAPI::deploy_application, this, app_name, app_images);
+    std::thread application_deployment_thread(&ec::ECAPI::deploy_application, this, app_name, app_images, gcm_ip);
     // //Another thread to run a management application
     application_deployment_thread.join();
 

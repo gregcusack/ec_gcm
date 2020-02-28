@@ -1,13 +1,13 @@
 #include "../include/JSONFacade.h"
 
-void JSONFacade::parseAppName() {
+void ec::Facade::JSONFacade::json::parseAppName() {
     if(_val.is_null()) {
         return;
     }
    _app_name = _val.at(U("name")).as_string();
 }
 
-void JSONFacade::parseAppImages() {
+void ec::Facade::JSONFacade::json::parseAppImages() {
     if(_val.is_null()) {
         return;
     }
@@ -17,7 +17,7 @@ void JSONFacade::parseAppImages() {
     }
 }
 
-void JSONFacade::parseIPAddresses() {
+void ec::Facade::JSONFacade::json::parseIPAddresses() {
     if(_val.is_null()) {
         return;
     }
@@ -27,14 +27,14 @@ void JSONFacade::parseIPAddresses() {
     }
 }
 
-void JSONFacade::parseGCMIPAddress() {
+void ec::Facade::JSONFacade::json::parseGCMIPAddress() {
     if(_val.is_null()) {
         return;
     }
    _gcm_ip = _val.at(U("gcmIP")).as_string();
 }
 
-int JSONFacade::parseFile(const std::string fileName) {
+int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
     try {
         utility::ifstream_t      file_stream(fileName);                                
         utility::stringstream_t  stream;                                         
@@ -47,31 +47,31 @@ int JSONFacade::parseFile(const std::string fileName) {
         parseAppImages();
         parseIPAddresses();
         parseGCMIPAddress();
-        return 0;
     }
     catch (const web::json::json_exception& excep) {
         std::cout << "ERROR Parsing JSON file: " << excep.what() << std::endl;
-        return 1;
+        return __ERROR__;
     }
     catch(const std::runtime_error& re) {
         // speciffic handling for runtime_error
         std::cerr << "Runtime error: " << re.what() << std::endl;
-        return 2;
+        return __ERROR__;
     }
     catch(const std::exception& ex) {
         // speciffic handling for all exceptions extending std::exception, except
         // std::runtime_error which is handled explicitly
         std::cerr << "Error occurred: " << ex.what() << std::endl;
-        return 3;
+        return __ERROR__;
     }
     catch(...) {
         // catch any other errors (that we have no information about)
         std::cerr << "Unknown failure occurred. Possible memory corruption" << std::endl;
-        return 4;
+        return __ERROR__;
     }
+    return 0;
 }
 
-std::string JSONFacade::createJSONPodDef(const std::string app_name, const std::string app_image) {
+void ec::Facade::JSONFacade::json::createJSONPodDef(const std::string &app_name, const std::string &app_image, std::string &response) {
     std::string pod_name = app_name + "-" + app_image;
     // Create a JSON object (the pod)
     web::json::value pod;
@@ -116,10 +116,10 @@ std::string JSONFacade::createJSONPodDef(const std::string app_name, const std::
     // Write the current JSON value to a stream with the native platform character width
     utility::stringstream_t stream;
     pod.serialize(stream);
-    return stream.str();          
+    response = stream.str();
 }
 
-std::string JSONFacade::postJSONRequest(const std::string url, const std::string jsonRequest) {
+void ec::Facade::JSONFacade::json::postJSONRequest(const std::string &url, const std::string &jsonRequest, std::string &jsonResp) {
     web::json::value jsonRequestVal = web::json::value::parse(jsonRequest);
     web::json::value json_return;
 
@@ -139,10 +139,11 @@ std::string JSONFacade::postJSONRequest(const std::string url, const std::string
             std::cerr << "Unknown failure occurred during JSON Post Request. " << std::endl;
         } 
     }).wait();
-    return json_return.serialize();
+    jsonResp = json_return.serialize();
+    // return json_return.serialize();
 }
 
-std::string JSONFacade::getJSONRequest(const std::string urlRequest) {
+void ec::Facade::JSONFacade::json::getJSONRequest(const std::string &urlRequest, std::string &jsonResp) {
 
     web::json::value json_return;
     web::http::client::http_client client(urlRequest);
@@ -159,26 +160,23 @@ std::string JSONFacade::getJSONRequest(const std::string urlRequest) {
         }
     })
     .wait();
-    return json_return.serialize();
+    jsonResp = json_return.serialize();
+    // return json_return.serialize();
 }
 
-std::vector<std::string> JSONFacade::getNodesFromResponse(const std::string jsonResp) {
-    std::vector<std::string> output;
+void ec::Facade::JSONFacade::json::getNodesFromResponse(const std::string &jsonResp, std::vector<std::string> &resultNodes) {
     web::json::value jsonResponse = web::json::value::parse(jsonResp);
-    
     // Todo - check what happens if 2 nodes have the same container name:
     auto node_array = jsonResponse.at(U("spec")).at(U("nodeName")).as_string();
-    output.push_back(node_array);
-    return output;
+    resultNodes.push_back(node_array);
 }
 
-std::string JSONFacade::getNodeIPFromResponse(std::string jsonResp) {
+void ec::Facade::JSONFacade::json::getNodeIPFromResponse(const std::string &jsonResp, std::string &tmp_ip) {
     web::json::value jsonResponse = web::json::value::parse(jsonResp);
     auto jsonval = jsonResponse.at(U("status")).at(U("addresses")).as_array();
     for (int i = 0; i < jsonval.size(); i++) {
         if (jsonval[i].at(U("type")).as_string() == "InternalIP") {
-            return jsonval[i].at(U("address")).as_string();
+            tmp_ip = jsonval[i].at(U("address")).as_string();
         }
     }
-    return NULL;
 }

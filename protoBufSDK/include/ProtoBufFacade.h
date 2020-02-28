@@ -17,12 +17,15 @@
 
 using namespace google::protobuf::io;
 
-class ProtoBufFacade {
-    public:
-        ProtoBufFacade() {}
-
-        int sendMessage(int sock_fd, msg_struct::ECMessage msg);
-        msg_struct::ECMessage recvMessage(int sock_fd);
-};
-
+namespace ec {
+    namespace Facade {
+        namespace ProtoBufFacade {
+            class ProtoBuf {
+            public:
+                int sendMessage(const int &sock_fd, const msg_struct::ECMessage &msg);
+                void recvMessage(const int &sock_fd,  msg_struct::ECMessage &rx_msg);
+            };
+        }
+    }
+}
 #endif //PROTO_FACADE_H

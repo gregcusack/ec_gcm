@@ -18,12 +18,14 @@ int main(int argc, char* argv[]){
         std::cerr << "Usage: " << argv[0] << " <path-to-json-file>" << std::endl;
         return 1;
     }
-    std::string jsonFile = argv[1];
+    const std::string &jsonFile = argv[1];
+    
     int status;
-
-    JSONFacade jsonFacade;
+    ec::Facade::JSONFacade::json jsonFacade;
     status = jsonFacade.parseFile(jsonFile);
     if (status != 0) {
+        std::cout << "[dbg] Error in parsing file.. exiting" << std::endl;
+        std::cout << "[status code]: " << status << std::endl;
         return 1;
     }
     auto app_name = jsonFacade.getAppName();
@@ -34,15 +36,13 @@ int main(int argc, char* argv[]){
     std::vector<uint16_t>       server_ports{4444};
 
     auto *gcm = new ec::GlobalCloudManager(gcm_ip, GCM_PORT, agent_ips, server_ports);
-
-    // }
     
     for(const auto &i : server_ports) {
         gcm->create_server();
     }
     std::cout << "[dbg] num servers: " << gcm->get_servers().size() << std::endl;
 
-    gcm->run(app_name, app_images);
+    gcm->run(app_name, app_images, gcm_ip);
 
     delete gcm;
 

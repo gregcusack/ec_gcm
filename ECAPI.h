@@ -30,9 +30,8 @@ namespace ec {
         ECAPI(uint32_t _ec_id);
         ~ECAPI();
         //creates _ec and server and connects them
-//        void build_manager_handler();
-        int create_ec(std::string app_name, std::string app_image);
-        void deploy_application(const std::string app_name, const std::vector<std::string> app_images);
+        void deploy_application(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip);
+        int create_ec(const std::string &app_name, const std::string &app_image, const std::string &gcm_ip);
 
         [[nodiscard]] const ElasticContainer& get_elastic_container() const;
 
@@ -58,7 +57,7 @@ namespace ec {
         //MEM
         uint64_t ec_get_memory_available() { return _ec->get_memory_available(); }
         uint64_t ec_get_memory_slice() { return _ec->get_memory_slice(); }
-        uint64_t get_memory_limit_in_bytes(ec::SubContainer::ContainerId container_id);
+        uint64_t get_memory_limit_in_bytes(SubContainer::ContainerId container_id);
 
 
         //AGENTS

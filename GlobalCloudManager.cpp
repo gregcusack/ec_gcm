@@ -61,7 +61,7 @@ ec::GlobalCloudManager::~GlobalCloudManager() {
     servers.clear();
 }
 
-void ec::GlobalCloudManager::run(const std::string app_name, const std::vector<std::string> app_images) {
+void ec::GlobalCloudManager::run(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip) {
 
     std::thread threads[__NUM_THREADS__];
     //app_thread_args *args;
@@ -71,9 +71,7 @@ void ec::GlobalCloudManager::run(const std::string app_name, const std::vector<s
         if(fork() == 0) {
             // std::cout << "[child] pid: " << getpid() << ", [parent] pid: " <<  getppid() << std::endl;
             std::cout << "New Server with ID: " << s.second->get_server_id() << std::endl;
-    
-            s.second->start(app_name, app_images);
-
+            s.second->start(app_name, app_images, gcm_ip);
         }
         else {
             continue;
