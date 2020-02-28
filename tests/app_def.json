@@ -11,7 +11,8 @@
 		"128.105.144.137"
 	],
 	"images": [
-		"nginx"
+		"nginx",
+		"redis"
 	],
 	"yaml_path" : [
 		"k8-yaml/"

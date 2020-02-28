@@ -16,10 +16,6 @@
 #include <chrono>
 #include <thread>
 #include <fstream>
-
-#include <cpprest/http_client.h>
-#include <cpprest/json.h> 
-
 #include "types/msg.h"
 #include "types/k_msg.h"
 
@@ -28,8 +24,6 @@
 #include "om.h"
 #include "stats/global/mem_g.h"
 #include "stats/global/cpu_g.h"
-
-using namespace web;
 
 #define __ALLOC_FAILED__ -2
 #define __ALLOC_SUCCESS__ 1
@@ -62,7 +56,7 @@ namespace ec {
         uint32_t get_ec_id() { return ec_id; }
         const subcontainer_map &get_subcontainers() {return subcontainers;}
         const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id);
-        AgentClient* get_corres_agent(SubContainer::ContainerId &container_id){return sc_agent_map[container_id];}
+        AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_agent_map[container_id];}
         const subcontainer_agent_map &get_subcontainer_agents() {return sc_agent_map;}
 
         //CPU
@@ -83,7 +77,7 @@ namespace ec {
          **/
 
         //MISC
-        int add_to_agent_map(SubContainer::ContainerId id, AgentClient* client) { sc_agent_map.insert({id, client}); }
+        int add_to_agent_map(SubContainer::ContainerId &id, AgentClient* client) { sc_agent_map.insert({id, client}); }
 
         //CPU
         void set_ec_period(int64_t _period)  { _cpu.set_period(_period); }   //will need to update maanger too
@@ -104,6 +98,9 @@ namespace ec {
         //MISC
         SubContainer* create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd);
         int insert_sc(SubContainer &_sc);
+
+        // int insert_pid(int pid);
+        // std::vector<int> get_pids();
 
         //CPU
 

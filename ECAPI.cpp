@@ -9,106 +9,82 @@
  //   // _ec = new ElasticContainer(manager_id, agent_clients);
 //}
 
-void ec::ECAPI::deploy_application(const std::string app_name, const std::vector<std::string> app_images){
-    // Logic here: We need to call the create_ec function for as many container images there are
-    //             - i.e. an application can have multiple container images and each container image corresponds to an EC
-    int cont_create;
-    for (const auto &appImage : app_images) {
-        cont_create = create_ec(app_name, appImage);
-        std::cout << "[DEPLOY Log] Created elastic container status: " << cont_create << " for app: " << app_name << " with image: " << appImage <<std::endl;
-    }
-}
-
-int ec::ECAPI::create_ec(const std::string app_name, const std::string app_image) {
+int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip) {
     _ec = new ElasticContainer(manager_id, agent_clients);      
 
     /* This is the highest level of abstraction provided to the end application developer. 
-    
     Steps to create and deploy the "distributed container":
         1. Create a Pod deployment strategy
         2. Communicate with K8 REST API to deploy the pod on all nodes (based on default kube-scheduler)
         3. Send a request to the specific agent on a node to call sys_connect
     */
 
-    // Step 1: Create a Pod on each of the nodes running an agent
-    std::vector<AgentClient *> ec_agent_clients = _ec->get_agent_clients();
     int pod_creation;
     int res;
+    std::string response;
+    std::vector<std::string> node_names;
+    std::vector<std::string> node_ips;
+    std::string pod_name;
 
-    std::string pod_name = app_name + "-" + app_image;
-    
-    std::cout << "[DEPLOY LOG] Generating JSON Definition File " << std::endl;
-    JSONFacade jsonFacade;
-    auto jsonOutput = jsonFacade.createJSONPodDef(app_name, app_image);
-    
-    // Step 2
-    std::cout << "[DEPLOY LOG] Deploying Containers " << std::endl;
-    DeployFacade deployment;
-    pod_creation = deployment.deployContainers(jsonOutput);
-    if (pod_creation != 0) {
-        std::cout << "[DEPLOY ERROR]:  Error in deploying Containers.. Exiting" << std::endl;
-        return -1;
-    }
+    ec::Facade::JSONFacade::json jsonFacade;
+    ec::Facade::DeployFacade::Deploy deployment;
+    for (const auto &app_image: app_images) {
+        // Step 1: Create a Pod on each of the nodes running an agent - k8s takes care of this
+        //         todo: this will change we implement k8-yaml support (still brainstorming how best to do that)           
+        std::cout << "[DEPLOY LOG] Generating JSON POD File for image: " << app_image << std::endl;
+        jsonFacade.createJSONPodDef(app_name, app_image, response);
+        // Step 2
+        std::cout << "[DEPLOY LOG] Deploying Container With Image: " << app_image << std::endl;
+        pod_creation = deployment.deployContainers(response);
+        if (pod_creation != 0) {
+            std::cout << "[DEPLOY ERROR]:  Error in deploying Container with image: "<< app_image <<".. Exiting" << std::endl;
+            return -1;
+        }
 
-    // Step 3: Instruct the Agent to look for this container and call sys_connect on it
-    //         Note that the following code simply waits for a response from Agent on the status of running sys_connect 
-    //         i.e. this is where we can use RPC 
-    //         Once the container actually establishes a connection to the GCM, the container will send it's own init 
-    //         message to the server which will call: handle_add_cgroup_to_ec
-        
-    std::cout << "[K8s LOG] Getting Nodes" << std::endl;
-    std::vector<std::string> node_names = deployment.getNodesWithContainer(pod_name);
-    std::vector<std::string> node_ips = deployment.getNodeIPs(node_names);
+        // Step 3: Instruct the Agent to look for this container and call sys_connect on it
+        //         Note that the following code simply waits for a response from Agent on the status of running sys_connect 
+        //         i.e. this is where we can use RPC 
+        //         Once the container actually establishes a connection to the GCM, the container will send it's own init 
+        //         message to the server which will call: handle_add_cgroup_to_ec
 
-    // std::cerr << "[dbg] node ips are: " << node_ips[0] << std::endl;
-    for (const auto node_ip : node_ips) {
-        // Get the Agent with this node ip first..
-        for (const auto &agentClient : ec_agent_clients) {
-            if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
-                // Send Message to Agent to call sysconnect on this container
-                ProtoBufFacade protoFacade;
-                msg_struct::ECMessage init_msg;
-                init_msg.set_client_ip("192.168.6.10");
-                init_msg.set_req_type(4);
-                init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
-                init_msg.set_cgroup_id(0);
+        std::cout << "[K8s LOG] Looking for node running container with image: " << app_image << std::endl;
+        pod_name = app_name + "-" + app_image;
+        node_names.clear();
+        deployment.getNodesWithContainer(pod_name, node_names);
+        node_ips.clear();
+        deployment.getNodeIPs(node_names, node_ips);
 
-                res = protoFacade.sendMessage(agentClient->get_socket(), init_msg);
-                if(res < 0) {
-                    std::cout << "[ERROR]: create_ec() - Error in writing to agent_clients socket. " << std::endl;
-                    return __FAILED__;
-                }
+        for (const auto node_ip : node_ips) {
+            // Get the Agent with this node ip first (this needs to change to a singleton class)
+            for (const auto &agentClient : _ec->get_agent_clients()) { 
+                if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
 
-                msg_struct::ECMessage rx_msg;
-                rx_msg = protoFacade.recvMessage(agentClient->get_socket());
+                    ec::Facade::ProtoBufFacade::ProtoBuf protoFacade;
+                    
+                    msg_struct::ECMessage init_msg;
+                    init_msg.set_client_ip(gcm_ip); //IP of the GCM
+                    init_msg.set_req_type(4);
+                    init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
+                    init_msg.set_cgroup_id(0);
 
-                if (rx_msg.rsrc_amnt() == (uint64_t) -1 ) {
-                    std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
-                    return __FAILED__;
-                }
+                    res = protoFacade.sendMessage(agentClient->get_socket(), init_msg);
+                    if(res < 0) {
+                        std::cout << "[ERROR]: create_ec() - Error in writing to agent_clients socket. " << std::endl;
+                        return __FAILED__;
+                    }
 
-                // This is where we need to find the subcontainer from the subcontainer_agent_map
-                auto result = std::find_if(
-                    _ec->get_subcontainer_agents().begin(),
-                    _ec->get_subcontainer_agents().end(),
-                    [agentClient](const auto& mo) {return mo.second == agentClient; });
+                    msg_struct::ECMessage rx_msg;
+                    protoFacade.recvMessage(agentClient->get_socket(), rx_msg);
 
-                if(result != _ec->get_subcontainer_agents().end()) {
-                    SubContainer::ContainerId cont_id = result->first;
-                    std::cout << "CONTAINER ID: " <<  cont_id << std::endl;
-                    SubContainer sc_tmp = _ec->get_subcontainer(cont_id);
-                    std::cout << "SUBCONTAINER ID FOUND: " <<  sc_tmp.get_c_id() << std::endl;
-                    std::string docker_id = rx_msg.payload_string();
-                    std::cout << "docker container id: " << docker_id << std::endl;
-                    sc_tmp.set_docker_id(docker_id);
+                    if (rx_msg.rsrc_amnt() == (uint64_t) -1 ) {
+                        std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
+                        return __FAILED__;
+                    }
                 } else {
-                    std::cout << "[deployment error]: Error in finding AgentClient in map " << std::endl;
-                    return __FAILED__;
+                    continue;
                 }
-            } else {
-                continue;
-            }
-        }        
+            }        
+        }
     }
     return 0;
 }
@@ -141,33 +117,32 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
     int ret = _ec->insert_sc(*sc);
     std::cout << "[dbg]: IP from container -  " << ip << std::endl;
 
+
     // And so once a subcontainer is created and added to the appropriate distributed container,
     // we can now create a map to link the container_id and cgroup_id - this is the place to do that..
     
-    std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
-    std::vector<AgentClient *> ec_agent_clients = _ec->get_agent_clients();
-    auto agent_ip = sc->get_c_id()->server_ip;
-    for (const auto &agentClient : ec_agent_clients) {
-        std::cerr << "[dbg] Agent client ip: " << agentClient-> get_agent_ip() << std::endl;
-        std::cerr << "[dbg] Agent ip: " << agent_ip << std::endl;
-        if (agentClient->get_agent_ip() == agent_ip) {
+    std::cout << "[dbg]: Init. Added cgroup to _ec with id: " << _ec->get_ec_id() << ". cgroup id: " << *sc->get_c_id() << std::endl;
+    std::cout << "[dbg]: Map Size at Insert " << _ec->get_subcontainers().size() << std::endl;
+
+    for (const auto &agentClient : _ec->get_agent_clients()) {
+        //std::cerr << "[dbg] Agent client ip: " << agentClient-> get_agent_ip() << std::endl;
+        //std::cerr << "[dbg] Agent ip: " <<  sc->get_c_id()->server_ip << std::endl;
+        if (agentClient->get_agent_ip() == sc->get_c_id()->server_ip) {
             _ec->add_to_agent_map(*sc->get_c_id(), agentClient);
+            std::cout << "[EVENT LOG]: Added subcontainer to Agent Map" << std::endl;
         } else {
             continue;
         }
     }
-    std::cerr << "[dbg] Agent client map in the elastic container ? " << ec_agent_clients[0]->get_agent_ip() << " " << ec_agent_clients[0]->get_socket() << std::endl;
-
     res->request = 0; //giveback (or send back)
     return ret;
-
 }
 
 void ec::ECAPI::ec_decrement_memory_available(uint64_t mem_to_reduce) {
     _ec->ec_decrement_memory_available(mem_to_reduce);
 }
 
-uint64_t ec::ECAPI::get_memory_limit_in_bytes(ec::SubContainer::ContainerId container_id) {
+uint64_t ec::ECAPI::get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &container_id) {
     
     uint64_t ret = 0;
 
