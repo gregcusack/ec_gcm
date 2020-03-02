@@ -42,8 +42,11 @@ namespace ec {
             client_ip = om::net::ip4_addr::reverse_byte_order(client_ip);
         }
 
-        void set_ip(uint32_t ip) { //this will not be needed later
+        void set_ip_from_net(uint32_t ip) { //this will not be needed later
             client_ip = om::net::ip4_addr::from_net(ip);
+        };
+        void set_ip_from_string(std::string ip) { //this will not be needed later
+            client_ip = om::net::ip4_addr::from_string(ip);
         };
 
 

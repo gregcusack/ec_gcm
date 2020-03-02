@@ -298,6 +298,7 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
                 reclaimed += rx_buff;
                 std::cout << "[INFO] GCM: reclaimed: " << rx_buff << " bytes" << std::endl;
                 std::cout << "[INFO] GCM: Current amount of reclaimed memory: " << reclaimed << std::endl;
+                delete reclaim_req;
             }
 
         }
