@@ -3,6 +3,7 @@
 //
 
 #include "ECAPI.h"
+#include "Agents/AgentClientDB.h"
 
 //ec::ECAPI::ECAPI(uint32_t _ec_id)
 //    : manager_id(_ec_id) {
@@ -22,7 +23,8 @@ void ec::ECAPI::deploy_application(std::string app_name, std::vector<std::string
 }
 
 int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
-    _ec = new ElasticContainer(manager_id, agent_clients);      
+    //TODO: AgentClientDB should be use in elastic container object
+    _ec = new ElasticContainer(manager_id);
 
     /* This is the highest level of abstraction we want to provide to the end application developer. 
     
@@ -33,7 +35,8 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     */
 
     // Step 1: Create a Pod on each of the nodes running an agent
-    std::vector<AgentClient *> ec_agent_clients = _ec->get_agent_clients();
+    AgentClientDB* acdb = acdb->get_agent_client_db_instance();
+
     int pod_creation;
     
     std::string pod_name = app_name+"-"+app_image; 
@@ -68,56 +71,57 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     //for (const auto &agentClient : ec_agent_clients) {
     for (const auto node_ip : node_ips) {
         // Get the Agent with this node ip first..
-        for (const auto &agentClient : ec_agent_clients) {
-            if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
+        //for (const auto &agentClient : ec_agent_clients) {
+        const AgentClient* target_agent;
+        if ( (target_agent = acdb->get_agent_client_by_ip(om::net::ip4_addr().from_string(node_ip)) ) != NULL  ) {
 
-                msg_struct::ECMessage init_msg;
-                init_msg.set_client_ip("192.168.6.10");
-                init_msg.set_req_type(4);
-                init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
-                init_msg.set_cgroup_id(0);
+            msg_struct::ECMessage init_msg;
+            init_msg.set_client_ip("10.0.2.15");
+            init_msg.set_req_type(4);
+            init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
+            init_msg.set_cgroup_id(0);
 
-                int tx_size = init_msg.ByteSizeLong()+4;
-                char* tx_buf = new char[tx_size];
-                google::protobuf::io::ArrayOutputStream arrayOut(tx_buf, tx_size);
-                google::protobuf::io::CodedOutputStream codedOut(&arrayOut);
-                codedOut.WriteVarint32(init_msg.ByteSizeLong());
-                init_msg.SerializeToCodedStream(&codedOut);
+            int tx_size = init_msg.ByteSizeLong()+4;
+            char* tx_buf = new char[tx_size];
+            google::protobuf::io::ArrayOutputStream arrayOut(tx_buf, tx_size);
+            google::protobuf::io::CodedOutputStream codedOut(&arrayOut);
+            codedOut.WriteVarint32(init_msg.ByteSizeLong());
+            init_msg.SerializeToCodedStream(&codedOut);
 
-                std::cout << "[EC Init] Sending Message to Agent at IP: " << agentClient->get_agent_ip()  << " with message of length: " << tx_size << std::endl; 
-                if (write(agentClient->get_socket(), (void*) tx_buf, tx_size) < 0) {
-                    std::cout << "[ERROR]: In Deploy_Container. Error in writing to agent_clients socket: " << std::endl;
-                    return -1;
-                }
-                char rx_buffer[2048];
-                bzero(rx_buffer, 2048);
-                ret = read(agentClient->get_socket(), rx_buffer, 2048);
-                if (ret <= 0) {
-                    std::cout << "[ERROR]: GCM. Can't read from socket after deploying container" << std::endl;
-                    return -2;
-                }
-
-                msg_struct::ECMessage rx_msg;
-                google::protobuf::uint32 size;
-                google::protobuf::io::ArrayInputStream ais(rx_buffer,4);
-                CodedInputStream coded_input(&ais);
-                coded_input.ReadVarint32(&size); 
-                google::protobuf::io::ArrayInputStream arrayIn(rx_buffer, size);
-                google::protobuf::io::CodedInputStream codedIn(&arrayIn);
-                codedIn.ReadVarint32(&size);
-                google::protobuf::io::CodedInputStream::Limit msgLimit = codedIn.PushLimit(size);
-                rx_msg.ParseFromCodedStream(&codedIn);
-                codedIn.PopLimit(msgLimit);
-                
-                std::cout << "[EC Init] Response from Agent: (Request_Type, Container Name, Container PID): (" << rx_msg.req_type() << ", " <<  rx_msg.payload_string() << ", " <<  rx_msg.rsrc_amnt() << ")" << std::endl;
-                if ( rx_msg.rsrc_amnt() == (uint64_t) -1 ) {
-                    std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
-                    return -3;
-                }
-            } else {
-                continue;
+            std::cout << "[EC Init] Sending Message to Agent at IP: " << target_agent->get_agent_ip()  << " with message of length: " << tx_size << std::endl;
+            if (write(target_agent->get_socket(), (void*) tx_buf, tx_size) < 0) {
+                std::cout << "[ERROR]: In Deploy_Container. Error in writing to agent_clients socket: " << std::endl;
+                return -1;
             }
-        }        
+            char rx_buffer[2048];
+            bzero(rx_buffer, 2048);
+            ret = read(target_agent->get_socket(), rx_buffer, 2048);
+            if (ret <= 0) {
+                std::cout << "[ERROR]: GCM. Can't read from socket after deploying container" << std::endl;
+                return -2;
+            }
+
+            msg_struct::ECMessage rx_msg;
+            google::protobuf::uint32 size;
+            google::protobuf::io::ArrayInputStream ais(rx_buffer,4);
+            CodedInputStream coded_input(&ais);
+            coded_input.ReadVarint32(&size);
+            google::protobuf::io::ArrayInputStream arrayIn(rx_buffer, size);
+            google::protobuf::io::CodedInputStream codedIn(&arrayIn);
+            codedIn.ReadVarint32(&size);
+            google::protobuf::io::CodedInputStream::Limit msgLimit = codedIn.PushLimit(size);
+            rx_msg.ParseFromCodedStream(&codedIn);
+            codedIn.PopLimit(msgLimit);
+
+            std::cout << "[EC Init] Response from Agent: (Request_Type, Container Name, Container PID): (" << rx_msg.req_type() << ", " <<  rx_msg.payload_string() << ", " <<  rx_msg.rsrc_amnt() << ")" << std::endl;
+            if ( rx_msg.rsrc_amnt() == (uint64_t) -1 ) {
+                std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << target_agent->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
+                return -3;
+            }
+        } else {
+            continue;
+        }
+        //}
     }
 
     
@@ -156,18 +160,16 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
     // we can now create a map to link the container_id and cgroup_id - this is the place to do that..
     
     std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
-    std::vector<AgentClient *> ec_agent_clients = _ec->get_agent_clients();
+    AgentClientDB* acdb = acdb->get_agent_client_db_instance();
     auto agent_ip = sc->get_c_id()->server_ip;
-    for (const auto &agentClient : ec_agent_clients) {
-        std::cerr << "[dbg] Agent client ip: " << agentClient-> get_agent_ip() << std::endl;
-        std::cerr << "[dbg] Agent ip: " << agent_ip << std::endl;
-        if (agentClient->get_agent_ip() == agent_ip) {
-            _ec->add_to_agent_map(*sc->get_c_id(), agentClient);
-        } else {
-            continue;
-        }
+    AgentClient* target_agent = const_cast<AgentClient *>(acdb->get_agent_client_by_ip(agent_ip));
+    std::cerr << "[dbg] Agent client ip: " << target_agent-> get_agent_ip() << std::endl;
+    std::cerr << "[dbg] Agent ip: " << agent_ip << std::endl;
+    if ( target_agent != NULL) {
+        _ec->add_to_agent_map(*sc->get_c_id(), target_agent);
+    } else {
+        std::cerr<< "[ERROR] SubContainer's node IP or Agent IP not found!" << std::endl;
     }
-    std::cerr << "[dbg] Agent client map in the elastic container ? " << ec_agent_clients[0]->get_agent_ip() << " " << ec_agent_clients[0]->get_socket() << std::endl;
 
     res->request = 0; //giveback (or send back)
     return ret;
@@ -187,9 +189,8 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(ec::SubContainer::ContainerId cont
     msg_req.set_req_type(5); //MEM_LIMIT_IN_BYTES 
     msg_req.set_cgroup_id(container_id.cgroup_id);
     msg_req.set_payload_string("test");
-
     std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
-    std::cerr << "[dbg] Getting the agent clients: " << _ec->get_agent_clients()[0]->get_socket() << std::endl;
+
     AgentClient* temp = _ec->get_corres_agent(container_id);
     if(temp == NULL)
         std::cerr << "[dbg] temp is NULL" << std::endl;

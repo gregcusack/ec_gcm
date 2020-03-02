@@ -3,16 +3,15 @@
 //
 
 #include "Manager.h"
+#include "Agents/AgentClientDB.h"
 
 ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> agents )
             : Server(server_counts, gcm_ip, server_port, agents)
 {
     //init server
     initialize();
-
-    //TODO: this is temporary. should be fixed. there is no need to have 2 instance of agentClients
-    agent_clients = agent_clients_;
-    std::cout<<"[dbg] Manager constructor: agent socket file descriptor is: " << agent_clients[0]->get_socket() << std:: endl;
+    AgentClientDB* acdb = acdb->get_agent_client_db_instance();
+    std::cout<<"[dbg] Manager constructor: agent clients db size is: " << acdb->get_agent_clients_db_size() << std:: endl;
 
 }
 
@@ -113,26 +112,27 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     uint64_t reclaimed = 0;
     uint64_t rx_buff;
     int ret;
-
+    AgentClientDB* acdb = acdb->get_agent_client_db_instance();
     std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
     for (const auto &container : get_subcontainers()) {
         if (container.second->get_fd() == client_fd) {
             continue;
         }
         auto ip = container.second->get_c_id()->server_ip;
-        std::cout << "ac.size(): " << get_agent_clients().size() << std::endl;
-        for (const auto &agentClient : get_agent_clients()) {
-            std::cout << "(agentClient->ip, container ip): (" << agentClient->get_agent_ip() << ", " << ip << ")" << std::endl;
-            if (agentClient->get_agent_ip() == ip) {
+        std::cout << "ac.size(): " << acdb->get_agent_clients_db_size() << std::endl;
+        //for (const auto &agentClient : get_agent_clients()) {
+            AgentClient* target_agent = const_cast<AgentClient *>(acdb->get_agent_client_by_ip(ip));
+            std::cout << "(agentClient->ip, container ip): (" << target_agent->get_agent_ip() << ", " << ip << ")" << std::endl;
+            if (target_agent) {
                 auto *reclaim_req = new reclaim_msg;
                 reclaim_req->cgroup_id = container.second->get_c_id()->cgroup_id;
                 reclaim_req->is_mem = 1;
                 //TODO: anyway to get the server to do this?
-                if (write(agentClient->get_socket(), (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
+                if (write(target_agent->get_socket(), (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
                     std::cout << "[ERROR]: GCM EC Manager id: " << get_manager_id() << ". Failed writing to agent_clients socket"
                               << std::endl;
                 }
-                ret = read(agentClient->get_socket(), buffer, sizeof(buffer));
+                ret = read(target_agent->get_socket(), buffer, sizeof(buffer));
                 if (ret <= 0) {
                     std::cout << "[ERROR]: GCM. Can't read from socke to reclaim memory" << std::endl;
                 }
@@ -142,7 +142,7 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
                 std::cout << "[INFO] GCM: Current amount of reclaimed memory: " << reclaimed << std::endl;
             }
 
-        }
+        //}
 
     }
     std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << reclaimed << std::endl;

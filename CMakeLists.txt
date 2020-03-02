@@ -28,8 +28,8 @@ add_executable(ec_gcm main.cpp
         stats/global/cpu_g.h            stats/global/cpu_g.cpp
         stats/global/mem_g.h            stats/global/mem_g.cpp
         Manager.h                       Manager.cpp
-        Agents/AgentClient.h            Agents/AgentClient.cpp    
-        )
+        Agents/AgentClient.h            Agents/AgentClient.cpp
+        Agents/AgentClientDB.cpp Agents/AgentClientDB.h)
 
 add_executable(tester tests/run_test.cpp
         types/msg.cpp                   types/msg.h

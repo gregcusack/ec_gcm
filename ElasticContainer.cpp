@@ -4,11 +4,8 @@
 
 #include "ElasticContainer.h"
 
-
-ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id) {}
-
-ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients)
-    : ec_id(_ec_id), agent_clients(_agent_clients) {
+ec::ElasticContainer::ElasticContainer(uint32_t _ec_id)
+    : ec_id(_ec_id) {
 
     //TODO: change num_agents to however many servers we have. IDK how to set it rn.
 

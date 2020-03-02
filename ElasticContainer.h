@@ -50,7 +50,6 @@ namespace ec {
     using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
     public:
         explicit ElasticContainer(uint32_t _ec_id);
-        ElasticContainer(uint32_t _ec_id, std::vector<AgentClient*> &_agent_clients);
         ~ElasticContainer();
 
         /**
@@ -71,10 +70,6 @@ namespace ec {
         uint64_t get_memory_available() { return _mem.get_mem_available(); }
         uint64_t get_memory_slice() { return _mem.get_slice_size(); }
 
-        //AGENTS
-        uint32_t get_num_agent_clients() { return agent_clients.size(); }
-        const std::vector<AgentClient *> &get_agent_clients() const { return agent_clients; };
-
         /**
          *******************************************************
          * SETTERS
@@ -82,7 +77,7 @@ namespace ec {
          **/
 
         //MISC
-        int add_to_agent_map(SubContainer::ContainerId id, AgentClient* client) { sc_agent_map.insert({id, client}); }
+        void add_to_agent_map(SubContainer::ContainerId id, AgentClient* client) { sc_agent_map.insert({id, client}); }
 
         //CPU
         void set_ec_period(int64_t _period)  { _cpu.set_period(_period); }   //will need to update maanger too
@@ -121,13 +116,6 @@ namespace ec {
         uint32_t ec_id;
         subcontainer_map subcontainers;
         subcontainer_agent_map sc_agent_map;
-
- //       std::vector<std::int> pids;
-
-        //agents
-        //TODO: this may need to be a map
-        //Passed by reference from ECAPI but owned by GCM
-        std::vector<AgentClient *> agent_clients;
 
         //cpu
 //        uint64_t runtime_remaining;

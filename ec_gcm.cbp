@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="ec_gcm"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;CMake Files\..\;CMake Files\..\..\;CMake Files\..\..\..\;CMake Files\..\..\..\..\;CMake Files\..\..\..\..\..\;CMake Files\..\..\..\..\..\usr\;CMake Files\..\..\..\..\..\usr\local\;CMake Files\..\..\..\..\..\usr\local\lib\;CMake Files\..\..\..\..\..\usr\local\lib\cpprestsdk\;CMake Files\proto\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/maaz/Desktop/EC-4.20.16/ec_gcm"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/maaz/Desktop/EC-4.20.16/ec_gcm"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/maaz/Desktop/EC-4.20.16/ec_gcm"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="loop_test">
+				<Option output="/home/maaz/Desktop/EC-4.20.16/ec_gcm/loop_test" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/maaz/Desktop/EC-4.20.16/ec_gcm"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 loop_test"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="loop_test/fast">
+				<Option output="/home/maaz/Desktop/EC-4.20.16/ec_gcm/loop_test" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/maaz/Desktop/EC-4.20.16/ec_gcm"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 loop_test/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="ec_gcm">
+				<Option output="/home/maaz/Desktop/EC-4.20.16/ec_gcm/ec_gcm" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/maaz/Desktop/EC-4.20.16/ec_gcm"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DCPPREST_FORCE_HTTP_CLIENT_ASIO"/>
+					<Add option="-DCPPREST_FORCE_HTTP_LISTENER_ASIO"/>
+					<Add option="-DCPPREST_NO_SSL_LEAK_SUPPRESS"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 ec_gcm"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="ec_gcm/fast">
+				<Option output="/home/maaz/Desktop/EC-4.20.16/ec_gcm/ec_gcm" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/maaz/Desktop/EC-4.20.16/ec_gcm"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DCPPREST_FORCE_HTTP_CLIENT_ASIO"/>
+					<Add option="-DCPPREST_FORCE_HTTP_LISTENER_ASIO"/>
+					<Add option="-DCPPREST_NO_SSL_LEAK_SUPPRESS"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 ec_gcm/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="tester">
+				<Option output="/home/maaz/Desktop/EC-4.20.16/ec_gcm/tester" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/maaz/Desktop/EC-4.20.16/ec_gcm"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 tester"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="tester/fast">
+				<Option output="/home/maaz/Desktop/EC-4.20.16/ec_gcm/tester" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/maaz/Desktop/EC-4.20.16/ec_gcm"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 tester/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="proto">
+				<Option output="/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto/libproto.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto/Makefile&quot;  VERBOSE=1 proto"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="proto/fast">
+				<Option output="/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto/libproto.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto/Makefile&quot;  VERBOSE=1 proto/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/Agents/Agent.cpp">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/Agents/Agent.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/Agents/AgentClient.cpp">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/Agents/AgentClient.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/Agents/AgentClientDB.cpp">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/Agents/AgentClientDB.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/ECAPI.cpp">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/ECAPI.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/ElasticContainer.cpp">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/ElasticContainer.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/GlobalCloudManager.cpp">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/GlobalCloudManager.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/Manager.cpp">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/Manager.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/Server.cpp">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/Server.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/SubContainer.cpp">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/SubContainer.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/main.cpp">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/om.h">
+			<Option target="loop_test"/>
+			<Option target="tester"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto/msg.pb.cc">
+			<Option target="proto"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto/msg.pb.h">
+			<Option target="proto"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto/msg.pb.h.rule">
+			<Option target="proto"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/stats/global/cpu_g.cpp">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/stats/global/cpu_g.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/stats/global/mem_g.cpp">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/stats/global/mem_g.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/stats/local/cpu_l.cpp">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/stats/local/cpu_l.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/stats/local/mem_l.cpp">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/stats/local/mem_l.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/tests/run_continuous.cpp">
+			<Option target="loop_test"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/tests/run_test.cpp">
+			<Option target="tester"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/types/k_msg.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/types/msg.cpp">
+			<Option target="loop_test"/>
+			<Option target="ec_gcm"/>
+			<Option target="tester"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/types/msg.h">
+			<Option target="loop_test"/>
+			<Option target="ec_gcm"/>
+			<Option target="tester"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/types/types.h">
+			<Option target="ec_gcm"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/../../../../../usr/local/lib/cpprestsdk/cpprestsdk-config.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\local\lib\cpprestsdk\"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/../../../../../usr/local/lib/cpprestsdk/cpprestsdk-targets-debug.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\local\lib\cpprestsdk\"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/../../../../../usr/local/lib/cpprestsdk/cpprestsdk-targets.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\local\lib\cpprestsdk\"/>
+		</Unit>
+		<Unit filename="/home/maaz/Desktop/EC-4.20.16/ec_gcm/proto/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\proto\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>
