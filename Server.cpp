@@ -6,7 +6,7 @@
 
 ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents)
     : server_id(_server_id), ip_address(_ip_address), port(_port), agents(_agents), server_initialized(false),
-    agent_clients_({}) {}
+    agent_clients_({}), num_of_cli(0) {}
 
 
 void ec::Server::initialize() {
@@ -63,7 +63,7 @@ void ec::Server::serve() {
     //test if server_socket struct valid here somehow
     fd_set readfds;
     int32_t max_sd, sd, cliaddr_len, clifd, select_rv;
-    int32_t num_of_cli = 0;
+//    int32_t num_of_cli = 0;
 
     std::thread threads[__MAX_CLIENT__];
     serv_thread_args *args;
