@@ -121,7 +121,7 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
         auto ip = container.second->get_c_id()->server_ip;
         std::cout << "ac.size(): " << acdb->get_agent_clients_db_size() << std::endl;
         //for (const auto &agentClient : get_agent_clients()) {
-            AgentClient* target_agent = const_cast<AgentClient *>(acdb->get_agent_client_by_ip(ip));
+            const auto* target_agent = acdb->get_agent_client_by_ip(ip);
             std::cout << "(agentClient->ip, container ip): (" << target_agent->get_agent_ip() << ", " << ip << ")" << std::endl;
             if (target_agent) {
                 auto *reclaim_req = new reclaim_msg;

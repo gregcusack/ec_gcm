@@ -154,7 +154,7 @@ int ec::Server::init_agent_connections() {
         else {
             num_connections++;
         }
-        AgentClient* ac = new AgentClient(ag, sockfd);
+        auto* ac = new AgentClient(ag, sockfd);
         agent_clients_db->add_agent_client(ac);
         std::cout << "[dbg] Agent client added to db and agent_clients sockfd: " << sockfd << ", " << agent_clients_db->get_agent_client_by_ip(ag->get_ip())->get_socket()
         <<" agent db size is: " << agent_clients_db->get_agent_clients_db_size()<< std::endl;

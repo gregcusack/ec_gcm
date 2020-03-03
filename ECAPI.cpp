@@ -69,7 +69,7 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     std::vector<std::string> node_ips = _ec->get_nodes_ips(node_names);
     std::cerr << "[dbg] node ips are: " << node_ips[0] << std::endl;
     //for (const auto &agentClient : ec_agent_clients) {
-    for (const auto node_ip : node_ips) {
+    for (const auto &node_ip : node_ips) {
         // Get the Agent with this node ip first..
         //for (const auto &agentClient : ec_agent_clients) {
         const AgentClient* target_agent;
@@ -162,7 +162,7 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
     std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
     AgentClientDB* acdb = acdb->get_agent_client_db_instance();
     auto agent_ip = sc->get_c_id()->server_ip;
-    AgentClient* target_agent = const_cast<AgentClient *>(acdb->get_agent_client_by_ip(agent_ip));
+    auto* target_agent = const_cast<AgentClient *>(acdb->get_agent_client_by_ip(agent_ip));
     std::cerr << "[dbg] Agent client ip: " << target_agent-> get_agent_ip() << std::endl;
     std::cerr << "[dbg] Agent ip: " << agent_ip << std::endl;
     if ( target_agent != NULL) {
