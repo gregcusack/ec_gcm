@@ -90,7 +90,7 @@ namespace ec {
 
         //MISC
 //        int handle_req(const char *buff_in, char *buff_out, uint32_t host_ip, int clifd);
-        virtual int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) = 0;
+        //virtual int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) = 0;
 
 
         //TODO: implement these here in a class that inherits from manager

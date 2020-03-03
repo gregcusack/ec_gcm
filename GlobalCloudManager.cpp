@@ -23,8 +23,8 @@ ec::GlobalCloudManager::GlobalCloudManager(std::string ip_addr, uint16_t port, a
     }
 }
 
-uint32_t ec::GlobalCloudManager::create_server() {
-    if(servers.find(server_counts) != servers.end()) {
+uint32_t ec::GlobalCloudManager::create_manager() {
+    if(managers.find(server_counts) != managers.end()) {
         std::cout << "ERROR: Error allocating new Server. Server IDs not correct" << std::endl;
         return 0;
     }
@@ -32,7 +32,7 @@ uint32_t ec::GlobalCloudManager::create_server() {
     uint16_t server_port = server_ports[server_counts - 1]; //Give new EC, the next available port in the list
     mngr = new Manager(server_counts, gcm_ip, server_port, agents);
 
-    servers.insert({server_counts, mngr});
+    managers.insert({server_counts, mngr});
 
 //    eclock.lock();
     server_counts++;
@@ -40,9 +40,9 @@ uint32_t ec::GlobalCloudManager::create_server() {
     return mngr->get_server_id();
 }
 
-const ec::Manager &ec::GlobalCloudManager::get_server(const uint32_t server_id) const {
-    auto itr = servers.find(server_id);
-    if(itr == servers.end()) {
+const ec::Manager &ec::GlobalCloudManager::get_manager(const uint32_t server_id) const {
+    auto itr = managers.find(server_id);
+    if(itr == managers.end()) {
         std::cout << "ERROR: No Server with server_id: " << server_id << ". Exiting...." << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -55,10 +55,10 @@ ec::GlobalCloudManager::~GlobalCloudManager() {
         delete a;
     }
     agents.clear();
-    for(auto &s : servers) {
+    for(auto &s : managers) {
         delete s.second;
     }
-    servers.clear();
+    managers.clear();
 }
 
 void ec::GlobalCloudManager::run(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip) {
@@ -67,7 +67,7 @@ void ec::GlobalCloudManager::run(const std::string &app_name, const std::vector<
     //app_thread_args *args;
     int32_t num_of_cli = 0;
 
-    for(const auto &s : servers) {
+    for(const auto &s : managers) {
         if(fork() == 0) {
             // std::cout << "[child] pid: " << getpid() << ", [parent] pid: " <<  getppid() << std::endl;
             std::cout << "New Server with ID: " << s.second->get_server_id() << std::endl;
@@ -78,7 +78,7 @@ void ec::GlobalCloudManager::run(const std::string &app_name, const std::vector<
         }
         break;
     }
-    for(const auto &i : servers) {
+    for(const auto &i : managers) {
         wait(nullptr);
     }
 

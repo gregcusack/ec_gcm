@@ -24,7 +24,7 @@
 namespace ec {
     class GlobalCloudManager {
         using agents_ip_list = std::vector<std::string>;
-        using server_map = std::unordered_map<uint16_t, ec::Manager*>;
+        using manager_map = std::unordered_map<uint16_t, ec::Manager*>;
     public:
 //        GlobalCloudManager();
         GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<uint16_t> &_server_ports);
@@ -32,10 +32,10 @@ namespace ec {
 
         void run(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip);
 
-        uint32_t create_server();
+        uint32_t create_manager();
 
-        const server_map& get_servers() {return servers;}
-        const Manager& get_server(uint32_t server_id) const;
+        const manager_map& get_managers() {return managers;}
+        const Manager& get_manager(uint32_t server_id) const;
 
         struct app_thread_args {
             app_thread_args()              = default;
@@ -47,7 +47,7 @@ namespace ec {
         ip4_addr                gcm_ip;
         uint16_t                gcm_port;           //unknown if needed
 
-        server_map              servers;
+        manager_map              managers;
         uint32_t                server_counts;
 
 
