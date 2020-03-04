@@ -80,6 +80,16 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
                         std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
                         return __FAILED__;
                     }
+
+                    // This is where Agent returns the docker id
+                    std::vector<ec::SubContainer::ContainerId> agentScIdMap;
+                    agentScIdMap = _ec->get_sc_from_agent(agentClient);
+                    for (auto &i: agentScIdMap) {
+                        ec::SubContainer sc = _ec->get_subcontainer(i);
+                        sc.set_docker_id(rx_msg.payload_string());
+                        std::cout << "docker id set: " << sc.get_docker_id() << std::endl;
+                    }
+
                 } else {
                     continue;
                 }
@@ -169,10 +179,11 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(const ec::SubContainer::ContainerI
     AgentClient* ac = _ec->get_corres_agent(container_id);
     if(ac == NULL)
          std::cerr << "[ERROR] NO AgentClient found for container id: " << container_id << std::endl;
-    SubContainer sc = _ec->get_subcontainer(container_id);
+    ec::SubContainer sc = _ec->get_subcontainer(container_id);
 
-    CAdvisor monitor_obj;
+    ec::Facade::MonitorFacade::CAdvisor monitor_obj;
     std::cout << "SUBCONTAINER ID: " << sc.get_c_id() << std::endl;
+    std::cout << "docker id used:" <<  sc.get_docker_id() << std::endl;
     ret = monitor_obj.getContMemLimit(ac->get_agent_ip().to_string(), sc.get_docker_id());
     return ret;
 }

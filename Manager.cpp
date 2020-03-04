@@ -145,7 +145,7 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     return reclaimed;
 }
 
-int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t &host_ip, int &clifd){
+int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd){
     if(req == nullptr || res == nullptr) {
         std::cout << "req or res == null in handle_req()" << std::endl;
         exit(EXIT_FAILURE);

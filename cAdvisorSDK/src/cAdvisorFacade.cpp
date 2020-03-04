@@ -11,7 +11,7 @@
 //     return true;
 // }
 
-uint64_t CAdvisor::getContCPULimit(const std::string agent_ip, const std::string docker_container_id) {
+uint64_t ec::Facade::MonitorFacade::CAdvisor::getContCPULimit(const std::string agent_ip, const std::string docker_container_id) {
     std::string res;
     JSONFacade jsonFacade;
     jsonFacade.getJSONRequest("http://" + agent_ip + ":8080/api/v1.2/docker/" + docker_container_id, res);
@@ -19,7 +19,7 @@ uint64_t CAdvisor::getContCPULimit(const std::string agent_ip, const std::string
 }
 
 
-uint64_t CAdvisor::getContMemLimit(const std::string agent_ip, const std::string docker_container_id) {
+uint64_t ec::Facade::MonitorFacade::CAdvisor::getContMemLimit(const std::string agent_ip, const std::string docker_container_id) {
     std::string tmp;
     uint64_t res;
     JSONFacade jsonFacade;
