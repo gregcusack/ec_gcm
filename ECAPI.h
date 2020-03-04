@@ -7,23 +7,19 @@
 
 #include "ElasticContainer.h"
 #include "types/msg.h"
-#include "types/msg.h"
 #include "Agents/Agent.h"
 #include "Agents/AgentClient.h"
 #include "om.h"
 #include <iostream>
 #include <functional> //for std::hash
 #include <string>
-#include "proto/msg.pb.h"
-#include <google/protobuf/message.h>
-#include <google/protobuf/descriptor.h>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <google/protobuf/io/coded_stream.h>
-#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
+
+#include "jsonSDK/include/JSONFacade.h"
+#include "deploySDK/include/DeployFacade.h"
+#include "protoBufSDK/include/ProtoBufFacade.h"
+#include "protoBufSDK/msg.pb.h"
 
 #define __FAILED__ -1
-
-using namespace google::protobuf::io;
 
 namespace ec {
     class ECAPI {
@@ -34,9 +30,7 @@ namespace ec {
         ECAPI(uint32_t _ec_id);
         ~ECAPI();
         //creates _ec and server and connects them
-//        void build_manager_handler();
-        int create_ec(std::string app_name, std::string app_image);
-        void deploy_application(std::string app_name, std::vector<std::string> app_images);
+        int create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip);
 
         [[nodiscard]] const ElasticContainer& get_elastic_container() const;
 
@@ -62,7 +56,7 @@ namespace ec {
         //MEM
         uint64_t ec_get_memory_available() { return _ec->get_memory_available(); }
         uint64_t ec_get_memory_slice() { return _ec->get_memory_slice(); }
-        uint64_t get_memory_limit_in_bytes(ec::SubContainer::ContainerId container_id);
+        uint64_t get_memory_limit_in_bytes(const SubContainer::ContainerId &container_id);
 
 
         //AGENTS

@@ -4,7 +4,7 @@
 
 #include "Manager.h"
 
-ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> agents )
+ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
             : Server(server_counts, gcm_ip, server_port, agents)
 {
     //init server
@@ -16,17 +16,13 @@ ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t serv
 
 }
 
-void ec::Manager::start(std::string app_name, std::vector<std::string> app_images) {
+void ec::Manager::start(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip) {
     //A thread to listen for subcontainers' events
     std::thread event_handler_thread(&ec::Server::serve, this);
-    // //TODO: temporary. don't need 2 IDs.
-    // manager_id = server_id;
-    // // Another thread to deploy the application
-    // sleep(10);
-    std::thread application_deployment_thread(&ec::ECAPI::deploy_application, this, app_name, app_images);
+    std::thread application_deployment_thread(&ec::ECAPI::create_ec, this, app_name, app_images, gcm_ip);
     // //Another thread to run a management application
     application_deployment_thread.join();
-
+    sleep(10);
     std::cerr<<"[dbg] manager::just before running the app thread\n";
     std::thread application_thread(&ec::Manager::run, this);
     application_thread.join();
@@ -175,13 +171,13 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
 void ec::Manager::run(){
     //ec::SubContainer::ContainerId x ;
     std::cout << "[dbg] In Manager Run function" << std::endl;
+    std::cout << "EC Map Size: " << _ec->get_subcontainers().size() << std::endl;
     while(true){
-        //std::cout << "[dbg] manager::run: for loop\n";
         for(auto sc_ : _ec->get_subcontainers()){
             std::cout << "=================================================================================================\n";
-            std::cout << "[READ API] the memory limit in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
+            std::cout << "[READ API]: the memory limit in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
             std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << std::endl;
-            sleep(3);
+            sleep(1);
         }
     }
 }

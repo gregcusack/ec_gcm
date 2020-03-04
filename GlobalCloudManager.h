@@ -18,6 +18,7 @@
 #include <thread>
 #include "Manager.h"
 
+#define __NUM_THREADS__ 32
 //std::mutex eclock;
 
 namespace ec {
@@ -29,7 +30,7 @@ namespace ec {
         GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<uint16_t> &_server_ports);
         ~GlobalCloudManager();
 
-        void run(std::string app_name, std::vector<std::string> app_images);
+        void run(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip);
 
         uint32_t create_server();
 
