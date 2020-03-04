@@ -13,7 +13,7 @@
 namespace ec {
     class Manager : public ECAPI, public Server {
         public:
-            Manager(uint32_t &server_counts, ip4_addr &gcm_ip, uint16_t &server_port, std::vector<Agent *> &agents);
+            Manager(uint32_t server_counts, ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents);
             int handle_cpu_req(const msg_t *req, msg_t *res) override;
 
             int handle_mem_req(const msg_t *req, msg_t *res, int clifd) override;

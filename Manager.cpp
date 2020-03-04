@@ -4,7 +4,7 @@
 
 #include "Manager.h"
 
-ec::Manager::Manager( uint32_t &server_counts, ec::ip4_addr &gcm_ip, uint16_t &server_port, std::vector<Agent *> &agents )
+ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
             : Server(server_counts, gcm_ip, server_port, agents)
 {
     //init server
