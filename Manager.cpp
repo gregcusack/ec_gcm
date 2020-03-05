@@ -87,7 +87,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
 //    std::cout << "rt_mean: " << rt_mean << std::endl;
 //    std::cout << "thr_mean: " << thr_mean << std::endl;
-//    std::cout << "cpu_unalloc: " << ec_get_cpu_unallocated_rt() << std::endl;
+    std::cout << "cpu_unalloc: " << ec_get_cpu_unallocated_rt() << std::endl;
 
     if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
 //        std::cout << "overrun. sc: " << *sc->get_c_id() << std::endl;
@@ -110,7 +110,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         to_sub = std::min(overrun, to_sub);
         updated_quota = rx_quota - to_sub;
         ret = set_sc_quota(sc, updated_quota);
-        if(ret <= 0) {
+        if(ret < 0) {
             std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (overrun sub quota). ret: " << ret << std::endl;
         }
         else {
@@ -140,7 +140,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //            std::cout << "to_Add: " << to_add << std::endl;
             updated_quota = rx_quota + to_add;
             ret = set_sc_quota(sc, updated_quota);
-            if(ret <= 0) {
+            if(ret < 0) {
                 std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (incr fair share). ret: " << ret << std::endl;
             }
             else {
@@ -166,7 +166,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
             updated_quota = rx_quota + overrun;
             ret = set_sc_quota(sc, updated_quota);
-            if(ret <= 0) {
+            if(ret < 0) {
                 std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (incr fair share overrun). ret: " << ret << std::endl;
             }
             else {
@@ -186,7 +186,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             ec_decr_unallocated_rt(extra_rt);
             updated_quota = rx_quota + extra_rt;
             ret = set_sc_quota(sc, updated_quota);
-            if(ret <= 0) {
+            if(ret < 0) {
                 std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (incr). ret: " << ret << std::endl;
             }
             else {
@@ -207,7 +207,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         if(new_quota != rx_quota) {
 //            std::cout << "new, old, rt_remain: (" << new_quota << "," << rx_quota << "," << rt_mean << ")" << std::endl;
             ret = set_sc_quota(sc, new_quota); //give back what was used + 5ms
-            if(ret <= 0) {
+            if(ret < 0) {
                 std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (decr). ret: " << ret << std::endl;
             }
             else {
@@ -308,7 +308,7 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     return reclaimed;
 }
 
-int ec::Manager::set_sc_quota(ec::SubContainer *sc, uint64_t _quota) {
+int64_t ec::Manager::set_sc_quota(ec::SubContainer *sc, uint64_t _quota) {
     if(!sc) {
         std::cout << "sc == NULL in manager set_sc_quota()" << std::endl;
         std::exit(EXIT_FAILURE);
@@ -327,7 +327,7 @@ int ec::Manager::set_sc_quota(ec::SubContainer *sc, uint64_t _quota) {
         std::exit(EXIT_FAILURE);
     }
 
-    uint64_t ret = agent->send_request(msg_req)[0];
+    int64_t ret = agent->send_request(msg_req);
     return ret;
 
 

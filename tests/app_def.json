@@ -7,7 +7,7 @@
 		"net": 10
 	},
 	"images": [
-		"gregcusack/ec-sat-dyn:remote"
+		"gregcusack/ec-sat:remote"
 	],
 	"yaml_path" : [
 		"k8-yaml/"

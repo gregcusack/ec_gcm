@@ -21,7 +21,7 @@ namespace ec {
 //        Manager(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients) : ECAPI(_ec_id, _agent_clients) {};
 
         int handle_cpu_usage_report(const msg_t *req, msg_t *res) override;
-        int set_sc_quota(SubContainer *sc, uint64_t _quota) override;
+        int64_t set_sc_quota(SubContainer *sc, uint64_t _quota) override;
 
         int handle_mem_req(const msg_t *req, msg_t *res, int clifd) override;
         uint64_t handle_reclaim_memory(int client_fd) override;

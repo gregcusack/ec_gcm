@@ -111,7 +111,7 @@ namespace ec {
         int handle_add_cgroup_to_ec(const msg_t *req, msg_t *res, uint32_t ip, int fd);
         //CPU
         virtual int handle_cpu_usage_report(const msg_t *req, msg_t *res) = 0;
-        virtual int set_sc_quota(SubContainer *sc, uint64_t _quota) = 0;
+        virtual int64_t set_sc_quota(SubContainer *sc, uint64_t _quota) = 0;
 //        int handle_slice_req(const msg_t *req, msg_t *res, int clifd);
 
         //MEMORY

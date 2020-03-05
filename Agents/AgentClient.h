@@ -30,7 +30,7 @@ namespace ec {
         [[nodiscard]] int get_socket() const { return sockfd_new; }
         [[nodiscard]] om::net::ip4_addr get_agent_ip() const {return agent->get_ip(); }
         [[nodiscard]] uint16_t get_agent_port() const { return agent->get_port(); }
-        std::vector<uint64_t> send_request(const struct msg_struct::ECMessage &msg) const;
+        int64_t send_request(const struct msg_struct::ECMessage &msg) const;
 
 
     private:

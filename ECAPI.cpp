@@ -197,7 +197,7 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(ec::SubContainer::ContainerId cont
     }
     
     std::cerr << "[dbg] temp sockfd is : " << temp->get_socket() << std::endl;
-    ret = temp->send_request(msg_req)[0];
+    ret = temp->send_request(msg_req);
     // delete(_req);
     return ret;
 

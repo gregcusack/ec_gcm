@@ -9,7 +9,7 @@ ec::AgentClient::AgentClient(const ec::Agent *_agent, int _sockfd)
 
 }
 
-std::vector<uint64_t > ec::AgentClient::send_request(const struct msg_struct::ECMessage &msg) const {
+int64_t ec::AgentClient::send_request(const struct msg_struct::ECMessage &msg) const {
     
     int tx_size = msg.ByteSizeLong()+4;
     char* tx_buf = new char[tx_size];
@@ -19,12 +19,13 @@ std::vector<uint64_t > ec::AgentClient::send_request(const struct msg_struct::EC
     msg.SerializeToCodedStream(&codedOut);
 
     char rx_buffer[__BUFFSIZE__];
-    std::vector<uint64_t> ret;
+    int64_t ret = -1;
     int32_t bytes_read;
-    std::cerr << "[dbg] send_request: asking question from the agent and socket file descriptor is: " <<  sockfd_new << " with request type: " << msg.req_type() << std::endl;
-    send(sockfd_new , (void *)tx_buf , tx_size , 0 );
+//    std::cerr << "[dbg] send_request: asking question from the agent and socket file descriptor is: " <<  sockfd_new << " with request type: " << msg.req_type() << std::endl;
+    if(send(sockfd_new , (void *)tx_buf , tx_size , 0 ) <= 0) {
+        std::cerr << "[ERROR]: Agent client failed sending protobuf to agent!" << std::endl;
+    }
 
-    std::cerr << "[dbg] send_request: test sending is successful\n";
     if ( (bytes_read = read( sockfd_new , rx_buffer, __BUFFSIZE__)) > 0){
 
         msg_struct::ECMessage rx_msg;
@@ -39,10 +40,9 @@ std::vector<uint64_t > ec::AgentClient::send_request(const struct msg_struct::EC
         rx_msg.ParseFromCodedStream(&codedIn);
         codedIn.PopLimit(msgLimit);
 
-        std::cerr << "[dbg] send_request: Agent returned rsrc amnt: " << rx_msg.rsrc_amnt() <<" \n";
-        ret.push_back(rx_msg.rsrc_amnt()); 
+//        std::cerr << "[dbg] send_request: Agent returned rsrc amnt: " << rx_msg.rsrc_amnt() <<" \n";
+        ret = rx_msg.rsrc_amnt();
     }
-    std::cerr << "[dbg] Out of loop\n";
 
     return ret;
 }
