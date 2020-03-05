@@ -10,12 +10,8 @@
 #include <iostream>
 #include <functional> //for std::hash
 #include <string>
-#include "../proto/msg.pb.h"
-#include <google/protobuf/message.h>
-#include <google/protobuf/descriptor.h>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <google/protobuf/io/coded_stream.h>
-#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
+#include "../protoBufSDK/msg.pb.h"
+#include "../protoBufSDK/include/ProtoBufFacade.h"
 
 using namespace google::protobuf::io;
 

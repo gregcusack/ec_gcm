@@ -6,8 +6,12 @@
 		"ports": 80,
 		"net": 10
 	},
+	"gcmIP": "10.0.2.15",
+	"agentIPs": [
+		"10.0.2.15"
+	],
 	"images": [
-		"gregcusack/ec-sat:remote"
+		"nginx"
 	],
 	"yaml_path" : [
 		"k8-yaml/"

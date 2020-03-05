@@ -4,7 +4,7 @@
 
 #include "Manager.h"
 
-ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> agents )
+ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
             : Server(server_counts, gcm_ip, server_port, agents)
 {
     //init server
@@ -16,17 +16,13 @@ ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t serv
 
 }
 
-void ec::Manager::start(std::string app_name, std::vector<std::string> app_images) {
+void ec::Manager::start(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip) {
     //A thread to listen for subcontainers' events
     std::thread event_handler_thread(&ec::Server::serve, this);
-    // //TODO: temporary. don't need 2 IDs.
-    // manager_id = server_id;
-    // // Another thread to deploy the application
-    // sleep(10);
-    std::thread application_deployment_thread(&ec::ECAPI::deploy_application, this, app_name, app_images);
+    std::thread application_deployment_thread(&ec::ECAPI::create_ec, this, app_name, app_images, gcm_ip);
     // //Another thread to run a management application
     application_deployment_thread.join();
-
+    sleep(10);
     std::cerr<<"[dbg] manager::just before running the app thread\n";
     std::thread application_thread(&ec::Manager::run, this);
     application_thread.join();
@@ -268,6 +264,7 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
 uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     int j = 0;
     char buffer[__BUFF_SIZE__] = {0};
+    uint64_t total_reclaimed = 0;
     uint64_t reclaimed = 0;
     uint64_t rx_buff;
     int ret;
@@ -282,30 +279,21 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
         for (const auto &agentClient : get_agent_clients()) {
             std::cout << "(agentClient->ip, container ip): (" << agentClient->get_agent_ip() << ", " << ip << ")" << std::endl;
             if (agentClient->get_agent_ip() == ip) {
-                auto *reclaim_req = new reclaim_msg;
-                reclaim_req->cgroup_id = container.second->get_c_id()->cgroup_id;
-                reclaim_req->is_mem = 1;
-                //TODO: anyway to get the server to do this?
-                if (write(agentClient->get_socket(), (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
-                    std::cout << "[ERROR]: GCM EC Manager id: " << get_manager_id() << ". Failed writing to agent_clients socket"
-                              << std::endl;
-                }
-                ret = read(agentClient->get_socket(), buffer, sizeof(buffer));
-                if (ret <= 0) {
-                    std::cout << "[ERROR]: GCM. Can't read from socke to reclaim memory" << std::endl;
-                }
-                rx_buff = *((uint64_t *) buffer);
-                reclaimed += rx_buff;
-                std::cout << "[INFO] GCM: reclaimed: " << rx_buff << " bytes" << std::endl;
-                std::cout << "[INFO] GCM: Current amount of reclaimed memory: " << reclaimed << std::endl;
-                delete reclaim_req;
+                msg_struct::ECMessage msg_req;
+                msg_req.set_req_type(1);
+                msg_req.set_cgroup_id(container.second->get_c_id()->cgroup_id);
+                msg_req.set_payload_string("test");
+
+                reclaimed = agentClient->send_request(msg_req);
+                total_reclaimed += reclaimed;
+
+                std::cout << "[INFO] GCM: reclaimed: " << reclaimed << " bytes" << std::endl;
+                std::cout << "[INFO] GCM: Current amount of total_reclaimed memory: " << total_reclaimed << std::endl;
             }
-
         }
-
     }
-    std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << reclaimed << std::endl;
-    return reclaimed;
+    std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << total_reclaimed << std::endl;
+    return total_reclaimed;
 }
 
 int64_t ec::Manager::set_sc_quota(ec::SubContainer *sc, uint64_t _quota) {
@@ -330,29 +318,6 @@ int64_t ec::Manager::set_sc_quota(ec::SubContainer *sc, uint64_t _quota) {
     int64_t ret = agent->send_request(msg_req);
     return ret;
 
-
-//    char buffer[__BUFF_SIZE__] = {0};
-//    auto ip = sc->get_c_id()->server_ip;
-//    std::cout << "# clients (%100): " << get_agent_clients().size() << std::endl;
-//    for(const auto &agentClient : get_agent_clients()) {
-//        std::cout << "agentclient ip: " << agentClient->get_agent_ip() << std::endl;
-//        if(agentClient->get_agent_ip() == ip) {
-//            auto *reclaim_req = new reclaim_msg;
-//            reclaim_req->cgroup_id = sc->get_c_id()->cgroup_id;
-//            reclaim_req->is_mem = 0;
-//            reclaim_req->_quota = _quota;
-//            std::cout << "reclaim msg size: " << sizeof(*reclaim_req) << std::endl;
-//            if(write(agentClient->get_socket(), (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
-//                std::cout << "[ERROR]: GCM EC Manager id: " << get_manager_id() << ". Failed writing to agent_clients socket (resize)"
-//                          << std::endl;
-//            }
-////            ret = read(agentClient->get_socket(), buffer, sizeof(buffer));
-////            return ret;
-//            delete reclaim_req;
-//            return 1;
-//        }
-//    }
-//    return -1;
 }
 
 int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd){
@@ -381,18 +346,13 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
 void ec::Manager::run() {
     //ec::SubContainer::ContainerId x ;
     std::cout << "[dbg] In Manager Run function" << std::endl;
-    while (true) {
-        //std::cout << "[dbg] manager::run: for loop\n";
-//        std::cout << "subcontainer size: " << _ec->get_subcontainers().size() << std::endl;
-        for (const auto &sc_ : _ec->get_subcontainers()) {
-            std::cout
-                    << "=================================================================================================\n";
-//            std::cout << "[READ API] the memory limit in bytes of the container with cgroup id: "
-//                      << sc_.second->get_c_id()->cgroup_id << std::endl;
-//            std::cout << " on the node with ip address: " << sc_.first.server_ip << " is: "
-//                      << get_memory_limit_in_bytes(sc_.first) << std::endl;
-//            std::cout << "set quota: " << set_sc_quota(sc_.second, 50000000);
-            sleep(3);
+    std::cout << "EC Map Size: " << _ec->get_subcontainers().size() << std::endl;
+    while(true){
+        for(auto sc_ : _ec->get_subcontainers()){
+            std::cout << "=================================================================================================\n";
+            std::cout << "[READ API]: the memory limit in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
+            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << std::endl;
+            sleep(1);
         }
     }
 }

@@ -16,20 +16,14 @@
 #include <chrono>
 #include <thread>
 #include <fstream>
-
-#include <cpprest/http_client.h>
-#include <cpprest/json.h> // JSON library
-
 #include "types/msg.h"
 #include "types/k_msg.h"
+
 #include "SubContainer.h"
 #include "Agents/AgentClient.h"
 #include "om.h"
 #include "stats/global/mem_g.h"
 #include "stats/global/cpu_g.h"
-//#include "Server.h"
-
-using namespace web;                        // Common features like URIs, JSON.
 
 #define __ALLOC_FAILED__ 0
 #define __ALLOC_SUCCESS__ 1
@@ -63,7 +57,7 @@ namespace ec {
         uint32_t get_ec_id() { return ec_id; }
         const subcontainer_map &get_subcontainers() {return subcontainers;}
         const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id);
-        AgentClient* get_corres_agent(SubContainer::ContainerId &container_id){return sc_agent_map[container_id];}
+        AgentClient *get_corres_agent(const SubContainer::ContainerId &container_id){return sc_agent_map[container_id];}
         SubContainer *get_sc_for_update(SubContainer::ContainerId &container_id);
 
         //CPU
@@ -89,7 +83,7 @@ namespace ec {
          **/
 
         //MISC
-        void add_to_agent_map(SubContainer::ContainerId id, AgentClient* client) { sc_agent_map.insert({id, client}); }
+        void add_to_agent_map(SubContainer::ContainerId &id, AgentClient* client) { sc_agent_map.insert({id, client}); }
 
         //CPU
         void set_ec_period(int64_t _period)  { _cpu.set_period(_period); }   //will need to update maanger too
@@ -125,12 +119,6 @@ namespace ec {
         //CPU
 
         //MEM
-
-        //K8s
-        json::value generate_pod_json(const std::string pod_name, const std::string app_image);
-        int deploy_pod(const json::value pod_json);
-        std::vector<std::string> get_nodes_with_pod(std::string pod_name);
-        std::vector<std::string> get_nodes_ips(const std::vector<std::string> node_names);
 
     private:
         uint32_t ec_id;
