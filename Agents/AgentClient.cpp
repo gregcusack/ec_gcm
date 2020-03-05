@@ -9,7 +9,7 @@ ec::AgentClient::AgentClient(const ec::Agent *_agent, int _sockfd)
 
 }
 
-std::vector<uint64_t > ec::AgentClient::send_request(struct msg_struct::ECMessage msg) const {
+std::vector<uint64_t > ec::AgentClient::send_request(const struct msg_struct::ECMessage &msg) const {
     
     int tx_size = msg.ByteSizeLong()+4;
     char* tx_buf = new char[tx_size];
@@ -39,7 +39,7 @@ std::vector<uint64_t > ec::AgentClient::send_request(struct msg_struct::ECMessag
         rx_msg.ParseFromCodedStream(&codedIn);
         codedIn.PopLimit(msgLimit);
 
-        // std::cerr << "[dbg] send_request: Agent returned rsrc amnt: " << rx_msg.rsrc_amnt() <<" \n";
+        std::cerr << "[dbg] send_request: Agent returned rsrc amnt: " << rx_msg.rsrc_amnt() <<" \n";
         ret.push_back(rx_msg.rsrc_amnt()); 
     }
     std::cerr << "[dbg] Out of loop\n";

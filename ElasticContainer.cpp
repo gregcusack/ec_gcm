@@ -112,12 +112,20 @@ json::value ec::ElasticContainer::generate_pod_json(const std::string pod_name, 
 
     pod[U("nodeSelector")] = nodeSelector;*/
 
-
     // Now we worry about the specs..
     json::value cont1;
     cont1[U("name")] = json::value::string(U(container_name));
     // Default image is nginx
     cont1[U("image")] = json::value::string(U(app_image));
+
+    json::value cpu_lim, res_lim, cpu_req;
+    cpu_lim[U("cpu")] = json::value::string(U("1000m"));
+    cpu_req[U("cpu")] = json::value::string(U("1000m"));
+
+    res_lim[U("limits")] = cpu_lim;
+    res_lim[U("requests")] = cpu_req;
+    cont1[U("resources")] = res_lim;
+
 
     json::value cont1_port;
     cont1_port[U("containerPort")] = json::value::number(U(80));
@@ -125,6 +133,11 @@ json::value ec::ElasticContainer::generate_pod_json(const std::string pod_name, 
     json::value ports;
     ports[0] = cont1_port;
     cont1[U("ports")] = ports;
+
+    //TODO: add container resources here
+    //Need to divide CPU across all pods for initial deployment
+//    cont1[U("")]
+
 
     // Create the items array
     json::value containers;
@@ -163,7 +176,7 @@ int ec::ElasticContainer::deploy_pod(const json::value pod_json) {
     .wait();
 
     std::cout << "[K8s Log] Received K8s API response" << std::endl;
-    //std::cout << json_return.serialize() << std::endl;
+    std::cout << json_return.serialize() << std::endl;
 
     // Prerit Todo: Is there anyway to tell from k8s right away if the Pod Failed at deployment? Look into this..
     // If so, return -1 for a failed pod deployment

@@ -103,14 +103,14 @@ void ec::Server::serve() {
 void ec::Server::handle_client_reqs(void *args) {
     ssize_t num_bytes;
     uint64_t ret;
-    char buff_in[__BUFFSIZE__] = {0};
+    char buff_in[__HANDLE_REQ_BUFF__] = {0};
 //    char *buff_out;
     auto *arguments = reinterpret_cast<serv_thread_args*>(args);
     int client_fd = arguments->clifd;
 
     num_of_cli++;
-    bzero(buff_in, __BUFFSIZE__);
-    while((num_bytes = read(client_fd, buff_in, __BUFFSIZE__)) > 0 ) {
+    while((num_bytes = read(client_fd, buff_in, __HANDLE_REQ_BUFF__)) > 0 ) {
+        std::cout << "num bytes read: " << num_bytes << std::endl;
         auto *req = reinterpret_cast<msg_t*>(buff_in);
         //req->set_ip_from_net(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
         req->set_ip_from_string("10.0.2.15"); //TODO: this needs to be changed. but here for testing merge
@@ -149,6 +149,7 @@ int ec::Server::init_agent_connections() {
         servaddr.sin_family = AF_INET;
         servaddr.sin_port = htons(ag->get_port());
         servaddr.sin_addr.s_addr = inet_addr((ag->get_ip()).to_string().c_str());
+        std::cout << "ag->ip: " << ag->get_ip() << std::endl;
 
         if(connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
             std::cout << "[ERROR] GCM: Connection to agent_clients failed. \n Agent on ip: " << ag->get_ip() << "is not connected" << std::endl;

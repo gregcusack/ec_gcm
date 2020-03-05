@@ -36,7 +36,8 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
     std::vector<AgentClient *> ec_agent_clients = _ec->get_agent_clients();
     int pod_creation;
     
-    std::string pod_name = app_name+"-"+app_image; 
+//    std::string pod_name = app_name+"-"+app_image;
+    std::string pod_name = app_name+"-pod-name";
 
     int ret;
 
@@ -72,7 +73,8 @@ int ec::ECAPI::create_ec(std::string app_name, std::string app_image) {
             if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
 
                 msg_struct::ECMessage init_msg;
-                init_msg.set_client_ip("192.168.6.10");
+//                init_msg.set_client_ip("192.168.6.10");
+                init_msg.set_client_ip("10.0.2.15");
                 init_msg.set_req_type(4);
                 init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
                 init_msg.set_cgroup_id(0);

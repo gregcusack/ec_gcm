@@ -2,12 +2,12 @@
 	"name": "app1",
 	"specs": {
 		"mem": 20,
-		"cpu": 1.5,
+		"cpu": 0.4,
 		"ports": 80,
 		"net": 10
 	},
 	"images": [
-		"nginx"
+		"gregcusack/ec-sat-dyn:remote"
 	],
 	"yaml_path" : [
 		"k8-yaml/"
