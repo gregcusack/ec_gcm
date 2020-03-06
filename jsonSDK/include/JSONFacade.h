@@ -5,7 +5,8 @@
 #include <fstream>
 #include <sstream>
 #include <cpprest/http_client.h>
-#include <cpprest/json.h> 
+#include <cpprest/json.h>
+#include <unordered_map>
 
 #define __ERROR__ -1
 
@@ -19,6 +20,7 @@ namespace ec {
                 void parseIPAddresses();
                 void parsePodNames();
                 void parseGCMIPAddress();
+                void parseSpecs();
                 int parseFile(const std::string &fileName);
 
                 // Getters
@@ -27,6 +29,11 @@ namespace ec {
                 const std::vector<std::string> &getAgentIPs() {return _agent_ips;}
                 const std::vector<std::string> &getPodNames() {return _pod_names;}
                 const std::string &getGCMIP() {return _gcm_ip;}
+
+                uint64_t get_mem();
+                uint64_t get_cpu();
+                uint64_t get_ports();
+                uint64_t get_net();
 
                 static void createJSONPodDef(const std::string &app_name, const std::string &app_image, const std::string &pod_name, std::string &response);
                 static void postJSONRequest(const std::string &url, const std::string &jsonRequest, std::string &jsonResp);
@@ -40,8 +47,11 @@ namespace ec {
                 std::vector<std::string> _app_images;
                 std::vector<std::string> _agent_ips;
                 std::vector<std::string> _pod_names;
-                std::string _gcm_ip;   
-        };
+                std::string _gcm_ip;
+                static std::unordered_map<std::string, uint64_t> _specs;
+
+                static void set_pod_limits(web::json::value &cont);
+            };
         }
     }
 }

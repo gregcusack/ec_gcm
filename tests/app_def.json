@@ -2,7 +2,7 @@
 	"name": "app1",
 	"specs": {
 		"mem": 20,
-		"cpu": 0.4,
+		"cpu": 1000,
 		"ports": 80,
 		"net": 10
 	},
@@ -11,14 +11,10 @@
 		"10.0.2.15"
 	],
 	"images": [
-		"gregcusack/ec-sat:remote",
-		"nginx",
-		"redis"
+		"nginx"
 	],
 	"pod-names": [
-		"ec-sat",
-		"nginx",
-		"redis"
+		"nginx"
 	],
 	"yaml_path" : [
 		"k8-yaml/"

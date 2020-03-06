@@ -1,5 +1,7 @@
 #include "../include/JSONFacade.h"
 
+std::unordered_map<std::string, uint64_t> ec::Facade::JSONFacade::json::_specs;
+
 void ec::Facade::JSONFacade::json::parseAppName() {
     if(_val.is_null()) {
         return;
@@ -44,6 +46,12 @@ void ec::Facade::JSONFacade::json::parseGCMIPAddress() {
    _gcm_ip = _val.at(U("gcmIP")).as_string();
 }
 
+void ec::Facade::JSONFacade::json::parseSpecs() {
+    for(const auto &i : _val.at(U("specs")).as_object()){
+        _specs.insert({i.first, i.second.as_integer()});
+    }
+}
+
 int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
     try {
         utility::ifstream_t      file_stream(fileName);                                
@@ -58,6 +66,7 @@ int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
         parseIPAddresses();
         parsePodNames();
         parseGCMIPAddress();
+        parseSpecs();
     }
     catch (const web::json::json_exception& excep) {
         std::cout << "ERROR Parsing JSON file: " << excep.what() << std::endl;
@@ -85,8 +94,19 @@ int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
         return __ERROR__;
     }
 
+    if(_specs.find("mem") ==  _specs.end()) {
+        std::cerr << "[ERROR]: no application mem limit set" << std::endl;
+        return __ERROR__;
+    }
+    if(_specs.find("cpu") == _specs.end()) {
+        std::cerr << "[ERROR]: no application cpu limit set" << std::endl;
+        return __ERROR__;
+    }
+
     return 0;
 }
+
+
 
 void ec::Facade::JSONFacade::json::createJSONPodDef(const std::string &app_name, const std::string &app_image, const std::string &pod_name, std::string &response) {
     // Create a JSON object (the pod)
@@ -115,13 +135,7 @@ void ec::Facade::JSONFacade::json::createJSONPodDef(const std::string &app_name,
     // Default image is nginx
     cont1[U("image")] = web::json::value::string(U(app_image));
 
-    web::json::value cpu_lim, res_lim, cpu_req;
-    cpu_lim[U("cpu")] = web::json::value::string(U("1000m"));
-    cpu_req[U("cpu")] = web::json::value::string(U("1000m"));
-
-    res_lim[U("limits")] = cpu_lim;
-    res_lim[U("requests")] = cpu_req;
-    cont1[U("resources")] = res_lim;
+    set_pod_limits(cont1);
 
     web::json::value cont1_port;
     cont1_port[U("containerPort")] = web::json::value::number(U(80));
@@ -143,6 +157,25 @@ void ec::Facade::JSONFacade::json::createJSONPodDef(const std::string &app_name,
     utility::stringstream_t stream;
     pod.serialize(stream);
     response = stream.str();
+}
+
+void ec::Facade::JSONFacade::json::set_pod_limits(web::json::value &cont) {
+    web::json::value requests, limits, resources;
+    auto cpu = std::to_string(_specs.find("cpu")->second) + "m";
+    auto mem = std::to_string(_specs.find("mem")->second) + "Mi";
+
+    std::cout << "cpu: " << cpu << std::endl;
+    std::cout << "mem: " << mem << std::endl;
+    requests[U("cpu")] = web::json::value::string(U(cpu));
+    requests[U("memory")] = web::json::value::string(U(mem));
+
+    limits[U("cpu")] = web::json::value::string(U(cpu));
+    limits[U("memory")] = web::json::value::string(U(mem));
+
+    resources[U("requests")] = requests;
+    resources[U("limits")] = limits;
+
+    cont[U("resources")] = resources;
 }
 
 void ec::Facade::JSONFacade::json::postJSONRequest(const std::string &url, const std::string &jsonRequest, std::string &jsonResp) {
@@ -200,9 +233,46 @@ void ec::Facade::JSONFacade::json::getNodesFromResponse(const std::string &jsonR
 void ec::Facade::JSONFacade::json::getNodeIPFromResponse(const std::string &jsonResp, std::string &tmp_ip) {
     web::json::value jsonResponse = web::json::value::parse(jsonResp);
     auto jsonval = jsonResponse.at(U("status")).at(U("addresses")).as_array();
-    for (int i = 0; i < jsonval.size(); i++) {
-        if (jsonval[i].at(U("type")).as_string() == "InternalIP") {
-            tmp_ip = jsonval[i].at(U("address")).as_string();
+    for (auto const &i : jsonval) {
+        if (i.at(U("type")).as_string() == "InternalIP") {
+            tmp_ip = i.at(U("address")).as_string();
         }
     }
 }
+
+uint64_t ec::Facade::JSONFacade::json::get_mem() {
+    auto itr = _specs.find("mem");
+    if(itr != _specs.end()) {
+        return itr->second;
+    }
+    return 0;
+}
+
+uint64_t ec::Facade::JSONFacade::json::get_cpu() {
+    auto itr = _specs.find("cpu");
+    if(itr != _specs.end()) {
+        return itr->second;
+    }
+    return 0;
+}
+
+uint64_t ec::Facade::JSONFacade::json::get_ports() {
+    auto itr = _specs.find("ports");
+    if(itr != _specs.end()) {
+        return itr->second;
+    }
+    return 0;
+}
+
+uint64_t ec::Facade::JSONFacade::json::get_net() {
+    auto itr = _specs.find("net");
+    if(itr != _specs.end()) {
+        return itr->second;
+    }
+    return 0;
+}
+
+
+
+
+
