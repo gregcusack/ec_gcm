@@ -59,21 +59,6 @@ int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
     return __ALLOC_INIT__;
 }
 
-// int ec::ElasticContainer::int insert_pid(int pid){
-//     if (pids == NULL) {
-//         return __ALLOC_FAILED__;
-//     }
-//     pids.push_back(pid);
-//     return __ALLOC_SUCCESS__;
-// }
-
-// int ec::ElasticContainer::int get_pids(){
-//     if (pids == NULL) {
-//         return __ALLOC_FAILED__;
-//     }
-//     return pids;
-// }
-
 uint64_t ec::ElasticContainer::refill_runtime() {
     return _cpu.refill_runtime();
 }
