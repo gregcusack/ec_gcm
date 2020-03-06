@@ -1,0 +1,3 @@
+[submodule "jsonSDK"]
+	path = jsonSDK
+	url = git@github.com:PreritO/jsonSDK.git
