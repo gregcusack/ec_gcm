@@ -16,10 +16,10 @@ ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t serv
 
 }
 
-void ec::Manager::start(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip) {
+void ec::Manager::start(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names,  const std::string &gcm_ip) {
     //A thread to listen for subcontainers' events
     std::thread event_handler_thread(&ec::Server::serve, this);
-    std::thread application_deployment_thread(&ec::ECAPI::create_ec, this, app_name, app_images, gcm_ip);
+    std::thread application_deployment_thread(&ec::ECAPI::create_ec, this, app_name, app_images, pod_names, gcm_ip);
     // //Another thread to run a management application
     application_deployment_thread.join();
     sleep(10);
@@ -294,30 +294,6 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     }
     std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << total_reclaimed << std::endl;
     return total_reclaimed;
-}
-
-int64_t ec::Manager::set_sc_quota(ec::SubContainer *sc, uint64_t _quota) {
-    if(!sc) {
-        std::cout << "sc == NULL in manager set_sc_quota()" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-
-    msg_struct::ECMessage msg_req;
-    msg_req.set_req_type(0); //__CPU__
-    msg_req.set_cgroup_id(sc->get_c_id()->cgroup_id);
-    msg_req.set_quota(_quota);
-    msg_req.set_payload_string("test");
-
-    std::cout << "updateing quota to (input, in msg_Req): (" << _quota << ", " << msg_req.quota() << ")" << std::endl;
-    auto agent = _ec->get_corres_agent(*sc->get_c_id());
-    if(!agent) {
-        std::cerr << "agent for container == NULL" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-
-    int64_t ret = agent->send_request(msg_req);
-    return ret;
-
 }
 
 int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd){

@@ -21,13 +21,12 @@ namespace ec {
 //        Manager(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients) : ECAPI(_ec_id, _agent_clients) {};
 
         int handle_cpu_usage_report(const msg_t *req, msg_t *res) override;
-        int64_t set_sc_quota(SubContainer *sc, uint64_t _quota) override;
 
         int handle_mem_req(const msg_t *req, msg_t *res, int clifd) override;
         uint64_t handle_reclaim_memory(int client_fd) override;
 
         int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd);
-        void start(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip);
+        void start(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &gcm_ip);
         virtual void run();
 
     };

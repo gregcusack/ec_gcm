@@ -11,7 +11,14 @@
 		"10.0.2.15"
 	],
 	"images": [
-		"nginx"
+		"gregcusack/ec-sat:remote",
+		"nginx",
+		"redis"
+	],
+	"pod-names": [
+		"ec-sat",
+		"nginx",
+		"redis"
 	],
 	"yaml_path" : [
 		"k8-yaml/"

@@ -9,7 +9,7 @@
  //   // _ec = new ElasticContainer(manager_id, agent_clients);
 //}
 
-int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip) {
+int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &gcm_ip) {
     _ec = new ElasticContainer(manager_id, agent_clients);      
 
     /* This is the highest level of abstraction provided to the end application developer. 
@@ -25,15 +25,18 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
     std::string response;
     std::vector<std::string> node_names;
     std::vector<std::string> node_ips;
-    std::string pod_name;
 
     ec::Facade::JSONFacade::json jsonFacade;
     ec::Facade::DeployFacade::Deploy deployment;
+    uint32_t podNameIndex = 0;
     for (const auto &app_image: app_images) {
         // Step 1: Create a Pod on each of the nodes running an agent - k8s takes care of this
         //         todo: this will change we implement k8-yaml support (still brainstorming how best to do that)           
         std::cout << "[DEPLOY LOG] Generating JSON POD File for image: " << app_image << std::endl;
-        jsonFacade.createJSONPodDef(app_name, app_image, response);
+        //TODO: need to add pod_name config so it only contains alphanumeric characters
+        std::string pod_name = pod_names[podNameIndex];
+        jsonFacade.createJSONPodDef(app_name, app_image, pod_name, response);
+        podNameIndex++;
         // Step 2
         std::cout << "[DEPLOY LOG] Deploying Container With Image: " << app_image << std::endl;
         pod_creation = deployment.deployContainers(response);
@@ -50,8 +53,6 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
 
         std::cout << "[K8s LOG] Looking for node running container with image: " << app_image << std::endl;
 //        pod_name = app_name + "-" + app_image;
-        //TODO: need to add pod_name config so it only contains alphanumeric characters
-        pod_name = app_name + "pod-name";
         node_names.clear();
         deployment.getNodesWithContainer(pod_name, node_names);
         node_ips.clear();
@@ -164,6 +165,31 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(const ec::SubContainer::ContainerI
     
     ret = agent->send_request(msg_req);
     return ret;
+}
+
+
+int64_t ec::ECAPI::set_sc_quota(ec::SubContainer *sc, uint64_t _quota) {
+    if(!sc) {
+        std::cout << "sc == NULL in manager set_sc_quota()" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    msg_struct::ECMessage msg_req;
+    msg_req.set_req_type(0); //__CPU__
+    msg_req.set_cgroup_id(sc->get_c_id()->cgroup_id);
+    msg_req.set_quota(_quota);
+    msg_req.set_payload_string("test");
+
+    std::cout << "updateing quota to (input, in msg_Req): (" << _quota << ", " << msg_req.quota() << ")" << std::endl;
+    auto agent = _ec->get_corres_agent(*sc->get_c_id());
+    if(!agent) {
+        std::cerr << "agent for container == NULL" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    int64_t ret = agent->send_request(msg_req);
+    return ret;
+
 }
 
 

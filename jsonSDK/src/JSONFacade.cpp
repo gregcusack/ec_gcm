@@ -27,6 +27,16 @@ void ec::Facade::JSONFacade::json::parseIPAddresses() {
     }
 }
 
+void ec::Facade::JSONFacade::json::parsePodNames() {
+    if(_val.is_null()){
+        return;
+    }
+    auto pod_names = _val.at(U("pod-names")).as_array();
+    for(const auto &i : pod_names) {
+        _pod_names.push_back(i.as_string());
+    }
+}
+
 void ec::Facade::JSONFacade::json::parseGCMIPAddress() {
     if(_val.is_null()) {
         return;
@@ -46,6 +56,7 @@ int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
         parseAppName();
         parseAppImages();
         parseIPAddresses();
+        parsePodNames();
         parseGCMIPAddress();
     }
     catch (const web::json::json_exception& excep) {
@@ -68,15 +79,22 @@ int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
         std::cerr << "Unknown failure occurred. Possible memory corruption" << std::endl;
         return __ERROR__;
     }
+
+    if(_pod_names.size() != _app_images.size()) {
+        std::cerr << "[ERROR]: # pod names != # app images" << std::endl;
+        return __ERROR__;
+    }
+
     return 0;
 }
 
-void ec::Facade::JSONFacade::json::createJSONPodDef(const std::string &app_name, const std::string &app_image, std::string &response) {
-    std::string pod_name = app_name + "-" + app_image;
+void ec::Facade::JSONFacade::json::createJSONPodDef(const std::string &app_name, const std::string &app_image, const std::string &pod_name, std::string &response) {
     // Create a JSON object (the pod)
     web::json::value pod;
     pod[U("kind")] = web::json::value::string(U("Pod"));
     pod[U("apiVersion")] = web::json::value::string(U("v1"));
+
+//    std::string pod_name_ = web::json::value::string(U())
 
     // Create a JSON object (the metadata)
     web::json::value metadata;

@@ -30,7 +30,7 @@ namespace ec {
         ECAPI(uint32_t _ec_id);
         ~ECAPI();
         //creates _ec and server and connects them
-        int create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip);
+        int create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &gcm_ip);
 
         [[nodiscard]] const ElasticContainer& get_elastic_container() const;
 
@@ -89,6 +89,8 @@ namespace ec {
         void ec_incr_overrun(uint64_t _incr) { _ec->incr_overrun(_incr); }
         void ec_decr_overrun(uint64_t _decr) { _ec->decr_overrun(_decr); }
 
+        int64_t set_sc_quota(ec::SubContainer *sc, uint64_t _quota);
+
         //MEM
         void ec_resize_memory_max(int64_t _max_mem) { _ec->ec_resize_memory_max(_max_mem); }
         void ec_decrement_memory_available(uint64_t mem_to_reduce);
@@ -105,7 +107,7 @@ namespace ec {
         int handle_add_cgroup_to_ec(const msg_t *req, msg_t *res, uint32_t ip, int fd);
         //CPU
         virtual int handle_cpu_usage_report(const msg_t *req, msg_t *res) = 0;
-        virtual int64_t set_sc_quota(SubContainer *sc, uint64_t _quota) = 0;
+//        virtual int64_t set_sc_quota(SubContainer *sc, uint64_t _quota) = 0;
 //        int handle_slice_req(const msg_t *req, msg_t *res, int clifd);
 
         //MEMORY

@@ -4,6 +4,8 @@ int ec::Facade::DeployFacade::k8Facade::deployPod(const std::string &jsonString)
     std::string res;
 //    ec::Facade::JSONFacade::json jsonFacade;
 
+    std::cout << "jsonstring: " << jsonString << std::endl;
+
     // Assumes that there's a k8s proxy running on localhost, port 8000
     ec::Facade::JSONFacade::json::postJSONRequest("http://localhost:8000/api/v1/namespaces/default/pods", jsonString, res);
     
