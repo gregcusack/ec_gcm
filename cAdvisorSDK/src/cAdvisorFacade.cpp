@@ -1,33 +1,29 @@
 #include "../include/cAdvisorFacade.h"
 
-// bool CAdvisor::checkCAdvisor(const std::string agent_ip) {
-//     // Assumes docker is installed and cAdvisor is running as a container in the background on port 8080
-//     std::string cmd;
-//     cmd = 'sudo docker inspect --format="{{.Id}}" cadvisor';
-//     if (cmd.size() == 0) {
-//         return false;
-//     }
-//     _cAdvisor_cont_id = cmd;
-//     return true;
-// }
-
 uint64_t ec::Facade::MonitorFacade::CAdvisor::getContCPULimit(const std::string agent_ip, const std::string docker_container_id) {
     std::string res;
-    JSONFacade jsonFacade;
+    ec::Facade::JSONFacade::json jsonFacade;
     jsonFacade.getJSONRequest("http://" + agent_ip + ":8080/api/v1.2/docker/" + docker_container_id, res);
     std::cout << res << std::endl;
 }
 
 
-uint64_t ec::Facade::MonitorFacade::CAdvisor::getContMemLimit(const std::string agent_ip, const std::string docker_container_id) {
-    std::string tmp;
+uint64_t ec::Facade::MonitorFacade::CAdvisor::getContMemLimit(const int agent_sock, const std::string docker_container_id) {
+    std::string json_resp;
     uint64_t res;
-    JSONFacade jsonFacade;
-    std::string req_tmp = "http://" + agent_ip + ":8080/api/v2.0/stats/" + docker_container_id + "?type=docker";
-    std::cout << req_tmp << std::endl;
-    jsonFacade.getJSONRequest(req_tmp, tmp);
-    res = jsonFacade.parseCAdvisorResponseLimits(tmp, "memory");
-    //std::cout << res << std::endl;
+
+    ec::Facade::ProtoBufFacade::ProtoBuf protoFacade;
+    msg_struct::ECMessage tx_msg;
+    tx_msg.set_req_type(5);
+    tx_msg.set_client_ip(docker_container_id);
+    tx_msg.set_payload_string("max_usage");
+    res = protoFacade.sendMessage(agent_sock, tx_msg);
+    if(res < 0) {
+        std::cout << "[ERROR]: getContMemLimit: Error in writing to agent_clients socket. " << std::endl;
+    }
+    msg_struct::ECMessage rx_msg;
+    protoFacade.recvMessage(agent_sock, rx_msg);
+    res = rx_msg.rsrc_amnt();
     return res;
 }
 

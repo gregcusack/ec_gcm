@@ -32,6 +32,8 @@ namespace ec {
                 static void getNodesFromResponse(const std::string &jsonResp, std::vector<std::string> &resultNodes);
                 static void getNodeIPFromResponse(const std::string &jsonResp, std::string &tmp_ip);
 
+                void getStringResponseFromURL(const std::string &urlRequest, std::string &jsonResp);
+                uint64_t parseCAdvisorResponseLimits(const std::string jsonResp, const std::string type);
             private:
                 web::json::value _val;
                 std::string _app_name;

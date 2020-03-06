@@ -13,12 +13,15 @@
 #include <iostream>
 #include <functional> //for std::hash
 #include <string>
+#include <thread>         
+#include <mutex>          
 
 #include "jsonSDK/include/JSONFacade.h"
 #include "deploySDK/include/DeployFacade.h"
 #include "protoBufSDK/include/ProtoBufFacade.h"
 #include "protoBufSDK/msg.pb.h"
 #include "cAdvisorSDK/include/cAdvisorFacade.h"
+
 
 #define __FAILED__ -1
 
@@ -114,6 +117,7 @@ namespace ec {
 
 
     protected:
+        std::mutex mtx;           
         uint32_t manager_id;
         std::vector<AgentClient *> agent_clients;
         ElasticContainer *_ec;

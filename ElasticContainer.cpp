@@ -30,7 +30,7 @@ ec::SubContainer *ec::ElasticContainer::create_new_sc(const uint32_t cgroup_id, 
     return new SubContainer(cgroup_id, host_ip, sockfd);
 }
 
-const ec::SubContainer &ec::ElasticContainer::get_subcontainer(const ec::SubContainer::ContainerId &container_id) {
+ec::SubContainer &ec::ElasticContainer::get_subcontainer(const ec::SubContainer::ContainerId &container_id) {
     auto itr = subcontainers.find(container_id);
     if(itr == subcontainers.end()) {
         std::cout << "ERROR: No EC with manager_id: " << ec_id << ". Exiting...." << std::endl;
@@ -49,19 +49,18 @@ int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
     return __ALLOC_SUCCESS__;
 }
 
-const std::vector<ec::SubContainer::ContainerId> &ec::ElasticContainer::get_sc_from_agent(const AgentClient* client) {
+void ec::ElasticContainer::get_sc_from_agent(AgentClient* client, std::vector<SubContainer::ContainerId> &res) {
     if (sc_agent_map.size() == 0) {
         std::cout << "ERROR: SC-AGENT Map is empty" << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
-    std::vector<SubContainer::ContainerId> res;
     for (const auto &i: sc_agent_map) {
         if (i.second == client) {
+            //res = i.first;
             res.push_back(i.first);
         }
     }
-    return res;
 }
 
 // int ec::ElasticContainer::int insert_pid(int pid){

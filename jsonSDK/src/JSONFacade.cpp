@@ -149,7 +149,7 @@ void ec::Facade::JSONFacade::json::getJSONRequest(const std::string &urlRequest,
     web::http::client::http_client client(urlRequest);
     client.request(web::http::methods::GET, U("/"))
     .then([](const web::http::http_response& response) {
-        return response.extract_json(); 
+        return response.extract_json(true); 
     })
     .then([&json_return](const pplx::task<web::json::value>& task) {
         try {
@@ -161,7 +161,24 @@ void ec::Facade::JSONFacade::json::getJSONRequest(const std::string &urlRequest,
     })
     .wait();
     jsonResp = json_return.serialize();
-    // return json_return.serialize();
+}
+
+void ec::Facade::JSONFacade::json::getStringResponseFromURL(const std::string &urlRequest, std::string &jsonResp) {
+
+    web::http::client::http_client client(urlRequest);
+    client.request(web::http::methods::GET)
+    .then([](const web::http::http_response& response) {
+        return response.extract_string(); 
+    })
+    .then([&jsonResp](const pplx::task<std::string>& task) {
+        try {
+            jsonResp = task.get();
+        }
+        catch (const web::http::http_exception& e) {                    
+            std::cout << "error " << e.what() << std::endl;
+        }
+    })
+    .wait();
 }
 
 void ec::Facade::JSONFacade::json::getNodesFromResponse(const std::string &jsonResp, std::vector<std::string> &resultNodes) {
@@ -181,34 +198,9 @@ void ec::Facade::JSONFacade::json::getNodeIPFromResponse(const std::string &json
     }
 }
 
-uint64_t JSONFacade::parseCAdvisorResponseLimits(const std::string jsonResp, const std::string type){
-    web::json::value jsonResponse = web::json::value::parse(jsonResp);
-    
-    if(jsonResponse.is_null()) {
-        std::cout << "Null";
-    }
-    if(jsonResponse.is_number()) {
-        std::cout << "number";
-    }
-    if(jsonResponse.is_integer()) {
-        std::cout << "int";
-    }
-    if(jsonResponse.is_double()) {
-        std::cout << "double";
-    }
-    if(jsonResponse.is_boolean()) {
-        std::cout << "bool";
-    }
-    if(jsonResponse.is_string ()) {
-        std::cout << "string";
-    }
-    if(jsonResponse.is_array()) {
-        std::cout << "array";
-    }
-    if(jsonResponse.is_object()) {
-        std::cout << "objc";
-    }
-    
+uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseLimits(const std::string jsonResp, const std::string type){
+    //web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    std::cout << jsonResp << std::endl;
     //auto DataArray = jsonResponse.as_string();
     // for (auto Iter = DataArray.begin(); Iter != DataArray.end(); ++Iter)
     // {

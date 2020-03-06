@@ -55,9 +55,10 @@ namespace ec {
         //MISC
         uint32_t get_ec_id() { return ec_id; }
         const subcontainer_map &get_subcontainers() {return subcontainers;}
-        const SubContainer &get_subcontainer(const SubContainer::ContainerId &container_id);
+        SubContainer &get_subcontainer(const SubContainer::ContainerId &container_id);
         AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_agent_map[container_id];}
         const subcontainer_agent_map &get_subcontainer_agents() {return sc_agent_map;}
+        void get_sc_from_agent(AgentClient* client, std::vector<SubContainer::ContainerId> &res);
 
         //CPU
         uint64_t get_rt_remaining() { return _cpu.get_runtime_remaining(); }
@@ -78,7 +79,6 @@ namespace ec {
 
         //MISC
         int add_to_agent_map(SubContainer::ContainerId &id, AgentClient* client) { sc_agent_map.insert({id, client}); }
-        const std::vector<ec::SubContainer::ContainerId> &get_sc_from_agent(const AgentClient* client);
 
         //CPU
         void set_ec_period(int64_t _period)  { _cpu.set_period(_period); }   //will need to update maanger too

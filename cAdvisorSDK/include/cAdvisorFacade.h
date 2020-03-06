@@ -5,6 +5,8 @@
 #include <fstream>
 #include <sstream>
 #include "../../jsonSDK/include/JSONFacade.h"
+#include "../../protoBufSDK/include/ProtoBufFacade.h"
+#include "../../protoBufSDK/msg.pb.h"
 
 namespace ec {
     namespace Facade {
@@ -12,7 +14,7 @@ namespace ec {
             class CAdvisor {
                 public:
                     uint64_t getContCPULimit(const std::string agent_ip, const std::string docker_container_id);
-                    uint64_t getContMemLimit(const std::string agent_ip, const std::string docker_container_id);
+                    uint64_t getContMemLimit(const int agent_sock, const std::string docker_container_id);
             };
         }
     }

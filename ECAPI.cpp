@@ -28,6 +28,10 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
 
     ec::Facade::JSONFacade::json jsonFacade;
     ec::Facade::DeployFacade::Deploy deployment;
+    std::vector<SubContainer::ContainerId> scs_per_agent;
+    std::vector<SubContainer::ContainerId> scs_done;
+    ec::Facade::ProtoBufFacade::ProtoBuf protoFacade;
+    
     for (const auto &app_image: app_images) {
         // Step 1: Create a Pod on each of the nodes running an agent - k8s takes care of this
         //         todo: this will change we implement k8-yaml support (still brainstorming how best to do that)           
@@ -54,13 +58,12 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
         node_ips.clear();
         deployment.getNodeIPs(node_names, node_ips);
 
+
         for (const auto node_ip : node_ips) {
-            // Get the Agent with this node ip first (this needs to change to a singleton class)
+            // Get the Agent with this node ip first (this needs to changed to a singleton class)
             for (const auto &agentClient : _ec->get_agent_clients()) { 
                 if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
-
-                    ec::Facade::ProtoBufFacade::ProtoBuf protoFacade;
-                    
+                    scs_per_agent.clear();
                     msg_struct::ECMessage init_msg;
                     init_msg.set_client_ip(gcm_ip); //IP of the GCM
                     init_msg.set_req_type(4);
@@ -72,27 +75,28 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
                         std::cout << "[ERROR]: create_ec() - Error in writing to agent_clients socket. " << std::endl;
                         return __FAILED__;
                     }
-
                     msg_struct::ECMessage rx_msg;
                     protoFacade.recvMessage(agentClient->get_socket(), rx_msg);
-
-                    if (rx_msg.rsrc_amnt() == (uint64_t) -1 ) {
-                        std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
-                        return __FAILED__;
+                    while (rx_msg.payload_string().size() == 0) {
+                        protoFacade.recvMessage(agentClient->get_socket(), rx_msg);
                     }
-
-                    // This is where Agent returns the docker id
-                    std::vector<ec::SubContainer::ContainerId> agentScIdMap;
-                    agentScIdMap = _ec->get_sc_from_agent(agentClient);
-                    for (auto &i: agentScIdMap) {
-                        ec::SubContainer sc = _ec->get_subcontainer(i);
-                        sc.set_docker_id(rx_msg.payload_string());
-                        std::cout << "docker id set: " << sc.get_docker_id() << std::endl;
+                    // Wait here until subcontainer has been added to the agent client map
+                    mtx.lock();
+                    _ec->get_sc_from_agent(agentClient, scs_per_agent);
+                    for (auto &sc_id: scs_per_agent) {
+                        if(std::count(scs_done.begin(), scs_done.end(), sc_id)) {
+                            continue;
+                        } else {
+                            std::cout << "current sc with id: " << sc_id << std::endl;
+                            _ec->get_subcontainer(sc_id).set_docker_id(rx_msg.payload_string());
+                            std::cout << "docker id set: " << _ec->get_subcontainer(sc_id).get_docker_id() << std::endl;
+                            scs_done.push_back(sc_id);
+                        }
                     }
-
                 } else {
                     continue;
                 }
+
             }        
         }
     }
@@ -129,16 +133,15 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
 
 
     // And so once a subcontainer is created and added to the appropriate distributed container,
-    // we can now create a map to link the container_id and cgroup_id - this is the place to do that..
+    // we can now create a map to link the container_id and agent_client
     
     std::cout << "[dbg]: Init. Added cgroup to _ec with id: " << _ec->get_ec_id() << ". cgroup id: " << *sc->get_c_id() << std::endl;
     std::cout << "[dbg]: Map Size at Insert " << _ec->get_subcontainers().size() << std::endl;
 
     for (const auto &agentClient : _ec->get_agent_clients()) {
-        //std::cerr << "[dbg] Agent client ip: " << agentClient-> get_agent_ip() << std::endl;
-        //std::cerr << "[dbg] Agent ip: " <<  sc->get_c_id()->server_ip << std::endl;
         if (agentClient->get_agent_ip() == sc->get_c_id()->server_ip) {
             _ec->add_to_agent_map(*sc->get_c_id(), agentClient);
+            mtx.unlock();
             std::cout << "[EVENT LOG]: Added subcontainer to Agent Map" << std::endl;
         } else {
             continue;
@@ -156,23 +159,6 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(const ec::SubContainer::ContainerI
     
     uint64_t ret = 0;
 
-    // //initialize request body
-    // msg_struct::ECMessage msg_req;
-    // msg_req.set_req_type(5); //MEM_LIMIT_IN_BYTES 
-    // msg_req.set_cgroup_id(container_id.cgroup_id);
-    // msg_req.set_payload_string("test");
-
-    // std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
-    // std::cerr << "[dbg] Getting the agent clients: " << _ec->get_agent_clients()[0]->get_socket() << std::endl;
-    // AgentClient* temp = _ec->get_corres_agent(container_id);
-    // if(temp == NULL)
-    //     std::cerr << "[dbg] temp is NULL" << std::endl;
-    
-    // std::cerr << "[dbg] temp sockfd is : " << temp->get_socket() << std::endl;
-    // ret = temp->send_request(msg_req)[0];
-    // // delete(_req);
-    // return ret;
-
     // This is where we'll use cAdvisor instead of the agent comm to get the mem limit
     std::cout << "CONTAINER ID USED: " << container_id << std::endl;
     std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
@@ -182,9 +168,8 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(const ec::SubContainer::ContainerI
     ec::SubContainer sc = _ec->get_subcontainer(container_id);
 
     ec::Facade::MonitorFacade::CAdvisor monitor_obj;
-    std::cout << "SUBCONTAINER ID: " << sc.get_c_id() << std::endl;
     std::cout << "docker id used:" <<  sc.get_docker_id() << std::endl;
-    ret = monitor_obj.getContMemLimit(ac->get_agent_ip().to_string(), sc.get_docker_id());
+    ret = monitor_obj.getContMemLimit(ac->get_socket(), sc.get_docker_id());
     return ret;
 }
 
