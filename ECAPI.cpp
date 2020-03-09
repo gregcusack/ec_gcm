@@ -169,7 +169,7 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(const ec::SubContainer::ContainerI
 
     ec::Facade::MonitorFacade::CAdvisor monitor_obj;
     std::cout << "docker id used:" <<  sc.get_docker_id() << std::endl;
-    ret = monitor_obj.getContMemLimit(ac->get_socket(), sc.get_docker_id());
+    ret = monitor_obj.getContMemLimit(ac->get_agent_ip().to_string(), sc.get_docker_id());
     return ret;
 }
 
