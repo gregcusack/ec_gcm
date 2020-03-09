@@ -1,7 +1,7 @@
 {
 	"name": "app1",
 	"specs": {
-		"mem": 20,
+		"mem": 200,
 		"cpu": 1000,
 		"ports": 80,
 		"net": 10
@@ -11,10 +11,12 @@
 		"10.0.2.15"
 	],
 	"images": [
-		"nginx"
+		"gregcusack/flask-app:f-1",
+		"gregcusack/flask-app:f-2"
 	],
 	"pod-names": [
-		"nginx"
+		"f-1",
+		"f-2"
 	],
 	"yaml_path" : [
 		"k8-yaml/"

@@ -9,6 +9,7 @@
 #include "Server.h"
 //#include "Agents/AgentClient.h"
 #include <cstdint>
+#include <mutex>
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
@@ -28,6 +29,9 @@ namespace ec {
         int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd);
         void start(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &gcm_ip);
         virtual void run();
+
+    private:
+        std::mutex cpulock;
 
     };
 }

@@ -34,12 +34,12 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         std::cout << "req or res == null in handle_cpu_usage_report()" << std::endl;
         exit(EXIT_FAILURE);
     }
-    std::mutex cpulock;
+//    std::mutex cpulock;
     if(req->req_type != _CPU_) { return __ALLOC_FAILED__; }
 
     auto t1 = std::chrono::high_resolution_clock::now();
     cpulock.lock();
-//    std::cout << "------------------------------" << std::endl;
+    std::cout << "--------------IN: " << req->cgroup_id << "----------------" << std::endl;
 //    std::cout << "cg id: " << req->cgroup_id << std::endl;
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
     auto sc = ec_get_sc_for_update(sc_id);
@@ -61,9 +61,11 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     uint64_t total_rt = 0;
 
     for(const auto &i : get_subcontainers()) {
+        std::cout << "alloc per cont (" << i.second->get_c_id()->cgroup_id << "): " << i.second->sc_get_quota() << std::endl;
         total_rt += i.second->sc_get_quota();
+
     }
-    total_rt += ec_get_cpu_unallocated_rt();
+//    total_rt += ec_get_cpu_unallocated_rt();
 //    std::cout << "total rt: " << total_rt << std::endl;
 //    if(ec_get_fair_cpu_share() * get_subcontainers().size() < total_rt) {
 //        std::cout << "WOOPS! ALLOC TOO MUCH CPU!" << std::endl;
@@ -84,6 +86,12 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //    std::cout << "rt_mean: " << rt_mean << std::endl;
 //    std::cout << "thr_mean: " << thr_mean << std::endl;
     std::cout << "cpu_unalloc: " << ec_get_cpu_unallocated_rt() << std::endl;
+    std::cout << "total alloced: " << total_rt << std::endl;
+    if(ec_get_cpu_unallocated_rt() + total_rt != ec_get_total_cpu()) {
+        std::cout << "[ERROR]: CPU ALLOC MISMATCH" << std::endl;
+        std::cout << "sys thinks cpu: " << ec_get_cpu_unallocated_rt() + total_rt << std::endl;
+        std::cout << "sys should hav: " << ec_get_total_cpu() << std::endl;
+    }
 
     if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
 //        std::cout << "overrun. sc: " << *sc->get_c_id() << std::endl;
@@ -187,7 +195,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
             else {
                 sc->set_quota_flag(true);
-                std::cout << "successfully resized quota to: " << rx_quota + extra_rt << "!" << std::endl;
+                std::cout << "successfully resized quota to (incr): " << rx_quota + extra_rt << "!" << std::endl;
             }
         }
 //        else {
@@ -197,7 +205,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         sc->get_cpu_stats()->flush();
     }
     else if(rt_mean > rx_quota * 0.2) { //greater than 20% of quota unused
-//        std::cout << "rt_mean > 20% of quota. sc: " << *sc->get_c_id() << std::endl;
+        std::cout << "rt_mean > 20% of quota. sc: " << *sc->get_c_id() << std::endl;
         uint64_t new_quota = rx_quota * (1 - 0.2); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
         if(new_quota != rx_quota) {
@@ -208,7 +216,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
             else {
                 sc->set_quota_flag(true);
-                std::cout << "successfully resized quota to: " << new_quota << "!" << std::endl;
+                std::cout << "successfully resized quota to (decr): " << new_quota << "!" << std::endl;
             }
 //            std::cout << "old quota, new quota: (" << rx_quota << ", " << new_quota << ")" << std::endl;
             ec_incr_unallocated_rt(rx_quota - new_quota); //unalloc_rt <-- old quota - new quota
@@ -222,7 +230,8 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //    else {
 //        std::cout << "DO NOTHING" << std::endl;
 //    }
-
+    std::cout << "--------------OUT:" << req->cgroup_id << "----------------" << std::endl;
+    cpulock.unlock();
     return __ALLOC_SUCCESS__;
 
 }
@@ -325,9 +334,9 @@ void ec::Manager::run() {
     std::cout << "EC Map Size: " << _ec->get_subcontainers().size() << std::endl;
     while(true){
         for(auto sc_ : _ec->get_subcontainers()){
-            std::cout << "=================================================================================================\n";
-            std::cout << "[READ API]: the memory limit in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
-            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << std::endl;
+//            std::cout << "=================================================================================================\n";
+//            std::cout << "[READ API]: the memory limit in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
+//            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << std::endl;
             sleep(1);
         }
     }
