@@ -1,3 +1,9 @@
 [submodule "jsonSDK"]
 	path = jsonSDK
 	url = git@github.com:PreritO/jsonSDK.git
+[submodule "cAdvisorSDK/cAdvisorSDK"]
+	path = cAdvisorSDK/cAdvisorSDK
+	url = git@github.com:PreritO/cadvisor.git
+[submodule "cAdvisorSDK/cadvisor"]
+	path = cAdvisorSDK/cadvisor
+	url = git@github.com:PreritO/cadvisor.git

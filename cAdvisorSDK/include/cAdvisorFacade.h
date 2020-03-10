@@ -15,6 +15,8 @@ namespace ec {
                 public:
                     uint64_t getContCPULimit(const std::string agent_ip, const std::string docker_container_id);
                     uint64_t getContMemLimit(const std::string agent_ip, const std::string docker_container_id);
+
+                    uint
             };
         }
     }
