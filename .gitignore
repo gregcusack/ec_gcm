@@ -9,4 +9,3 @@ cmake_install.cmake
 ec_gcm
 loop_test
 tester
-jsonSDK/
