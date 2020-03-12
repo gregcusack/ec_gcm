@@ -38,11 +38,13 @@ namespace ec {
                  uint64_t refill_runtime();
                  void incr_unalloacted_rt(uint64_t _incr) { unallocated_rt += _incr; }
                  void decr_unallocated_rt(uint64_t _decr) { unallocated_rt -= _decr; }
+                 void set_unallocated_rt(uint64_t _val) { unallocated_rt = _val; }
                  void set_total_cpu (uint64_t _tot_cpu) { total_cpu = _tot_cpu; }
                  void incr_total_cpu (uint64_t _incr) { total_cpu += _incr; }
                  void decr_total_cpu (uint64_t _decr) { total_cpu -= _decr; }
                  void incr_overrun(uint64_t _incr) { overrun += _incr; }
                  void decr_overrun(uint64_t _decr) { overrun -= _decr; }
+                 void set_overrun(uint64_t _val) { overrun = _val; }
 
 
             private:

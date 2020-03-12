@@ -2,7 +2,7 @@
 	"name": "app1",
 	"specs": {
 		"mem": 200,
-		"cpu": 1000,
+		"cpu": 500,
 		"ports": 80,
 		"net": 10
 	},
@@ -11,8 +11,8 @@
 		"10.0.2.15"
 	],
 	"images": [
-		"gregcusack/flask-app:f-1",
-		"gregcusack/flask-app:f-2"
+		"gregcusack/flask-app:abh1",
+		"gregcusack/flask-app:abh2"
 	],
 	"pod-names": [
 		"f-1",

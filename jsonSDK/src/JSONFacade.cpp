@@ -161,15 +161,18 @@ void ec::Facade::JSONFacade::json::createJSONPodDef(const std::string &app_name,
 
 void ec::Facade::JSONFacade::json::set_pod_limits(web::json::value &cont) {
     web::json::value requests, limits, resources;
-    auto cpu = std::to_string(_specs.find("cpu")->second) + "m";
+    auto cpu_ = _specs.find("cpu")->second;
+    auto cpu_req = std::to_string(cpu_) + "m";
+    auto cpu_lim = std::to_string(cpu_) + "m";
+//    auto cpu = std::to_string(_specs.find("cpu")->second) + "m";
     auto mem = std::to_string(_specs.find("mem")->second) + "Mi";
 
-    std::cout << "cpu: " << cpu << std::endl;
+    std::cout << "cpu: " << cpu_req << std::endl;
     std::cout << "mem: " << mem << std::endl;
-    requests[U("cpu")] = web::json::value::string(U(cpu));
+//    requests[U("cpu")] = web::json::value::string(U(cpu_req));
     requests[U("memory")] = web::json::value::string(U(mem));
 
-    limits[U("cpu")] = web::json::value::string(U(cpu));
+    limits[U("cpu")] = web::json::value::string(U(cpu_lim));
     limits[U("memory")] = web::json::value::string(U(mem));
 
     resources[U("requests")] = requests;

@@ -39,7 +39,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 
     auto t1 = std::chrono::high_resolution_clock::now();
     cpulock.lock();
-    std::cout << "--------------IN: " << req->cgroup_id << "----------------" << std::endl;
+//    std::cout << "--------------IN: " << req->cgroup_id << "----------------" << std::endl;
 //    std::cout << "cg id: " << req->cgroup_id << std::endl;
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
     auto sc = ec_get_sc_for_update(sc_id);
@@ -59,12 +59,24 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     double thr_mean = 0;
     uint64_t rt_mean = 0;
     uint64_t total_rt = 0;
+    int64_t unalloc_rt = 0;
 
     for(const auto &i : get_subcontainers()) {
-        std::cout << "alloc per cont (" << i.second->get_c_id()->cgroup_id << "): " << i.second->sc_get_quota() << std::endl;
+//        std::cout << "alloc per cont (" << i.second->get_c_id()->cgroup_id << "): " << i.second->sc_get_quota() << std::endl;
         total_rt += i.second->sc_get_quota();
-
     }
+
+    unalloc_rt = ec_get_total_cpu() - total_rt;
+    if(unalloc_rt < 0) {
+        ec_set_overrun(total_rt - ec_get_total_cpu());
+        unalloc_rt = 0;
+    }
+    ec_set_unallocated_rt(unalloc_rt);
+
+//    if(total_rt - ec_get_total_cpu() > 0) {
+//
+//    }
+
 //    total_rt += ec_get_cpu_unallocated_rt();
 //    std::cout << "total rt: " << total_rt << std::endl;
 //    if(ec_get_fair_cpu_share() * get_subcontainers().size() < total_rt) {
@@ -86,15 +98,18 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //    std::cout << "rt_mean: " << rt_mean << std::endl;
 //    std::cout << "thr_mean: " << thr_mean << std::endl;
     std::cout << "cpu_unalloc: " << ec_get_cpu_unallocated_rt() << std::endl;
-    std::cout << "total alloced: " << total_rt << std::endl;
-    if(ec_get_cpu_unallocated_rt() + total_rt != ec_get_total_cpu()) {
-        std::cout << "[ERROR]: CPU ALLOC MISMATCH" << std::endl;
-        std::cout << "sys thinks cpu: " << ec_get_cpu_unallocated_rt() + total_rt << std::endl;
-        std::cout << "sys should hav: " << ec_get_total_cpu() << std::endl;
-    }
+//    std::cout << "total alloced: " << total_rt << std::endl;
+//    std::cout << "sys thinks cpu: " << ec_get_cpu_unallocated_rt() + total_rt << std::endl;
+//    std::cout << "sys should hav: " << ec_get_total_cpu() << std::endl;
+//
+//    if(ec_get_cpu_unallocated_rt() + total_rt != ec_get_total_cpu()) {
+//        std::cout << "[ERROR]: CPU ALLOC MISMATCH" << std::endl;
+////        std::cout << "sys thinks cpu: " << ec_get_cpu_unallocated_rt() + total_rt << std::endl;
+////        std::cout << "sys should hav: " << ec_get_total_cpu() << std::endl;
+//    }
 
     if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
-//        std::cout << "overrun. sc: " << *sc->get_c_id() << std::endl;
+        std::cout << "overrun. sc: " << *sc->get_c_id() << std::endl;
         uint64_t to_sub;
         uint64_t amnt_share_over = rx_quota - ec_get_fair_cpu_share();
         uint64_t overrun = ec_get_overrun();
@@ -185,7 +200,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     else if(thr_mean >= 0.2 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
 //        std::cout << "throttle. try get alloc. sc:  " << *sc->get_c_id() << std::endl;
         auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(2 * thr_mean * ec_get_cpu_slice()));
-        std::cout << "extra_rt: " << extra_rt << std::endl;
+//        std::cout << "extra_rt: " << extra_rt << std::endl;
         if(extra_rt > 0) {
             ec_decr_unallocated_rt(extra_rt);
             updated_quota = rx_quota + extra_rt;
@@ -205,7 +220,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         sc->get_cpu_stats()->flush();
     }
     else if(rt_mean > rx_quota * 0.2) { //greater than 20% of quota unused
-        std::cout << "rt_mean > 20% of quota. sc: " << *sc->get_c_id() << std::endl;
+//        std::cout << "rt_mean > 20% of quota. sc: " << *sc->get_c_id() << std::endl;
         uint64_t new_quota = rx_quota * (1 - 0.2); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
         if(new_quota != rx_quota) {
@@ -230,7 +245,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //    else {
 //        std::cout << "DO NOTHING" << std::endl;
 //    }
-    std::cout << "--------------OUT:" << req->cgroup_id << "----------------" << std::endl;
+//    std::cout << "--------------OUT:" << req->cgroup_id << "----------------" << std::endl;
     cpulock.unlock();
     return __ALLOC_SUCCESS__;
 

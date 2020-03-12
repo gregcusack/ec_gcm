@@ -92,11 +92,13 @@ namespace ec {
         uint64_t refill_runtime();
         void incr_unallocated_rt(uint64_t _incr) { _cpu.incr_unalloacted_rt(_incr); }
         void decr_unallocated_rt(uint64_t _decr) { _cpu.decr_unallocated_rt(_decr); }
+        void set_unallocated_rt(uint64_t _val) { _cpu.set_unallocated_rt(_val); }
         void update_fair_cpu_share();
         void incr_total_cpu(uint64_t _incr) { _cpu.incr_total_cpu(_incr); }
         void decr_total_cpu(uint64_t _decr) { _cpu.decr_total_cpu(_decr); }
         void incr_overrun(uint64_t _incr) { _cpu.incr_overrun(_incr); }
         void decr_overrun(uint64_t _decr) { _cpu.decr_overrun(_decr); }
+        void set_overrun(uint64_t _val) { _cpu.set_overrun(_val); }
 
         //MEM
         void ec_resize_memory_max(int64_t _max_mem) { _mem.set_mem_limit(_max_mem); }

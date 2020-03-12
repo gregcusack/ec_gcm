@@ -180,7 +180,7 @@ int64_t ec::ECAPI::set_sc_quota(ec::SubContainer *sc, uint64_t _quota) {
     msg_req.set_quota(_quota);
     msg_req.set_payload_string("test");
 
-    std::cout << "updateing quota to (input, in msg_Req): (" << _quota << ", " << msg_req.quota() << ")" << std::endl;
+//    std::cout << "updateing quota to (input, in msg_Req): (" << _quota << ", " << msg_req.quota() << ")" << std::endl;
     auto agent = _ec->get_corres_agent(*sc->get_c_id());
     if(!agent) {
         std::cerr << "agent for container == NULL" << std::endl;

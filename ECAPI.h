@@ -89,6 +89,8 @@ namespace ec {
         void ec_decr_total_cpu(uint64_t _decr) { _ec->decr_total_cpu(_decr); }
         void ec_incr_overrun(uint64_t _incr) { _ec->incr_overrun(_incr); }
         void ec_decr_overrun(uint64_t _decr) { _ec->decr_overrun(_decr); }
+        void ec_set_overrun(uint64_t _val) {_ec->set_overrun(_val); }
+        void ec_set_unallocated_rt(uint64_t _val) {_ec->set_unallocated_rt(_val); }
 
         int64_t set_sc_quota(ec::SubContainer *sc, uint64_t _quota);
 
