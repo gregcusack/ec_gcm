@@ -13,7 +13,6 @@
 #include <iostream>
 #include <functional> //for std::hash
 #include <string>
-
 #include "jsonSDK/include/JSONFacade.h"
 #include "deploySDK/include/DeployFacade.h"
 #include "protoBufSDK/include/ProtoBufFacade.h"
@@ -99,13 +98,15 @@ namespace ec {
         void ec_decrement_memory_available(uint64_t mem_to_reduce);
         uint64_t ec_set_memory_available(uint64_t mem) { return _ec->ec_set_memory_available(mem); }
 
+        bool resize_memory_limit_in_bytes(ec::SubContainer::ContainerId container_idm, uint64_t new_mem_limit);
+
         /**
          *******************************************************
          * EVENTS
          * ALL CPU AND MEMORY EVENTS HANDLED HERE
          *******************************************************
          **/
-
+        
         //TODO: implement these here in a class that inherits from manager
         int handle_add_cgroup_to_ec(const msg_t *req, msg_t *res, uint32_t ip, int fd);
         //CPU

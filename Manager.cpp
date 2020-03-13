@@ -5,11 +5,10 @@
 #include "Manager.h"
 
 ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
-            : Server(server_counts, gcm_ip, server_port, agents)
-{
+            : Server(server_counts, gcm_ip, server_port, agents) {
+
     //init server
     initialize();
-
     //TODO: this is temporary. should be fixed. there is no need to have 2 instance of agentClients
     agent_clients = agent_clients_;
     std::cout<<"[dbg] Manager constructor: agent socket file descriptor is: " << agent_clients[0]->get_socket() << std:: endl;
@@ -30,6 +29,7 @@ void ec::Manager::start(const std::string &app_name, const std::vector<std::stri
 }
 
 int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
+
     if(req == nullptr || res == nullptr) {
         std::cout << "req or res == null in handle_cpu_usage_report()" << std::endl;
         exit(EXIT_FAILURE);
@@ -352,16 +352,19 @@ void ec::Manager::run() {
     //ec::SubContainer::ContainerId x ;
     std::cout << "[dbg] In Manager Run function" << std::endl;
     std::cout << "EC Map Size: " << _ec->get_subcontainers().size() << std::endl;
+    uint64_t new_mem = 30000;
     while(true){
         for(auto sc_ : _ec->get_subcontainers()){
 //            std::cout << "=================================================================================================\n";
 //            std::cout << "[READ API]: the memory limit in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
 //            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << std::endl;
             sleep(1);
+//            std::cout << "[dbg] resize maximum memory api is called: " << resize_memory_limit_in_bytes(sc_.first, new_mem) << std::endl;
+//            new_mem += 2000;
+//            sleep(3);
         }
     }
 }
-
 
 
 

@@ -12,13 +12,12 @@
 int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &gcm_ip) {
     _ec = new ElasticContainer(manager_id, agent_clients);      
 
-    /* This is the highest level of abstraction provided to the end application developer. 
+    /* This is the highest level of abstraction provided to the end application developer.
     Steps to create and deploy the "distributed container":
         1. Create a Pod deployment strategy
         2. Communicate with K8 REST API to deploy the pod on all nodes (based on default kube-scheduler)
         3. Send a request to the specific agent on a node to call sys_connect
     */
-
     int pod_creation;
 
     int res;
@@ -127,7 +126,6 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
 
     // And so once a subcontainer is created and added to the appropriate distributed container,
     // we can now create a map to link the container_id and cgroup_id - this is the place to do that..
-    
     std::cout << "[dbg]: Init. Added cgroup to _ec with id: " << _ec->get_ec_id() << ". cgroup id: " << *sc->get_c_id() << std::endl;
     std::cout << "[dbg]: Map Size at Insert " << _ec->get_subcontainers().size() << std::endl;
 
@@ -141,6 +139,7 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
     }
     res->request = 0; //giveback (or send back)
     return ret;
+
 }
 
 void ec::ECAPI::ec_decrement_memory_available(uint64_t mem_to_reduce) {
@@ -190,6 +189,25 @@ int64_t ec::ECAPI::set_sc_quota(ec::SubContainer *sc, uint64_t _quota) {
     int64_t ret = agent->send_request(msg_req);
     return ret;
 
+}
+
+bool ec::ECAPI::resize_memory_limit_in_bytes(ec::SubContainer::ContainerId container_id, uint64_t new_mem_limit) {
+    uint64_t ret = 0;
+    msg_struct::ECMessage msg_req;
+    msg_req.set_req_type(6); //RESIZE_MEM_LIMIT
+    msg_req.set_cgroup_id(container_id.cgroup_id);
+    msg_req.set_payload_string("test");
+    msg_req.set_rsrc_amnt(new_mem_limit);
+
+    auto agent = _ec->get_corres_agent(container_id);
+
+    if(!agent) {
+        std::cerr << "[dbg] temp is NULL" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    
+    ret = agent->send_request(msg_req);
+    return ret == 0;
 }
 
 

@@ -42,7 +42,7 @@ int main(int argc, char* argv[]){
         gcm->create_server();
     }
     std::cout << "[dbg] num servers: " << gcm->get_servers().size() << std::endl;
-
+    
     gcm->run(app_name, app_images, pod_names, gcm_ip);
 
     delete gcm;

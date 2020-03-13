@@ -126,7 +126,6 @@ namespace ec {
         uint32_t ec_id;
         subcontainer_map subcontainers;
         subcontainer_agent_map sc_agent_map;
-
         uint64_t fair_cpu_share;
 
         //Passed by reference from ECAPI but owned by GCM

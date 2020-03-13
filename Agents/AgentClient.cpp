@@ -9,7 +9,6 @@ ec::AgentClient::AgentClient(const ec::Agent *_agent, int _sockfd)
 
 }
 
-
 int64_t ec::AgentClient::send_request(const struct msg_struct::ECMessage &msg) const {
     int status;
     int64_t ret = -1;

@@ -65,7 +65,6 @@ void ec::GlobalCloudManager::run(const std::string &app_name, const std::vector<
 
     std::thread threads[__NUM_THREADS__];
     //app_thread_args *args;
-//    int32_t num_of_cli = 0;
 
     for(const auto &s : servers) {
         if(fork() == 0) {
