@@ -112,11 +112,23 @@ void ec::Server::handle_client_reqs(void *args) {
         //req->set_ip_from_net(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
         req->set_ip_from_string("10.0.2.15"); //TODO: this needs to be changed. but here for testing merge
         auto *res = new msg_t(*req);
-//        std::cout << "received: " << *req << std::endl;
+        std::cout << "received: " << *req << std::endl;
         ret = handle_req(req, res, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
 
         if(ret == __ALLOC_INIT__) {  //TODO: fix this.
+            std::cout << "sending back init req: " << *res << std::endl;
+            std::cout << "size of *res: " << sizeof(*res) << std::endl;
+            std::cout << "size of msg_t: " << sizeof(msg_t) << std::endl;
             if (write(client_fd, (const char *) &*res, sizeof(*res)) < 0) {
+                std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
+                break;
+            }
+        }
+        else if(ret == __ALLOC_SUCCESS__ && !res->request) {
+            std::cout << "sending back non-cpu req: " << *res << std::endl;
+            std::cout << "size of *res: " << sizeof(*res) << std::endl;
+            std::cout << "size of msg_t: " << sizeof(msg_t) << std::endl;
+            if(write(client_fd, (const char*) res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
                 break;
             }

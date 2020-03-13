@@ -32,6 +32,7 @@ namespace ec {
 
     private:
         std::mutex cpulock;
+        std::mutex memlock;
 
     };
 }

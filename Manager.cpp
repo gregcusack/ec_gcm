@@ -34,7 +34,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         std::cout << "req or res == null in handle_cpu_usage_report()" << std::endl;
         exit(EXIT_FAILURE);
     }
-//    std::mutex cpulock;
+    return __ALLOC_SUCCESS__;
     if(req->req_type != _CPU_) { return __ALLOC_FAILED__; }
 
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -257,25 +257,15 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
         exit(EXIT_FAILURE);
     }
     uint64_t ret = 0;
-    std::mutex memlock;
     if(req->req_type != _MEM_) { return __ALLOC_FAILED__; }
     memlock.lock();
     int64_t memory_available = ec_get_memory_available();
-    if(memory_available > 0 || (memory_available = ec_set_memory_available(handle_reclaim_memory(clifd))) > 0) {          //TODO: integrate give back here
-        std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
-        ret = memory_available > ec_get_memory_slice() ? ec_get_memory_slice() : memory_available;
+    if(memory_available > 0) {
+        std::cout << "gcm memory avail > 0. Returning global slice. mem avail: " << memory_available << std::endl;
 
-        std::cout << "mem amnt to ret: " << ret << std::endl;
-
-        ec_decrement_memory_available(ret);
-//        memory_available -= ret;
-
-        std::cout << "successfully decrease remaining mem to: " << memory_available << std::endl;
-
-        res->rsrc_amnt = req->rsrc_amnt + ret;   //give back "ret" pages
-        memlock.unlock();
-        res->request = 0;       //give back
-        return __ALLOC_SUCCESS__;
+    }
+    else if((memory_available = ec_set_memory_available(handle_reclaim_memory(clifd))) > 0){          //TODO: integrate give back here
+        std::cout << "reclaimed mem from other pods. mem rx: " << memory_available << std::endl;
     }
     else {
         memlock.unlock();
@@ -283,6 +273,21 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
         res->rsrc_amnt = 0;
         return __ALLOC_FAILED__;
     }
+
+    std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
+    ret = memory_available > ec_get_memory_slice() ? ec_get_memory_slice() : memory_available;
+
+    std::cout << "mem amnt to ret: " << ret << std::endl;
+
+    ec_decrement_memory_available(ret);
+//        memory_available -= ret;
+
+    std::cout << "successfully decrease remaining mem to: " << ec_get_memory_available() << std::endl;
+
+    res->rsrc_amnt = req->rsrc_amnt + ret;   //give back "ret" pages
+    memlock.unlock();
+    res->request = 0;       //give back
+    return __ALLOC_SUCCESS__;
 }
 
 uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
