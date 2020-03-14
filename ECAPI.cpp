@@ -191,7 +191,7 @@ int64_t ec::ECAPI::set_sc_quota(ec::SubContainer *sc, uint64_t _quota) {
 
 }
 
-bool ec::ECAPI::resize_memory_limit_in_bytes(ec::SubContainer::ContainerId container_id, uint64_t new_mem_limit) {
+int64_t ec::ECAPI::resize_memory_limit_in_bytes(ec::SubContainer::ContainerId container_id, uint64_t new_mem_limit) {
     uint64_t ret = 0;
     msg_struct::ECMessage msg_req;
     msg_req.set_req_type(6); //RESIZE_MEM_LIMIT
@@ -207,7 +207,7 @@ bool ec::ECAPI::resize_memory_limit_in_bytes(ec::SubContainer::ContainerId conta
     }
     
     ret = agent->send_request(msg_req);
-    return ret == 0;
+    return ret;
 }
 
 

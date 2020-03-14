@@ -285,6 +285,10 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
     std::cout << "successfully decrease remaining mem to: " << ec_get_memory_available() << std::endl;
 
     res->rsrc_amnt = req->rsrc_amnt + ret;   //give back "ret" pages
+//    auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
+//    res->rsrc_amnt = resize_memory_limit_in_bytes(sc_id, res->rsrc_amnt);
+
+
     memlock.unlock();
     res->request = 0;       //give back
     return __ALLOC_SUCCESS__;
@@ -352,7 +356,7 @@ void ec::Manager::run() {
     //ec::SubContainer::ContainerId x ;
     std::cout << "[dbg] In Manager Run function" << std::endl;
     std::cout << "EC Map Size: " << _ec->get_subcontainers().size() << std::endl;
-    uint64_t new_mem = 30000;
+    uint64_t new_mem = 56200;
     while(true){
         for(auto sc_ : _ec->get_subcontainers()){
 //            std::cout << "=================================================================================================\n";
