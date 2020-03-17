@@ -34,7 +34,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         std::cout << "req or res == null in handle_cpu_usage_report()" << std::endl;
         exit(EXIT_FAILURE);
     }
-    return __ALLOC_SUCCESS__;
+//    return __ALLOC_SUCCESS__;
     if(req->req_type != _CPU_) { return __ALLOC_FAILED__; }
 
     auto t1 = std::chrono::high_resolution_clock::now();
