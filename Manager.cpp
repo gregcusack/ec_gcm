@@ -71,29 +71,6 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
 
     std::cout << "cpu_unalloc: " << ec_get_cpu_unallocated_rt() << std::endl;
-    cpulock.unlock();
-    return __ALLOC_SUCCESS__;
-}
-
-int ec::Manager::allocate_cpu(SubContainer *sc_, int64_t rx_quota) {
-    if (!sc_) {
-        std::cout << "sc == null in allocate_cpu()" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    cpulock.lock();
-    auto sc_id = sc_->get_c_id();
-    auto sc = ec_get_sc_for_update(*sc_id);
-    auto rt_mean = sc->get_cpu_stats()->get_rt_mean();
-    auto thr_mean = sc->get_cpu_stats()->get_thr_mean();
-
-    uint64_t updated_quota = rx_quota;
-    uint64_t to_add = 0;
-    uint32_t seq_num = seq_number;
-    int ret;
-
-    sc->sc_set_quota(rx_quota);
-
 
     if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
         std::cout << "overrun. sc: " << *sc->get_c_id() << std::endl;
@@ -364,10 +341,10 @@ void ec::Manager::run() {
 //            std::cout << "=================================================================================================\n";
 //            std::cout << "[READ API]: the memory limit in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
 //            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << std::endl;
-            std::cout << "=================================================================================================" << std::endl;
-            auto quota =  get_sc_quota(sc_.second);
-            std::cout << "[READ API]: get quota from sc (cg_id, quota): (" << sc_.second->get_c_id()->cgroup_id << ", " << quota << ")" << std::endl;
-            allocate_cpu(sc_.second, quota);
+//            std::cout << "=================================================================================================" << std::endl;
+//            auto quota =  get_sc_quota(sc_.second);
+//            std::cout << "[READ API]: get quota from sc (cg_id, quota): (" << sc_.second->get_c_id()->cgroup_id << ", " << quota << ")" << std::endl;
+//            allocate_cpu(sc_.second, quota);
 //            std::cout << "[dbg] resize maximum memory api is called: " << resize_memory_limit_in_bytes(sc_.first, new_mem) << std::endl;
 //            new_mem += 2000
         }
