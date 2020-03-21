@@ -113,8 +113,8 @@ void ec::Server::handle_client_reqs(void *args) {
 //        req->set_ip_from_string("10.0.2.15"); //TODO: this needs to be changed. but here for testing merge
         auto *res = new msg_t(*req);
 //        std::cout << "received: " << *req << std::endl;
-        ret = handle_req(req, res, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
-//        ret = handle_req(req, res, om::net::ip4_addr::from_net(arguments->cliaddr->sin_addr.s_addr).to_uint32(), arguments->clifd);
+//        ret = handle_req(req, res, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
+        ret = handle_req(req, res, om::net::ip4_addr::from_net(arguments->cliaddr->sin_addr.s_addr).to_uint32(), arguments->clifd);
 
         if(ret == __ALLOC_INIT__) {  //TODO: fix this.
             std::cout << "sending back init req: " << *res << std::endl;
