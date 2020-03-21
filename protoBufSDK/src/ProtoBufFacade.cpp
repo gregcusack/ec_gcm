@@ -11,7 +11,8 @@ int ec::Facade::ProtoBufFacade::ProtoBuf::sendMessage(const int &sock_fd, const 
     if (write(sock_fd, (void*) tx_buf, tx_size) < 0) {
         std::cout << "[PROTOBUF ERROR]: Error in writing to agent_clients socket: " << sock_fd << std::endl;
         return -1;
-    }  
+    }
+    delete[] tx_buf;
     return tx_size;
 }
 

@@ -60,6 +60,12 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     uint64_t total_rt = 0;
     uint32_t seq_num = seq_number;
 
+    if(rx_quota / 1000 != sc->sc_get_quota() / 1000) {
+        std::cout << "quotas do not match (rx, sc->get): (" << rx_quota << ", " << sc->sc_get_quota() << ")" << std::endl;
+        cpulock.unlock();
+        return __ALLOC_SUCCESS__;
+    }
+
     for (const auto &i : get_subcontainers()) {
         total_rt += i.second->sc_get_quota();
     }
