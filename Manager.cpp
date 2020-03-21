@@ -36,10 +36,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //    std::mutex cpulock;
     if (req->req_type != _CPU_) { return __ALLOC_FAILED__; }
 
-    auto t1 = std::chrono::high_resolution_clock::now();
+//    auto t1 = std::chrono::high_resolution_clock::now();
     cpulock.lock();
-    std::cout << "------------------------------" << std::endl;
-    std::cout << "cg id: " << req->cgroup_id << std::endl;
+//    std::cout << "------------------------------" << std::endl;
+//    std::cout << "cg id: " << req->cgroup_id << std::endl;
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
     auto sc = ec_get_sc_for_update(sc_id);
     if (!sc) {
@@ -69,7 +69,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     for (const auto &i : get_subcontainers()) {
         total_rt += i.second->sc_get_quota();
     }
-    std::cout << "total rt given to containers: " << total_rt << std::endl;
+//    std::cout << "total rt given to containers: " << total_rt << std::endl;
     total_rt += ec_get_cpu_unallocated_rt();
     std::cout << "total rt in system: " << total_rt << std::endl;
 
@@ -79,12 +79,12 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     std::cout << "cpu_unalloc: " << ec_get_cpu_unallocated_rt() << std::endl;
 
     if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
-        std::cout << "overrun. sc: " << *sc->get_c_id() << std::endl;
+//        std::cout << "overrun. sc: " << *sc->get_c_id() << std::endl;
         uint64_t to_sub;
         uint64_t amnt_share_over = rx_quota - ec_get_fair_cpu_share();
         uint64_t overrun = ec_get_overrun();
         double percent_over = ((double)rx_quota - (double)ec_get_fair_cpu_share()) / (double)ec_get_fair_cpu_share();
-        std::cout << "percent over: " << percent_over << std::endl;
+//        std::cout << "percent over: " << percent_over << std::endl;
         if(percent_over > 1) {
             to_sub = (uint64_t) (percent_over * (double) ec_get_cpu_slice());
         }
@@ -114,14 +114,14 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //        sc->sc_set_quota(updated_quota);
     }
     else if(rx_quota < ec_get_fair_cpu_share() && thr_mean > 0.5) {   //throttled but don't have fair share
-        std::cout << "throt and less than fair share. sc: " << *sc->get_c_id() << std::endl;
+//        std::cout << "throt and less than fair share. sc: " << *sc->get_c_id() << std::endl;
         uint64_t amnt_share_lacking = ec_get_fair_cpu_share() - rx_quota;
-        std::cout << "amnt_share_lacking: " << amnt_share_lacking << std::endl;
+//        std::cout << "amnt_share_lacking: " << amnt_share_lacking << std::endl;
         if (ec_get_cpu_unallocated_rt() > 0) {
             //TODO: take min of to_Add and slice. don't full reset
-            std::cout << "give back some unalloc_Rt. sc: " << *sc->get_c_id() << std::endl;
+//            std::cout << "give back some unalloc_Rt. sc: " << *sc->get_c_id() << std::endl;
             double percent_under = ((double)ec_get_fair_cpu_share() - (double)rx_quota) / (double)ec_get_fair_cpu_share();
-            std::cout << "percent under1: " << percent_under << std::endl;
+//            std::cout << "percent under1: " << percent_under << std::endl;
             if(amnt_share_lacking > ec_get_cpu_slice() / 2) {   //ensure we eventually converge
                 to_add = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(percent_under * (double)amnt_share_lacking));
             }
@@ -129,7 +129,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
                 to_add = amnt_share_lacking;
             }
 //            to_add = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(thr_mean * amnt_share_lacking));
-            std::cout << "to_Add: " << to_add << std::endl;
+//            std::cout << "to_Add: " << to_add << std::endl;
             updated_quota = rx_quota + to_add;
             ret = set_sc_quota(sc, updated_quota, seq_num);
             if(ret) {
@@ -151,7 +151,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //            std::cout << "not enough in unalloc rt. give back slice or overrun.. sc: " << *sc->get_c_id() << std::endl;
             uint64_t overrun;
             double percent_under = ((double)ec_get_fair_cpu_share() - (double)rx_quota) / (double)ec_get_fair_cpu_share();
-            std::cout << "percent under2: " << percent_under << std::endl;
+//            std::cout << "percent under2: " << percent_under << std::endl;
 //            overrun = (uint64_t)thr_mean * amnt_share_lacking;
             if(amnt_share_lacking > ec_get_cpu_slice() / 2) { //ensure we eventualyl converge
                 overrun = (uint64_t)((double) percent_under * amnt_share_lacking);
@@ -177,11 +177,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //        sc->get_cpu_stats()->flush();
     }
     else if(thr_mean >= 0.2 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
-        std::cout << "throttle. try get alloc. sc:  " << *sc->get_c_id() << std::endl;
+//        std::cout << "throttle. try get alloc. sc:  " << *sc->get_c_id() << std::endl;
         auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(2 * thr_mean * ec_get_cpu_slice()));
-        std::cout << "extra_rt: " << extra_rt << std::endl;
+//        std::cout << "extra_rt: " << extra_rt << std::endl;
         if(extra_rt > 0) {
-            ec_decr_unallocated_rt(extra_rt);
             updated_quota = rx_quota + extra_rt;
             ret = set_sc_quota(sc, updated_quota, seq_num);
             if(ret) {
@@ -190,22 +189,23 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             else {
                 sc->set_quota_flag(true);
                 std::cout << "successfully resized quota to (incr): " << rx_quota + extra_rt << "!" << std::endl;
+                ec_decr_unallocated_rt(extra_rt);
                 sc->sc_set_quota(updated_quota);
                 sc->get_cpu_stats()->flush();
             }
         }
-        else {
-            std::cout << "extra_rt == 0: " << extra_rt << std::endl;
-        }
+//        else {
+//            std::cout << "extra_rt == 0: " << extra_rt << std::endl;
+//        }
 //        sc->sc_set_quota(updated_quota);
 //        sc->get_cpu_stats()->flush();
     }
     else if(rt_mean > rx_quota * 0.2) { //greater than 20% of quota unused
-        std::cout << "rt_mean > 20% of quota. sc: " << *sc->get_c_id() << std::endl;
+//        std::cout << "rt_mean > 20% of quota. sc: " << *sc->get_c_id() << std::endl;
         uint64_t new_quota = rx_quota * (1 - 0.2); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
         if(new_quota != rx_quota) {
-            std::cout << "new, old, rt_remain: (" << new_quota << "," << rx_quota << "," << rt_mean << ")" << std::endl;
+//            std::cout << "new, old, rt_remain: (" << new_quota << "," << rx_quota << "," << rt_mean << ")" << std::endl;
             ret = set_sc_quota(sc, new_quota, seq_num); //give back what was used + 5ms
             if(ret) {
                 std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (decr). ret: " << ret << std::endl;

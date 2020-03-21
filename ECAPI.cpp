@@ -186,9 +186,9 @@ int64_t ec::ECAPI::set_sc_quota(ec::SubContainer *sc, uint64_t _quota, uint32_t 
         std::cerr << "agent for container == NULL" << std::endl;
         std::exit(EXIT_FAILURE);
     }
-    sendlock.lock();
+//    sendlock.lock();
     int64_t ret = agent->send_request(msg_req);
-    sendlock.unlock();
+//    sendlock.unlock();
 //    std::cout << "set_sc_quota: " << ret << std::endl;
     return ret;
 
