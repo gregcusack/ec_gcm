@@ -22,6 +22,7 @@ namespace ec {
 //        Manager(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients) : ECAPI(_ec_id, _agent_clients) {};
 
         int handle_cpu_usage_report(const msg_t *req, msg_t *res) override;
+        int allocate_cpu(ec::SubContainer *sc, int64_t rx_quota);
 
         int handle_mem_req(const msg_t *req, msg_t *res, int clifd) override;
         uint64_t handle_reclaim_memory(int client_fd) override;
@@ -33,6 +34,7 @@ namespace ec {
     private:
         std::mutex cpulock;
         std::mutex memlock;
+        int64_t seq_number;
 
     };
 }

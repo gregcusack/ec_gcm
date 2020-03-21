@@ -60,6 +60,7 @@ namespace ec {
         uint64_t ec_get_overrun() { return _ec->get_overrun(); }
         uint64_t ec_get_total_cpu() { return _ec->get_total_cpu(); }
 
+
         //MEM
         uint64_t ec_get_memory_available() { return _ec->get_memory_available(); }
         uint64_t ec_get_memory_slice() { return _ec->get_memory_slice(); }
@@ -69,6 +70,8 @@ namespace ec {
         //AGENTS
         uint32_t get_num_agent_clients() { return _ec->get_num_agent_clients(); }
         [[nodiscard]] const std::vector<AgentClient*> &get_agent_clients() const {return _ec->get_agent_clients(); }
+        int64_t get_sc_quota(ec::SubContainer *sc);
+
 
         /**
          *******************************************************
@@ -91,7 +94,7 @@ namespace ec {
         void ec_set_overrun(uint64_t _val) {_ec->set_overrun(_val); }
         void ec_set_unallocated_rt(uint64_t _val) {_ec->set_unallocated_rt(_val); }
 
-        int64_t set_sc_quota(ec::SubContainer *sc, uint64_t _quota);
+        int64_t set_sc_quota(ec::SubContainer *sc, uint64_t _quota, uint32_t seq_number);
 
         //MEM
         void ec_resize_memory_max(int64_t _max_mem) { _ec->ec_resize_memory_max(_max_mem); }
@@ -126,6 +129,7 @@ namespace ec {
         uint32_t manager_id;
         std::vector<AgentClient *> agent_clients;
         ElasticContainer *_ec;
+        std::mutex sendlock;
 
     };
 }
