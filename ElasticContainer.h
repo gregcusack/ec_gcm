@@ -55,16 +55,10 @@ namespace ec {
         //MISC
         uint32_t get_ec_id() { return ec_id; }
         const subcontainer_map &get_subcontainers() {return subcontainers;}
-<<<<<<< HEAD
         SubContainer &get_subcontainer(const SubContainer::ContainerId &container_id);
         AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_agent_map[container_id];}
         const subcontainer_agent_map &get_subcontainer_agents() {return sc_agent_map;}
         void get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res);
-=======
-        const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id);
-        AgentClient *get_corres_agent(const SubContainer::ContainerId &container_id){return sc_agent_map[container_id];}
-        SubContainer *get_sc_for_update(SubContainer::ContainerId &container_id);
->>>>>>> ref-merge-cpu-master
 
         //CPU
         uint64_t get_cpu_rt_remaining() { return _cpu.get_runtime_remaining(); }
@@ -85,11 +79,7 @@ namespace ec {
          **/
 
         //MISC
-<<<<<<< HEAD
-        void add_to_agent_map(SubContainer::ContainerId id, AgentClient* client) { sc_agent_map.insert({id, client}); }
-=======
         void add_to_agent_map(SubContainer::ContainerId &id, AgentClient* client) { sc_agent_map.insert({id, client}); }
->>>>>>> ref-merge-cpu-master
 
         //CPU
         void set_ec_period(int64_t _period)  { _cpu.set_period(_period); }   //will need to update maanger too
@@ -134,7 +124,6 @@ namespace ec {
         subcontainer_agent_map sc_agent_map;
         uint64_t fair_cpu_share;
 
-<<<<<<< HEAD
         //cpu
 //        uint64_t runtime_remaining;
         //TODO: need file/struct of macros - like slice, failed, etc
@@ -143,11 +132,6 @@ namespace ec {
 
         //test
         int flag;
-=======
-        //Passed by reference from ECAPI but owned by GCM
-        std::vector<AgentClient *> agent_clients;
-
->>>>>>> ref-merge-cpu-master
 
         global::stats::mem _mem;
         global::stats::cpu _cpu;
