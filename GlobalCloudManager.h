@@ -30,7 +30,7 @@ namespace ec {
         GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<uint16_t> &_server_ports);
         ~GlobalCloudManager();
 
-        void run(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip);
+        void run(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &_gcm_ip);
 
         uint32_t create_server();
 

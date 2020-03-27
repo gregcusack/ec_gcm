@@ -12,6 +12,9 @@
 #include <string>
 #include "../protoBufSDK/msg.pb.h"
 #include "../protoBufSDK/include/ProtoBufFacade.h"
+#include <mutex>
+#include <chrono>
+
 
 using namespace google::protobuf::io;
 
@@ -26,12 +29,14 @@ namespace ec {
         [[nodiscard]] int get_socket() const { return sockfd_new; }
         [[nodiscard]] om::net::ip4_addr get_agent_ip() const {return agent->get_ip(); }
         [[nodiscard]] uint16_t get_agent_port() const { return agent->get_port(); }
-        uint64_t send_request(const struct msg_struct::ECMessage &msg) const;
+        int64_t send_request(const struct msg_struct::ECMessage &msg);
 
 
     private:
         const Agent* agent;
         int sockfd_new;
+        std::mutex sendlock;
+
 
     };
 }
