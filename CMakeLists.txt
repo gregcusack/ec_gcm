@@ -45,4 +45,4 @@ add_executable(loop_test tests/run_continuous.cpp
         om.h
         )
 
-target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY})
+target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY})
