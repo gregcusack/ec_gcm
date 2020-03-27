@@ -57,7 +57,7 @@ namespace ec {
         SubContainer &get_subcontainer(const SubContainer::ContainerId &container_id);
         AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_agent_map[container_id];}
         const subcontainer_agent_map &get_subcontainer_agents() {return sc_agent_map;}
-        void get_sc_from_agent(AgentClient* client, std::vector<SubContainer::ContainerId> &res);
+        void get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res);
 
         //CPU
         uint64_t get_rt_remaining() { return _cpu.get_runtime_remaining(); }

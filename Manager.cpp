@@ -21,7 +21,7 @@ void ec::Manager::start(const std::string &app_name, const std::vector<std::stri
     std::thread application_deployment_thread(&ec::ECAPI::create_ec, this, app_name, app_images, gcm_ip);
     // //Another thread to run a management application
     application_deployment_thread.join();
-    sleep(10);
+    sleep(5);
     std::cerr<<"[dbg] manager::just before running the app thread\n";
     std::thread application_thread(&ec::Manager::run, this);
     application_thread.join();

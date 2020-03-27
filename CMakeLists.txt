@@ -29,6 +29,7 @@ add_executable(ec_gcm                   main.cpp
         stats/global/mem_g.h            stats/global/mem_g.cpp
         Manager.h                       Manager.cpp
         Agents/AgentClient.h            Agents/AgentClient.cpp    
+        Agents/AgentClientDB.cpp        Agents/AgentClientDB.h
         jsonSDK/include/JSONFacade.h    jsonSDK/src/JSONFacade.cpp
         deploySDK/include/DeployFacade.h    deploySDK/src/DeployFacade.cpp
         protoBufSDK/include/ProtoBufFacade.h    protoBufSDK/src/ProtoBufFacade.cpp

@@ -11,7 +11,7 @@
 //}
 
 int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip) {
-    _ec = new ElasticContainer(manager_id, agent_clients);      
+    _ec = new ElasticContainer(manager_id);      
 
     /* This is the highest level of abstraction provided to the end application developer. 
     Steps to create and deploy the "distributed container":
@@ -62,7 +62,6 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
         node_ips.clear();
         deployment.getNodeIPs(node_names, node_ips);
 
-
         for (const auto node_ip : node_ips) {
             // Get the Agent with this node ip first (this needs to changed to a singleton class)
             //for (const auto &agentClient : _ec->get_agent_clients()) { 
@@ -74,19 +73,19 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
                 init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
                 init_msg.set_cgroup_id(0);
 
-                res = protoFacade.sendMessage(agentClient->get_socket(), init_msg);
+                res = protoFacade.sendMessage(target_agent->get_socket(), init_msg);
                 if(res < 0) {
                     std::cout << "[ERROR]: create_ec() - Error in writing to agent_clients socket. " << std::endl;
                     return __FAILED__;
                 }
                 msg_struct::ECMessage rx_msg;
-                protoFacade.recvMessage(agentClient->get_socket(), rx_msg);
+                protoFacade.recvMessage(target_agent->get_socket(), rx_msg);
                 while (rx_msg.payload_string().size() == 0) {
-                    protoFacade.recvMessage(agentClient->get_socket(), rx_msg);
+                    protoFacade.recvMessage(target_agent->get_socket(), rx_msg);
                 }
                 // Wait here until subcontainer has been added to the agent client map
                 mtx.lock();
-                _ec->get_sc_from_agent(agentClient, scs_per_agent);
+                _ec->get_sc_from_agent(target_agent, scs_per_agent);
                 for (auto &sc_id: scs_per_agent) {
                     if(std::count(scs_done.begin(), scs_done.end(), sc_id)) {
                         continue;
@@ -147,6 +146,7 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
     std::cerr << "[dbg] Agent ip: " << agent_ip << std::endl;
     if ( target_agent != NULL) {
         _ec->add_to_agent_map(*sc->get_c_id(), target_agent);
+        mtx.unlock();
     } else {
         std::cerr<< "[ERROR] SubContainer's node IP or Agent IP not found!" << std::endl;
     }
