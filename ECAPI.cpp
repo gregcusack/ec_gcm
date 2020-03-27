@@ -3,6 +3,7 @@
 //
 
 #include "ECAPI.h"
+#include "Agents/AgentClientDB.h"
 
 //ec::ECAPI::ECAPI(uint32_t _ec_id)
 //    : manager_id(_ec_id) {
@@ -18,6 +19,9 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
         2. Communicate with K8 REST API to deploy the pod on all nodes (based on default kube-scheduler)
         3. Send a request to the specific agent on a node to call sys_connect
     */
+
+    // Step 1: Create a Pod on each of the nodes running an agent
+    AgentClientDB* acdb = acdb->get_agent_client_db_instance();
 
     int pod_creation;
     int res;
@@ -61,43 +65,43 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
 
         for (const auto node_ip : node_ips) {
             // Get the Agent with this node ip first (this needs to changed to a singleton class)
-            for (const auto &agentClient : _ec->get_agent_clients()) { 
-                if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
-                    scs_per_agent.clear();
-                    msg_struct::ECMessage init_msg;
-                    init_msg.set_client_ip(gcm_ip); //IP of the GCM
-                    init_msg.set_req_type(4);
-                    init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
-                    init_msg.set_cgroup_id(0);
+            //for (const auto &agentClient : _ec->get_agent_clients()) { 
+            const AgentClient* target_agent;
+            if ( (target_agent = acdb->get_agent_client_by_ip(om::net::ip4_addr().from_string(node_ip)) ) != NULL  ) {
+                msg_struct::ECMessage init_msg;
+                init_msg.set_client_ip(gcm_ip); //IP of the GCM
+                init_msg.set_req_type(4);
+                init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
+                init_msg.set_cgroup_id(0);
 
-                    res = protoFacade.sendMessage(agentClient->get_socket(), init_msg);
-                    if(res < 0) {
-                        std::cout << "[ERROR]: create_ec() - Error in writing to agent_clients socket. " << std::endl;
-                        return __FAILED__;
-                    }
-                    msg_struct::ECMessage rx_msg;
-                    protoFacade.recvMessage(agentClient->get_socket(), rx_msg);
-                    while (rx_msg.payload_string().size() == 0) {
-                        protoFacade.recvMessage(agentClient->get_socket(), rx_msg);
-                    }
-                    // Wait here until subcontainer has been added to the agent client map
-                    mtx.lock();
-                    _ec->get_sc_from_agent(agentClient, scs_per_agent);
-                    for (auto &sc_id: scs_per_agent) {
-                        if(std::count(scs_done.begin(), scs_done.end(), sc_id)) {
-                            continue;
-                        } else {
-                            std::cout << "current sc with id: " << sc_id << std::endl;
-                            _ec->get_subcontainer(sc_id).set_docker_id(rx_msg.payload_string());
-                            std::cout << "docker id set: " << _ec->get_subcontainer(sc_id).get_docker_id() << std::endl;
-                            scs_done.push_back(sc_id);
-                        }
-                    }
-                } else {
-                    continue;
+                res = protoFacade.sendMessage(agentClient->get_socket(), init_msg);
+                if(res < 0) {
+                    std::cout << "[ERROR]: create_ec() - Error in writing to agent_clients socket. " << std::endl;
+                    return __FAILED__;
                 }
+                msg_struct::ECMessage rx_msg;
+                protoFacade.recvMessage(agentClient->get_socket(), rx_msg);
+                while (rx_msg.payload_string().size() == 0) {
+                    protoFacade.recvMessage(agentClient->get_socket(), rx_msg);
+                }
+                // Wait here until subcontainer has been added to the agent client map
+                mtx.lock();
+                _ec->get_sc_from_agent(agentClient, scs_per_agent);
+                for (auto &sc_id: scs_per_agent) {
+                    if(std::count(scs_done.begin(), scs_done.end(), sc_id)) {
+                        continue;
+                    } else {
+                        std::cout << "current sc with id: " << sc_id << std::endl;
+                        _ec->get_subcontainer(sc_id).set_docker_id(rx_msg.payload_string());
+                        std::cout << "docker id set: " << _ec->get_subcontainer(sc_id).get_docker_id() << std::endl;
+                        scs_done.push_back(sc_id);
+                    }
+                }
+            } else {
+                continue;
+            }
 
-            }        
+            //}        
         }
     }
     return 0;
@@ -135,18 +139,18 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
     // And so once a subcontainer is created and added to the appropriate distributed container,
     // we can now create a map to link the container_id and agent_client
     
-    std::cout << "[dbg]: Init. Added cgroup to _ec with id: " << _ec->get_ec_id() << ". cgroup id: " << *sc->get_c_id() << std::endl;
-    std::cout << "[dbg]: Map Size at Insert " << _ec->get_subcontainers().size() << std::endl;
-
-    for (const auto &agentClient : _ec->get_agent_clients()) {
-        if (agentClient->get_agent_ip() == sc->get_c_id()->server_ip) {
-            _ec->add_to_agent_map(*sc->get_c_id(), agentClient);
-            mtx.unlock();
-            std::cout << "[EVENT LOG]: Added subcontainer to Agent Map" << std::endl;
-        } else {
-            continue;
-        }
+    std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
+    AgentClientDB* acdb = acdb->get_agent_client_db_instance();
+    auto agent_ip = sc->get_c_id()->server_ip;
+    auto* target_agent = const_cast<AgentClient *>(acdb->get_agent_client_by_ip(agent_ip));
+    std::cerr << "[dbg] Agent client ip: " << target_agent-> get_agent_ip() << std::endl;
+    std::cerr << "[dbg] Agent ip: " << agent_ip << std::endl;
+    if ( target_agent != NULL) {
+        _ec->add_to_agent_map(*sc->get_c_id(), target_agent);
+    } else {
+        std::cerr<< "[ERROR] SubContainer's node IP or Agent IP not found!" << std::endl;
     }
+
     res->request = 0; //giveback (or send back)
     return ret;
 }

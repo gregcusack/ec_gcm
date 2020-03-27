@@ -79,7 +79,6 @@ namespace ec {
         uint32_t num_of_cli;
 
     protected:
-        std::vector<AgentClient *> agent_clients_;
         uint32_t server_id;
     };
 }
