@@ -31,6 +31,7 @@ int main(int argc, char* argv[]){
     auto app_name = jsonFacade.getAppName();
     auto app_images = jsonFacade.getAppImages(); 
     auto agent_ips = jsonFacade.getAgentIPs();
+    auto pod_names = jsonFacade.getPodNames();
     auto gcm_ip = jsonFacade.getGCMIP();
     
     std::vector<uint16_t>       server_ports{4444};
@@ -41,8 +42,8 @@ int main(int argc, char* argv[]){
         gcm->create_server();
     }
     std::cout << "[dbg] num servers: " << gcm->get_servers().size() << std::endl;
-
-    gcm->run(app_name, app_images, gcm_ip);
+    
+    gcm->run(app_name, app_images, pod_names, gcm_ip);
 
     delete gcm;
 

@@ -13,26 +13,41 @@ find_package(Boost REQUIRED system)
 add_subdirectory(protoBufSDK)
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
+add_custom_command(
+        OUTPUT
+        ${CMAKE_CURRENT_LIST_DIR}/protoBufSDK/msg.pb.h
+        ${CMAKE_CURRENT_LIST_DIR}/protoBufSDK/msg.pb.cc
+        MAIN_DEPENDENCY ${CMAKE_CURRENT_LIST_DIR}/protoBufSDK/msg.proto
+        COMMAND ${PROTOBUF_PROTOC}
+        ARGS --proto_path=. --cpp_out=. msg.proto
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/protoBufSDK)
 
-add_executable(ec_gcm                   main.cpp
-        ElasticContainer.h              ElasticContainer.cpp
-        SubContainer.h                  SubContainer.cpp
-        ECAPI.h                         ECAPI.cpp
-        GlobalCloudManager.h            GlobalCloudManager.cpp
-        types/msg.h                     types/msg.cpp
-        types/types.h                   types/k_msg.h
-        Server.h                        Server.cpp
-        Agents/Agent.h                  Agents/Agent.cpp
-        stats/local/cpu_l.h             stats/local/cpu_l.cpp
-        stats/local/mem_l.h             stats/local/mem_l.cpp
-        stats/global/cpu_g.h            stats/global/cpu_g.cpp
-        stats/global/mem_g.h            stats/global/mem_g.cpp
-        Manager.h                       Manager.cpp
-        Agents/AgentClient.h            Agents/AgentClient.cpp    
-        jsonSDK/include/JSONFacade.h    jsonSDK/src/JSONFacade.cpp
-        deploySDK/include/DeployFacade.h    deploySDK/src/DeployFacade.cpp
+set(GCM_PROTO_SRC
+        protoBufSDK/msg.pb.h
+        protoBufSDK/msg.pb.cc)
+
+add_executable(ec_gcm main.cpp
+        ElasticContainer.h                      ElasticContainer.cpp
+        SubContainer.h                          SubContainer.cpp
+        ECAPI.h                                 ECAPI.cpp
+        GlobalCloudManager.h                    GlobalCloudManager.cpp
+        types/msg.h                             types/msg.cpp
+        types/types.h                           types/k_msg.h
+        Server.h                                Server.cpp
+        Agents/Agent.h                          Agents/Agent.cpp
+        stats/local/cpu_l.h                     stats/local/cpu_l.cpp
+        stats/local/mem_l.h                     stats/local/mem_l.cpp
+        stats/global/cpu_g.h                    stats/global/cpu_g.cpp
+        stats/global/mem_g.h                    stats/global/mem_g.cpp
+        Manager.h                               Manager.cpp
+        Agents/AgentClient.h                    Agents/AgentClient.cpp
+        Agents/AgentClient.h                    Agents/AgentClient.cpp
+        jsonSDK/include/JSONFacade.h            jsonSDK/src/JSONFacade.cpp
+        deploySDK/include/DeployFacade.h        deploySDK/src/DeployFacade.cpp
         protoBufSDK/include/ProtoBufFacade.h    protoBufSDK/src/ProtoBufFacade.cpp
-        )
+        stats/window/Window.h                   stats/window/Window_impl.h
+        ${GCM_PROTO_SRC})
+
 
 add_executable(tester tests/run_test.cpp
         types/msg.cpp                   types/msg.h
@@ -44,4 +59,4 @@ add_executable(loop_test tests/run_continuous.cpp
         om.h
         )
 
-target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY})
+target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY})

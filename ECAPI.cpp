@@ -9,30 +9,33 @@
  //   // _ec = new ElasticContainer(manager_id, agent_clients);
 //}
 
-int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip) {
+int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &gcm_ip) {
     _ec = new ElasticContainer(manager_id, agent_clients);      
 
-    /* This is the highest level of abstraction provided to the end application developer. 
+    /* This is the highest level of abstraction provided to the end application developer.
     Steps to create and deploy the "distributed container":
         1. Create a Pod deployment strategy
         2. Communicate with K8 REST API to deploy the pod on all nodes (based on default kube-scheduler)
         3. Send a request to the specific agent on a node to call sys_connect
     */
-
     int pod_creation;
+
     int res;
     std::string response;
     std::vector<std::string> node_names;
     std::vector<std::string> node_ips;
-    std::string pod_name;
 
     ec::Facade::JSONFacade::json jsonFacade;
     ec::Facade::DeployFacade::Deploy deployment;
+    uint32_t podNameIndex = 0;
     for (const auto &app_image: app_images) {
         // Step 1: Create a Pod on each of the nodes running an agent - k8s takes care of this
         //         todo: this will change we implement k8-yaml support (still brainstorming how best to do that)           
         std::cout << "[DEPLOY LOG] Generating JSON POD File for image: " << app_image << std::endl;
-        jsonFacade.createJSONPodDef(app_name, app_image, response);
+        //TODO: need to add pod_name config so it only contains alphanumeric characters
+        std::string pod_name = pod_names[podNameIndex];
+        jsonFacade.createJSONPodDef(app_name, app_image, pod_name, response);
+        podNameIndex++;
         // Step 2
         std::cout << "[DEPLOY LOG] Deploying Container With Image: " << app_image << std::endl;
         pod_creation = deployment.deployContainers(response);
@@ -48,13 +51,13 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
         //         message to the server which will call: handle_add_cgroup_to_ec
 
         std::cout << "[K8s LOG] Looking for node running container with image: " << app_image << std::endl;
-        pod_name = app_name + "-" + app_image;
+//        pod_name = app_name + "-" + app_image;
         node_names.clear();
         deployment.getNodesWithContainer(pod_name, node_names);
         node_ips.clear();
         deployment.getNodeIPs(node_names, node_ips);
 
-        for (const auto node_ip : node_ips) {
+        for (const auto &node_ip : node_ips) {
             // Get the Agent with this node ip first (this needs to change to a singleton class)
             for (const auto &agentClient : _ec->get_agent_clients()) { 
                 if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
@@ -103,26 +106,26 @@ ec::ECAPI::~ECAPI() {
     delete _ec;
 }
 
-
-int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const uint32_t ip, int fd) {
-    if(!res) {
-        std::cout << "ERROR. res == null in handle_add_cgroup_to_ec()" << std::endl;
+int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, const uint32_t ip, int fd) {
+    if(!req || !res) {
+        std::cout << "ERROR. res or req == null in handle_add_cgroup_to_ec()" << std::endl;
         return __ALLOC_FAILED__;
     }
     // This is where we see the connection be initiated by a container on some node  
-    auto *sc = _ec->create_new_sc(cgroup_id, ip, fd);
-    
-    if (sc == NULL) {
+    auto *sc = _ec->create_new_sc(req->cgroup_id, ip, fd, req->rsrc_amnt, req->request); //update with throttle and quota
+    if (!sc) {
         std::cerr << "[ERROR] Unable to create new sc object: Line 147" << std::endl;
         return __ALLOC_FAILED__;
     }
+
     int ret = _ec->insert_sc(*sc);
-    std::cout << "[dbg]: IP from container -  " << ip << std::endl;
+    _ec->incr_total_cpu(sc->sc_get_quota());
+    _ec->update_fair_cpu_share();
+    std::cout << "fair share: " << ec_get_fair_cpu_share() << std::endl;
 
 
     // And so once a subcontainer is created and added to the appropriate distributed container,
     // we can now create a map to link the container_id and cgroup_id - this is the place to do that..
-    
     std::cout << "[dbg]: Init. Added cgroup to _ec with id: " << _ec->get_ec_id() << ". cgroup id: " << *sc->get_c_id() << std::endl;
     std::cout << "[dbg]: Map Size at Insert " << _ec->get_subcontainers().size() << std::endl;
 
@@ -132,12 +135,11 @@ int ec::ECAPI::handle_add_cgroup_to_ec(ec::msg_t *res, uint32_t cgroup_id, const
         if (agentClient->get_agent_ip() == sc->get_c_id()->server_ip) {
             _ec->add_to_agent_map(*sc->get_c_id(), agentClient);
             std::cout << "[EVENT LOG]: Added subcontainer to Agent Map" << std::endl;
-        } else {
-            continue;
         }
     }
     res->request = 0; //giveback (or send back)
     return ret;
+
 }
 
 void ec::ECAPI::ec_decrement_memory_available(uint64_t mem_to_reduce) {
@@ -154,13 +156,88 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(const ec::SubContainer::ContainerI
     msg_req.set_payload_string("test");
     std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
     std::cerr << "[dbg] Getting the agent clients: " << _ec->get_agent_clients()[0]->get_socket() << std::endl;
-    AgentClient* temp = _ec->get_corres_agent(container_id);
-    if(temp == NULL)
-        std::cerr << "[dbg] temp is NULL" << std::endl;
-    ret = temp->send_request(msg_req);
+    auto agent = _ec->get_corres_agent(container_id);
+    if(!agent) {
+        std::cerr << "[dbg] agent is NULL" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    
+    ret = agent->send_request(msg_req);
     return ret;
 }
 
+
+int64_t ec::ECAPI::set_sc_quota(ec::SubContainer *sc, uint64_t _quota, uint32_t seq_number) {
+    if(!sc) {
+        std::cout << "sc == NULL in manager set_sc_quota()" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    msg_struct::ECMessage msg_req;
+    msg_req.set_req_type(0); //__CPU__
+    msg_req.set_cgroup_id(sc->get_c_id()->cgroup_id);
+    msg_req.set_request(seq_number);
+    msg_req.set_quota(_quota);
+    msg_req.set_payload_string("test");
+
+//    std::cout << "updateing quota to (input, in msg_Req): (" << _quota << ", " << msg_req.quota() << ")" << std::endl;
+    auto agent = _ec->get_corres_agent(*sc->get_c_id());
+    if(!agent) {
+        std::cerr << "agent for container == NULL" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+//    sendlock.lock();
+    int64_t ret = agent->send_request(msg_req);
+//    sendlock.unlock();
+//    std::cout << "set_sc_quota: " << ret << std::endl;
+    return ret;
+
+}
+
+int64_t ec::ECAPI::get_sc_quota(ec::SubContainer *sc) {
+    if(!sc) {
+        std::cout << "sc == NULL in manager get_sc_quota()" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    uint32_t seq_number = 1;
+    msg_struct::ECMessage msg_req;
+    msg_req.set_req_type(7); //__READ_QUOTA__
+    msg_req.set_cgroup_id(sc->get_c_id()->cgroup_id);
+    msg_req.set_request(seq_number);
+    msg_req.set_payload_string("test");
+
+//    std::cout << "updateing quota to (input, in msg_Req): (" << _quota << ", " << msg_req.quota() << ")" << std::endl;
+    auto agent = _ec->get_corres_agent(*sc->get_c_id());
+    if(!agent) {
+        std::cerr << "agent for container == NULL" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+//    sendlock.lock();
+    int64_t ret = agent->send_request(msg_req);
+//    sendlock.unlock();
+//    std::cout << "set_sc_quota: " << ret << std::endl;
+    return ret;
+}
+
+
+int64_t ec::ECAPI::resize_memory_limit_in_bytes(ec::SubContainer::ContainerId container_id, uint64_t new_mem_limit) {
+    uint64_t ret = 0;
+    msg_struct::ECMessage msg_req;
+    msg_req.set_req_type(6); //RESIZE_MEM_LIMIT
+    msg_req.set_cgroup_id(container_id.cgroup_id);
+    msg_req.set_payload_string("test");
+    msg_req.set_rsrc_amnt(new_mem_limit);
+
+    auto agent = _ec->get_corres_agent(container_id);
+
+    if(!agent) {
+        std::cerr << "[dbg] temp is NULL" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    
+    ret = agent->send_request(msg_req);
+    return ret;
+}
 
 
 
