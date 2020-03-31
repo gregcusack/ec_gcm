@@ -10,7 +10,7 @@
  //   // _ec = new ElasticContainer(manager_id, agent_clients);
 //}
 
-int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::string &gcm_ip) {
+int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &gcm_ip) {
     _ec = new ElasticContainer(manager_id);      
 
     /* This is the highest level of abstraction provided to the end application developer. 
@@ -62,34 +62,35 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
 
         for (const auto &node_ip : node_ips) {
             // Get the Agent with this node ip first (this needs to change to a singleton class)
-            for (const auto &agentClient : _ec->get_agent_clients()) { 
-                if (agentClient->get_agent_ip() == om::net::ip4_addr::from_string(node_ip)) {
+            //for (const auto &agentClient : _ec->get_agent_clients()) { 
+            const AgentClient* target_agent;
+            if ( (target_agent = acdb->get_agent_client_by_ip(om::net::ip4_addr().from_string(node_ip)) ) != NULL  ) {
 
-                    ec::Facade::ProtoBufFacade::ProtoBuf protoFacade;
-                    
-                    msg_struct::ECMessage init_msg;
-                    init_msg.set_client_ip(gcm_ip); //IP of the GCM
-                    init_msg.set_req_type(4);
-                    init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
-                    init_msg.set_cgroup_id(0);
+                ec::Facade::ProtoBufFacade::ProtoBuf protoFacade;
+                
+                msg_struct::ECMessage init_msg;
+                init_msg.set_client_ip(gcm_ip); //IP of the GCM
+                init_msg.set_req_type(4);
+                init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
+                init_msg.set_cgroup_id(0);
 
-                    res = protoFacade.sendMessage(agentClient->get_socket(), init_msg);
-                    if(res < 0) {
-                        std::cout << "[ERROR]: create_ec() - Error in writing to agent_clients socket. " << std::endl;
-                        return __FAILED__;
-                    }
-
-                    msg_struct::ECMessage rx_msg;
-                    protoFacade.recvMessage(agentClient->get_socket(), rx_msg);
-
-                    if (rx_msg.rsrc_amnt() == (uint64_t) -1 ) {
-                        std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << agentClient->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
-                        return __FAILED__;
-                    }
-                } else {
-                    continue;
+                res = protoFacade.sendMessage(target_agent->get_socket(), init_msg);
+                if(res < 0) {
+                    std::cout << "[ERROR]: create_ec() - Error in writing to agent_clients socket. " << std::endl;
+                    return __FAILED__;
                 }
-            }        
+
+                msg_struct::ECMessage rx_msg;
+                protoFacade.recvMessage(target_agent->get_socket(), rx_msg);
+
+                if (rx_msg.rsrc_amnt() == (uint64_t) -1 ) {
+                    std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << target_agent->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
+                    return __FAILED__;
+                }
+            } else {
+                continue;
+            }
+            // }       
         }
 
     }
@@ -153,7 +154,7 @@ void ec::ECAPI::ec_decrement_memory_available(uint64_t mem_to_reduce) {
 }
 
 uint64_t ec::ECAPI::get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &container_id) {
-    
+    uint64_t ret = 0;
      // This is where we'll use cAdvisor instead of the agent comm to get the mem limit
     std::cout << "CONTAINER ID USED: " << container_id << std::endl;
     std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";

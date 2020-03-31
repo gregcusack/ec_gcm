@@ -45,6 +45,7 @@ namespace ec {
     using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
     public:
         explicit ElasticContainer(uint32_t _ec_id);
+        ElasticContainer(uint32_t _ec_id, std::vector<AgentClient*> &_agent_clients);
         ~ElasticContainer();
 
         /**
@@ -55,8 +56,9 @@ namespace ec {
         //MISC
         uint32_t get_ec_id() { return ec_id; }
         const subcontainer_map &get_subcontainers() {return subcontainers;}
-        SubContainer &get_subcontainer(const SubContainer::ContainerId &container_id);
+        const SubContainer &get_subcontainer(const SubContainer::ContainerId &container_id);
         AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_agent_map[container_id];}
+        SubContainer *get_sc_for_update(SubContainer::ContainerId &container_id);
         const subcontainer_agent_map &get_subcontainer_agents() {return sc_agent_map;}
         void get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res);
 

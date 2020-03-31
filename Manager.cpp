@@ -12,8 +12,6 @@ ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t serv
     initialize();
     //TODO: this is temporary. should be fixed. there is no need to have 2 instance of agentClients
     AgentClientDB* acdb = acdb->get_agent_client_db_instance();
-    std::cout<<"[dbg] Manager constructor: agent socket file descriptor is: " << agent_clients[0]->get_socket() << std:: endl;
-
 }
 
 void ec::Manager::start(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names,  const std::string &gcm_ip) {
@@ -314,14 +312,7 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
                 std::cout << "[INFO] GCM: reclaimed: " << rx_buff << " bytes" << std::endl;
                 std::cout << "[INFO] GCM: Current amount of reclaimed memory: " << reclaimed << std::endl;
             }
-
-        //}
-
-                std::cout << "[INFO] GCM: reclaimed: " << reclaimed << " bytes" << std::endl;
-                std::cout << "[INFO] GCM: Current amount of total_reclaimed memory: " << total_reclaimed << std::endl;
-            }
         }
-    }
     std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << total_reclaimed << std::endl;
     return total_reclaimed;
 }

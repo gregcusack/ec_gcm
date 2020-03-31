@@ -31,6 +31,13 @@ namespace ec {
         void start(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &gcm_ip);
         virtual void run();
 
+        // Need to remove this when Agent code gets merged with the correct codebase version
+        struct reclaim_msg {
+            uint16_t cgroup_id;
+            uint32_t is_mem;
+            //...maybe it needs more things
+        };
+
     private:
         std::mutex cpulock;
         std::mutex memlock;

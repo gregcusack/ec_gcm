@@ -7,7 +7,7 @@
 
 ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents)
     : server_id(_server_id), ip_address(_ip_address), port(_port), agents(_agents), server_initialized(false),
-    agent_clients_({}), num_of_cli(0) {}
+    num_of_cli(0) {}
 
 
 void ec::Server::initialize() {

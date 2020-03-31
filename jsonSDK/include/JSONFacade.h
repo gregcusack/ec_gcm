@@ -1,5 +1,3 @@
-#endif //JSON_FACADE_H
-
 #ifndef JSON_FACADE_H
 #define JSON_FACADE_H
 
@@ -43,7 +41,7 @@ namespace ec {
                 static void getNodesFromResponse(const std::string &jsonResp, std::vector<std::string> &resultNodes);
                 static void getNodeIPFromResponse(const std::string &jsonResp, std::string &tmp_ip);
 
-                void getStringResponseFromURL(const std::string &urlRequest, std::string &jsonResp);
+                static void getStringResponseFromURL(const std::string &urlRequest, std::string &jsonResp);
                 uint64_t parseCAdvisorResponseLimits(const std::string &jsonResp, const std::string &resource, const std::string &type);
 
             private:

@@ -41,10 +41,11 @@ add_executable(ec_gcm main.cpp
         stats/global/mem_g.h                    stats/global/mem_g.cpp
         Manager.h                               Manager.cpp
         Agents/AgentClient.h                    Agents/AgentClient.cpp
-        Agents/AgentClient.h                    Agents/AgentClient.cpp
+        Agents/AgentClientDB.cpp                Agents/AgentClientDB.h
         jsonSDK/include/JSONFacade.h            jsonSDK/src/JSONFacade.cpp
         deploySDK/include/DeployFacade.h        deploySDK/src/DeployFacade.cpp
         protoBufSDK/include/ProtoBufFacade.h    protoBufSDK/src/ProtoBufFacade.cpp
+        cAdvisorSDK/include/cAdvisorFacade.h    cAdvisorSDK/src/cAdvisorFacade.cpp
         stats/window/Window.h                   stats/window/Window_impl.h
         ${GCM_PROTO_SRC})
 
