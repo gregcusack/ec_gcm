@@ -29,6 +29,9 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
     std::vector<std::string> node_names;
     std::vector<std::string> node_ips;
 
+    std::vector<SubContainer::ContainerId> scs_per_agent;
+    std::vector<SubContainer::ContainerId> scs_done;
+
     ec::Facade::JSONFacade::json jsonFacade;
     ec::Facade::DeployFacade::Deploy deployment;
     uint32_t podNameIndex = 0;
@@ -87,10 +90,22 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
                     std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << target_agent->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
                     return __FAILED__;
                 }
+                std::string docker_id = rx_msg.payload_string();
+                mtx.lock();	
+                _ec->get_sc_from_agent(target_agent, scs_per_agent);	
+                for (const auto &sc_id: scs_per_agent) {	
+                    if(std::count(scs_done.begin(), scs_done.end(), sc_id)) {	
+                        continue;	
+                    } else {	
+                        std::cout << "current sc with id: " << sc_id << std::endl;	
+                        _ec->get_subcontainer(sc_id).set_docker_id(docker_id);	
+                        std::cout << "docker id set: " << _ec->get_subcontainer(sc_id).get_docker_id() << std::endl;	
+                        scs_done.push_back(sc_id);
+                    }
+                }
             } else {
                 continue;
             }
-            // }       
         }
 
     }
