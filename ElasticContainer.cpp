@@ -60,7 +60,7 @@ int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
 }
 
 void ec::ElasticContainer::get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res) {
-    if (sc_agent_map.size() == 0) {
+    if (sc_agent_map.empty()) {
         std::cout << "ERROR: SC-AGENT Map is empty" << std::endl;
         std::exit(EXIT_FAILURE);
     }

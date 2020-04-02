@@ -350,7 +350,7 @@ void ec::Manager::run() {
             std::cout << "=================================================================================================\n";
             std::cout << "[READ API]: the memory limit in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
             std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << "---" << std::endl;
-            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
+//            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
             sleep(1);
         }
         sleep(1);

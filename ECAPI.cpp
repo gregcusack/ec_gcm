@@ -68,8 +68,6 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
             const AgentClient* target_agent = acdb->get_agent_client_by_ip(om::net::ip4_addr::from_string(node_ip));
             if ( target_agent != nullptr  ) {
 
-                ec::Facade::ProtoBufFacade::ProtoBuf protoFacade;
-                
                 msg_struct::ECMessage init_msg;
                 init_msg.set_client_ip(gcm_ip); //IP of the GCM
                 init_msg.set_req_type(4);
@@ -89,7 +87,11 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
                     std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << target_agent->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
                     return __FAILED__;
                 }
-                std::string docker_id = rx_msg.payload_string();
+//                std::string docker_id = rx_msg.payload_string();
+                //TODO: if I delete this print, GCM fails to read the payload string correctly about 50% of the time
+                std::cout << "docker_id: " << rx_msg.payload_string() << std::endl;
+                std::string docker_id = const_cast<std::string &>(rx_msg.payload_string());
+//                std::cout << "rx docker_id from agent: " << docker_id << std::endl;
                 mtx.lock();	
                 _ec->get_sc_from_agent(target_agent, scs_per_agent);	
                 for (const auto &sc_id: scs_per_agent) {	
@@ -97,7 +99,7 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
                         continue;	
                     } else {	
                         std::cout << "current sc with id: " << sc_id << std::endl;	
-                        _ec->get_subcontainer(sc_id).set_docker_id(docker_id);	
+                        _ec->get_subcontainer(sc_id).set_docker_id(docker_id);
                         std::cout << "docker id set: " << _ec->get_subcontainer(sc_id).get_docker_id() << std::endl;	
                         scs_done.push_back(sc_id);
                     }
