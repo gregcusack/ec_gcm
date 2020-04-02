@@ -32,7 +32,7 @@ namespace ec{
 
         void remove_agent_client(const AgentClient& target_agent_client);
 
-        const AgentClient* get_agent_client_by_ip(const om::net::ip4_addr& req) {return agents_db.find(req) != agents_db.end() ? agents_db[req] : NULL;}
+        AgentClient* get_agent_client_by_ip(const om::net::ip4_addr& req);
 
         uint32_t get_agent_clients_db_size() {return agents_db.size();}
 

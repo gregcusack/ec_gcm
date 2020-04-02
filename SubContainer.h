@@ -41,7 +41,7 @@ namespace ec {
         ContainerId* get_c_id() {return &c_id;}
         int get_fd() { return fd; }
         
-        void set_docker_id(std::string docker_id) { _docker_id = docker_id; }
+        void set_docker_id(std::string &docker_id) { _docker_id = docker_id; }
         std::string get_docker_id() { return _docker_id; }
 
         uint64_t sc_get_quota() { return cpu.get_quota(); }

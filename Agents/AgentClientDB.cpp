@@ -25,3 +25,12 @@ void ec::AgentClientDB::remove_agent_client(const AgentClient& target_agent_clie
     agents_db.erase(target_agent_client.get_agent_ip());
 }
 
+ec::AgentClient *ec::AgentClientDB::get_agent_client_by_ip(const om::net::ip4_addr &req) {
+    auto itr = agents_db.find(req);
+    if(itr != agents_db.end()) {
+        return itr->second;
+    }
+    return nullptr;
+//    return agents_db.find(req) != agents_db.end() ? agents_db[req] : nullptr;
+}
+

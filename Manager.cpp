@@ -11,7 +11,7 @@ ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t serv
     //init server
     initialize();
     //TODO: this is temporary. should be fixed. there is no need to have 2 instance of agentClients
-    AgentClientDB* acdb = acdb->get_agent_client_db_instance();
+//    AgentClientDB* acdb = acdb->get_agent_client_db_instance();
 }
 
 void ec::Manager::start(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names,  const std::string &gcm_ip) {
@@ -60,7 +60,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     uint32_t seq_num = seq_number;
 
     if(rx_quota / 1000 != sc->sc_get_quota() / 1000) {
-        std::cout << "quotas do not match (rx, sc->get): (" << rx_quota << ", " << sc->sc_get_quota() << ")" << std::endl;
+//        std::cout << "quotas do not match (rx, sc->get): (" << rx_quota << ", " << sc->sc_get_quota() << ")" << std::endl;
         cpulock.unlock();
         return __ALLOC_SUCCESS__;
     }
@@ -70,7 +70,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     }
 //    std::cout << "total rt given to containers: " << total_rt << std::endl;
     total_rt += ec_get_cpu_unallocated_rt();
-    std::cout << "total rt in system: " << total_rt << std::endl;
+//    std::cout << "total rt in system: " << total_rt << std::endl;
 
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
@@ -103,7 +103,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
         else {
             sc->set_quota_flag(true);
-            std::cout << "successfully resized quota to (overrun): " << updated_quota << "!" << std::endl;
+//            std::cout << "successfully resized quota to (overrun): " << updated_quota << "!" << std::endl;
             sc->get_cpu_stats()->flush();
             ec_decr_overrun(to_sub);
             sc->sc_set_quota(updated_quota);
@@ -136,7 +136,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
             else {
                 sc->set_quota_flag(true);
-                std::cout << "successfully resized quota to (fair share 1): " << updated_quota << "!" << std::endl;
+//                std::cout << "successfully resized quota to (fair share 1): " << updated_quota << "!" << std::endl;
                 ec_decr_unallocated_rt(to_add);
                 sc->sc_set_quota(updated_quota);
                 sc->get_cpu_stats()->flush();
@@ -165,7 +165,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
             else {
                 sc->set_quota_flag(true);
-                std::cout << "successfully resized quota to (fair share 2): " << updated_quota << "!" << std::endl;
+//                std::cout << "successfully resized quota to (fair share 2): " << updated_quota << "!" << std::endl;
                 ec_incr_overrun(overrun);
                 sc->sc_set_quota(updated_quota);
                 sc->get_cpu_stats()->flush();
@@ -187,7 +187,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
             else {
                 sc->set_quota_flag(true);
-                std::cout << "successfully resized quota to (incr): " << rx_quota + extra_rt << "!" << std::endl;
+//                std::cout << "successfully resized quota to (incr): " << rx_quota + extra_rt << "!" << std::endl;
                 ec_decr_unallocated_rt(extra_rt);
                 sc->sc_set_quota(updated_quota);
                 sc->get_cpu_stats()->flush();
@@ -211,7 +211,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
             else {
                 sc->set_quota_flag(true);
-                std::cout << "successfully resized quota to (decr): " << new_quota << "!" << std::endl;
+//                std::cout << "successfully resized quota to (decr): " << new_quota << "!" << std::endl;
 
 //            std::cout << "old quota, new quota: (" << rx_quota << ", " << new_quota << ")" << std::endl;
                 ec_incr_unallocated_rt(rx_quota - new_quota); //unalloc_rt <-- old quota - new quota
@@ -283,7 +283,7 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     uint64_t reclaimed = 0;
     uint64_t rx_buff;
     int ret;
-    AgentClientDB* acdb = acdb->get_agent_client_db_instance();
+    AgentClientDB* acdb = AgentClientDB::get_agent_client_db_instance();
     std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
     for (const auto &container : get_subcontainers()) {
         if (container.second->get_fd() == client_fd) {
@@ -340,6 +340,7 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
     return ret;
 }
 
+//TODO: this should be separated out into own file
 void ec::Manager::run() {
     //ec::SubContainer::ContainerId x ;
     std::cout << "[dbg] In Manager Run function" << std::endl;
@@ -348,7 +349,8 @@ void ec::Manager::run() {
         for(auto sc_ : _ec->get_subcontainers()){
             std::cout << "=================================================================================================\n";
             std::cout << "[READ API]: the memory limit in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
-            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << std::endl;
+            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << "---" << std::endl;
+            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
             sleep(1);
         }
         sleep(1);

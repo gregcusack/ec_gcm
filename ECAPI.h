@@ -63,6 +63,7 @@ namespace ec {
         uint64_t ec_get_fair_cpu_share() { return _ec->get_fair_cpu_share(); }
         uint64_t ec_get_overrun() { return _ec->get_overrun(); }
         uint64_t ec_get_total_cpu() { return _ec->get_total_cpu(); }
+        int64_t get_cpu_quota_in_us(const SubContainer::ContainerId &container_id);
 
 
         //MEM

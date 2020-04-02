@@ -265,19 +265,28 @@ uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseLimits(const std::st
     web::json::value jsonResponse = web::json::value::parse(jsonResp);
     const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
     const web::json::value &kubePodStats = jsonResponse.as_object().cbegin()->second;
-    //std::cout << kubePodName << std::endl;
+    const web::json::object &k = kubePodStats.as_object();//["spec"]]["memory"]["limit"]
+//    std::cout << "resource: " << resource << ", type: " << type << std::endl;
+    return k.at("spec").at(resource).at(type).as_number().to_uint64();
+}
+
+uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseUsages(const std::string &jsonResp, const std::string &resource, const std::string &type) {
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
+    const web::json::value &kubePodStats = jsonResponse.as_object().cbegin()->second;
+    std::cout << kubePodName << std::endl;
     std::vector<uint64_t> tmpVals;
-    for(auto iter = kubePodStats.as_object().cbegin(); iter != kubePodStats.as_object().cend(); ++iter) {
-        if (iter->first.compare("stats") == 0) {
-            const web::json::value &stats_val = iter->second;
-            for (auto &iter_val : stats_val.as_array()) {
-                for(auto iter_obj = iter_val.as_object().cbegin(); iter_obj != iter_val.as_object().cend(); ++iter_obj) {
-                    if (iter_obj->first.compare(resource) == 0) {
-                        const web::json::value &mem_stats = iter_obj->second;
-                        for(auto iter_mem = mem_stats.as_object().cbegin(); iter_mem != mem_stats.as_object().cend(); ++iter_mem) {
-                            if(iter_mem->first.compare(type) == 0) {
+    for(const auto &iter : kubePodStats.as_object()) {
+        if (iter.first == "stats") {
+            const auto &stats_val = iter.second;
+            for (const auto &iter_val : stats_val.as_array()) {
+                for(const auto & iter_obj : iter_val.as_object()) {
+                    if (iter_obj.first == resource) {
+                        const web::json::value &mem_stats = iter_obj.second;
+                        for(const auto & iter_mem : mem_stats.as_object()) {
+                            if(iter_mem.first == type) {
                                 //std::cout << iter_mem->first << ":" << iter_mem->second.as_number().to_uint64() << std::endl;
-                                tmpVals.emplace_back(iter_mem->second.as_number().to_uint64());
+                                tmpVals.emplace_back(iter_mem.second.as_number().to_uint64());
                             }
                         }
                     }
@@ -287,6 +296,7 @@ uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseLimits(const std::st
     }
     return tmpVals.back();
 }
+
 
 uint64_t ec::Facade::JSONFacade::json::get_mem() {
     auto itr = _specs.find("mem");
@@ -319,5 +329,6 @@ uint64_t ec::Facade::JSONFacade::json::get_net() {
     }
     return 0;
 }
+
 
 

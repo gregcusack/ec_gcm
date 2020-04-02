@@ -13,8 +13,11 @@ namespace ec {
         namespace MonitorFacade {
             class CAdvisor {
                 public:
-                    uint64_t getContCPULimit(const std::string agent_ip, const std::string docker_container_id);
-                    uint64_t getContMemLimit(const std::string agent_ip, const std::string docker_container_id);
+                    static uint64_t getContCPULimit(const std::string &agent_ip, const std::string &docker_container_id);
+                    static uint64_t getContCPUQuota(const std::string &agent_ip, const std::string &docker_container_id);
+                    static uint64_t getContCPUShares(const std::string &agent_ip, const std::string &docker_container_id);
+                    static uint64_t getContMemLimit(const std::string &agent_ip, const std::string &docker_container_id);
+                    static uint64_t getContMemUsage(const std::string &agent_ip, const std::string &docker_container_id);
             };
         }
     }

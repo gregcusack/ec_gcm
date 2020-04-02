@@ -154,7 +154,7 @@ bool ec::Server::init_agent_connections() {
     int sockfd, i;
     struct sockaddr_in servaddr;
     uint32_t num_connections = 0;
-    AgentClientDB* agent_clients_db = agent_clients_db->get_agent_client_db_instance();
+    AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
 //    for(i = 0; i < num_agents; i++) {
     for(const auto &ag : agents) {
         if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
