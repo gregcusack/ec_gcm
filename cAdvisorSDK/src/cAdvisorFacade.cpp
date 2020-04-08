@@ -29,5 +29,5 @@ uint64_t ec::Facade::MonitorFacade::CAdvisor::getContMemLimit(const std::string 
 uint64_t ec::Facade::MonitorFacade::CAdvisor::getContMemUsage(const std::string &agent_ip, const std::string &docker_container_id) {
     std::string res;
     ec::Facade::JSONFacade::json::getJSONRequest("http://" + agent_ip + ":8080/api/v1.3/docker/" + docker_container_id, res);
-    return ec::Facade::JSONFacade::json::parseCAdvisorResponseStats(res, "memory", "max_usage");
+    return ec::Facade::JSONFacade::json::parseCAdvisorResponseStats(res, "memory", "usage");
 }
