@@ -70,7 +70,9 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     }
 //    std::cout << "total rt given to containers: " << total_rt << std::endl;
     total_rt += ec_get_cpu_unallocated_rt();
-//    std::cout << "total rt in system: " << total_rt << std::endl;
+    auto tot_rt_and_overrun = total_rt + ec_get_overrun();
+    std::cout << "total rt in system: " << total_rt << std::endl;
+    std::cout << "total rt + overrun in system: " << tot_rt_and_overrun << std::endl;
 
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
