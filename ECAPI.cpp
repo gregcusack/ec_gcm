@@ -203,6 +203,21 @@ uint64_t ec::ECAPI::get_memory_usage_in_bytes(const ec::SubContainer::ContainerI
     return ret;
 }
 
+uint64_t ec::ECAPI::get_machine_free_memory(const ec::SubContainer::ContainerId &container_id) {
+    uint64_t ret = 0;
+     // This is where we'll use cAdvisor instead of the agent comm to get the mem limit
+//    std::cout << "CONTAINER ID USED: " << container_id << std::endl;
+//    std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
+    AgentClient* ac = _ec->get_corres_agent(container_id);  
+    if(!ac) {
+        std::cerr << "[ERROR] NO AgentClient found for container id: " << container_id << std::endl;
+        return 0;
+    }
+    ec::SubContainer sc = _ec->get_subcontainer(container_id);
+    ret = ec::Facade::MonitorFacade::CAdvisor::getMachineFreeMem(ac->get_agent_ip().to_string());
+    return ret;
+}
+
 int64_t ec::ECAPI::get_cpu_quota_in_us(const ec::SubContainer::ContainerId &container_id) {
     uint64_t ret = 0;
     // This is where we'll use cAdvisor instead of the agent comm to get the mem limit

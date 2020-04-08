@@ -41,10 +41,14 @@ namespace ec {
                 static void getNodesFromResponse(const std::string &jsonResp, std::vector<std::string> &resultNodes);
                 static void getNodeIPFromResponse(const std::string &jsonResp, std::string &tmp_ip);
 
+                // Parse Container Stats
                 static void getStringResponseFromURL(const std::string &urlRequest, std::string &jsonResp);
                 static uint64_t parseCAdvisorResponseSpecs(const std::string &jsonResp, const std::string &resource, const std::string &type);
                 static uint64_t parseCAdvisorCPUResponseStats(const std::string &jsonResp, const std::string &resource, const std::string &type);
                 static uint64_t parseCAdvisorResponseStats(const std::string &jsonResp, const std::string &resource, const std::string &type);
+
+                 // Parse Machine Stats
+                static uint64_t parseCAdvisorMachineStats(const std::string &jsonResp, const std::string &type);
 
             private:
                 web::json::value _val;

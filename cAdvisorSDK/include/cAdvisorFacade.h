@@ -16,6 +16,9 @@ namespace ec {
                     static uint64_t getContCPUShares(const std::string &agent_ip, const std::string &docker_container_id);
                     static uint64_t getContMemLimit(const std::string &agent_ip, const std::string &docker_container_id);
                     static uint64_t getContMemUsage(const std::string &agent_ip, const std::string &docker_container_id);
+
+                    static uint64_t getMachineFreeMem(const std::string &agent_ip);
+                    
             };
         }
     }

@@ -31,3 +31,9 @@ uint64_t ec::Facade::MonitorFacade::CAdvisor::getContMemUsage(const std::string 
     ec::Facade::JSONFacade::json::getJSONRequest("http://" + agent_ip + ":8080/api/v1.3/docker/" + docker_container_id, res);
     return ec::Facade::JSONFacade::json::parseCAdvisorResponseStats(res, "memory", "usage");
 }
+
+uint64_t ec::Facade::MonitorFacade::CAdvisor::getMachineFreeMem(const std::string &agent_ip) {
+    std::string res;
+    ec::Facade::JSONFacade::json::getJSONRequest("http://" + agent_ip + ":8080/api/v1.3/machine", res);
+    return ec::Facade::JSONFacade::json::parseCAdvisorMachineStats(res, "memory_free");
+}

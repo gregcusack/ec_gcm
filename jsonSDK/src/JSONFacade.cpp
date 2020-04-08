@@ -294,6 +294,12 @@ uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseStats(const std::str
     return last.at(resource).at(type).as_number().to_uint64();
 }
 
+uint64_t ec::Facade::JSONFacade::json::parseCAdvisorMachineStats(const std::string &jsonResp, const std::string &type) {
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    const web::json::object &machineSpecs = jsonResponse.as_object();
+    return machineSpecs.at(type).as_number().to_uint64();
+}
+
 
 uint64_t ec::Facade::JSONFacade::json::get_mem() {
     auto itr = _specs.find("mem");
