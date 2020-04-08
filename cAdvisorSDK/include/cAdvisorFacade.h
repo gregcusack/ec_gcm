@@ -5,8 +5,6 @@
 #include <fstream>
 #include <sstream>
 #include "../../jsonSDK/include/JSONFacade.h"
-#include "../../protoBufSDK/include/ProtoBufFacade.h"
-#include "../../protoBufSDK/msg.pb.h"
 
 namespace ec {
     namespace Facade {

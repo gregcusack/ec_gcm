@@ -134,7 +134,17 @@ The CloudLab cluster is setup in the following manner: One GCM master node and t
       * Edit the file: /etc/apt/sources.list.d/kubernetes.list to add `deb http://apt.kubernetes.io/ kubernetes-xenial main`
       * `sudo apt-get update`
       * `sudo apt-get install -y kubelet kubeadm kubectl`
-  4. Install [Go](https://www.howtoforge.com/how-to-install-go-programming-language-on-linux-ubuntu-debian-centos/)
+  4. Install latest version of Go (version 1.14.1 has been tested):
+      * `sudo apt-get update `
+      * `cd /tmp`
+      * `wget https://dl.google.com/go/go1.14.1.linux-amd64.tar.gz`
+      * `sudo tar -xvf go1.14.1.linux-amd64.tar.gz`
+      * `sudo mv go /usr/local`
+      * Add the Following lines in ~/.profile
+        * `export GOROOT=/usr/local/go`
+        * `export GOPATH=$HOME/go`    
+        * `export PATH=$GOPATH/bin:$GOROOT/bin:$PATH`
+      * `source ~/.profile`
 
 
 ## K8s Cluster Initialization
@@ -193,10 +203,8 @@ Finally, we're at the step where we can deploy a distributed container applicati
 ### Worker Nodes
 1. Start the Agent processes on each of the worker nodes to run in the background
 2. Start the cAdvisor process on each of the worker nodes by navigating to directory: EC-4.20.16/ec_gcm/cAdvisorSDK/cadvisor and entering the following commands:
-  ```
-  sudo make
-  sudo ./cadvisor
-  ```
+    * `sudo make build`
+    * `sudo ./cadvisor`
 
 ### Master Node
 1. Run a kube proxy via the command: `kubectl proxy -p 8000` 
