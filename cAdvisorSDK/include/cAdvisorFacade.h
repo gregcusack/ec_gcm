@@ -11,7 +11,7 @@ namespace ec {
         namespace MonitorFacade {
             class CAdvisor {
                 public:
-                    static uint64_t getContCPULimit(const std::string &agent_ip, const std::string &docker_container_id);
+                    static uint64_t getContCPUThrottledPeriods(const std::string &agent_ip, const std::string &docker_container_id);
                     static uint64_t getContCPUQuota(const std::string &agent_ip, const std::string &docker_container_id);
                     static uint64_t getContCPUShares(const std::string &agent_ip, const std::string &docker_container_id);
                     static uint64_t getContMemLimit(const std::string &agent_ip, const std::string &docker_container_id);

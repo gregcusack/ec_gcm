@@ -6,9 +6,9 @@
 		"ports": 80,
 		"net": 10
 	},
-	"gcmIP": "10.0.2.15",
+	"gcmIP": "128.105.144.20",
 	"agentIPs": [
-		"10.0.2.15"
+		"128.105.144.93"
 	],
 	"images": [
 		"gregcusack/flask-app:absat-1",

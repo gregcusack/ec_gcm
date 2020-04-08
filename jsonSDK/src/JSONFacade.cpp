@@ -261,40 +261,37 @@ void ec::Facade::JSONFacade::json::getNodeIPFromResponse(const std::string &json
     }
 }
 
-uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseLimits(const std::string &jsonResp, const std::string &resource, const std::string &type){
+uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseSpecs(const std::string &jsonResp, const std::string &resource, const std::string &type){
     web::json::value jsonResponse = web::json::value::parse(jsonResp);
     const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
-    const web::json::value &kubePodStats = jsonResponse.as_object().cbegin()->second;
-    const web::json::object &k = kubePodStats.as_object();//["spec"]]["memory"]["limit"]
+    const web::json::value &kubePodSpecs = jsonResponse.as_object().cbegin()->second;
+    const web::json::object &k = kubePodSpecs.as_object();//["spec"]]["memory"]["limit"]
 //    std::cout << "resource: " << resource << ", type: " << type << std::endl;
     return k.at("spec").at(resource).at(type).as_number().to_uint64();
 }
 
-uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseUsages(const std::string &jsonResp, const std::string &resource, const std::string &type) {
+uint64_t ec::Facade::JSONFacade::json::parseCAdvisorCPUResponseStats(const std::string &jsonResp, const std::string &resource, const std::string &type){
     web::json::value jsonResponse = web::json::value::parse(jsonResp);
     const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
     const web::json::value &kubePodStats = jsonResponse.as_object().cbegin()->second;
-    std::cout << kubePodName << std::endl;
-    std::vector<uint64_t> tmpVals;
-    for(const auto &iter : kubePodStats.as_object()) {
-        if (iter.first == "stats") {
-            const auto &stats_val = iter.second;
-            for (const auto &iter_val : stats_val.as_array()) {
-                for(const auto & iter_obj : iter_val.as_object()) {
-                    if (iter_obj.first == resource) {
-                        const web::json::value &mem_stats = iter_obj.second;
-                        for(const auto & iter_mem : mem_stats.as_object()) {
-                            if(iter_mem.first == type) {
-                                //std::cout << iter_mem->first << ":" << iter_mem->second.as_number().to_uint64() << std::endl;
-                                tmpVals.emplace_back(iter_mem.second.as_number().to_uint64());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return tmpVals.back();
+    const web::json::object &k = kubePodStats.as_object();//["stats"]{["memory"]["limit"]}{}{}{}..
+//    std::cout << "resource: " << resource << ", type: " << type << std::endl;
+    const auto len = k.at("stats").as_array().size();
+//    std::cout << "length of array response " << len << std::endl;
+    const auto &last = k.at("stats").as_array().at(len-1).as_object();
+    return last.at(resource).at('cfs').at(type).as_number().to_uint64();
+}
+
+uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseStats(const std::string &jsonResp, const std::string &resource, const std::string &type){
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
+    const web::json::value &kubePodStats = jsonResponse.as_object().cbegin()->second;
+    const web::json::object &k = kubePodStats.as_object();//["stats"]{["memory"]["limit"]}{}{}{}..
+//    std::cout << "resource: " << resource << ", type: " << type << std::endl;
+    const auto len = k.at("stats").as_array().size();
+//    std::cout << "length of array response " << len << std::endl;
+    const auto &last = k.at("stats").as_array().at(len-1).as_object();
+    return last.at(resource).at(type).as_number().to_uint64();
 }
 
 

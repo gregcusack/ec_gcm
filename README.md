@@ -203,7 +203,7 @@ Finally, we're at the step where we can deploy a distributed container applicati
 ### Worker Nodes
 1. Start the Agent processes on each of the worker nodes to run in the background
 2. Start the cAdvisor process on each of the worker nodes by navigating to directory: EC-4.20.16/ec_gcm/cAdvisorSDK/cadvisor and entering the following commands:
-    * `sudo make build`
+    * `make build`
     * `sudo ./cadvisor`
 
 ### Master Node
