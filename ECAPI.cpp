@@ -82,7 +82,11 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
 
                 msg_struct::ECMessage rx_msg;
                 ec::Facade::ProtoBufFacade::ProtoBuf::recvMessage(target_agent->get_socket(), rx_msg);
-
+                // This should check if the agent returns a docker id. Solved the bug where agent returns empty string and as a consequence, cadvsior returns stats from root container
+                if (rx_msg.payload_string().size() == 0) {
+                    std::cout << "[deployment error]: No docker id recieved from Agent. " << target_agent->get_agent_ip() << ". Check Agent Logs for more info. " << std::endl;
+                    return __FAILED__;
+                }
                 if (rx_msg.rsrc_amnt() == (uint64_t) -1 ) {
                     std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << target_agent->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
                     return __FAILED__;
