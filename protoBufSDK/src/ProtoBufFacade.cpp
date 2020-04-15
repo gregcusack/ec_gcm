@@ -7,7 +7,7 @@ int ec::Facade::ProtoBufFacade::ProtoBuf::sendMessage(const int &sock_fd, const 
     google::protobuf::io::CodedOutputStream codedOut(&arrayOut);
     codedOut.WriteVarint32(msg.ByteSizeLong());
     msg.SerializeToCodedStream(&codedOut);
-
+    std::cout << "[PROTOBUF log]: TX size: " << tx_size << std::endl;
     if (write(sock_fd, (void*) tx_buf, tx_size) < 0) {
         std::cout << "[PROTOBUF ERROR]: Error in writing to agent_clients socket: " << sock_fd << std::endl;
         return -1;
