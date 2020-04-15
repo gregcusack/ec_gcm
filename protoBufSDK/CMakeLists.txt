@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.15)
+project(ec_gcm_proto)
+
+set(CMAKE_STANDARD 17)
+
+find_program(PROTOBUF_PROTOC protoc)
+
+INCLUDE(FindProtobuf)
+FIND_PACKAGE(Protobuf REQUIRED)
+INCLUDE_DIRECTORIES(${PROTOBUF_INCLUDE_DIR})
+PROTOBUF_GENERATE_CPP(PROTO_SRC PROTO_HEADER msg.proto)
+ADD_LIBRARY(proto ${PROTO_HEADER} ${PROTO_SRC})
