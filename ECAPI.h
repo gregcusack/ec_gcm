@@ -137,7 +137,12 @@ namespace ec {
         std::mutex mtx;           
         uint32_t manager_id;
         ElasticContainer *_ec;
-        std::mutex sendlock;
+//        std::unordered_map<ec::AgentClient, std::pair<int32_t, int32_t> > pod_conn_check;
+        std::unordered_map<om::net::ip4_addr, std::pair<int32_t, int32_t> > pod_conn_check; //<ip, {depPod, conPod}>
+
+        std::condition_variable cv;
+        std::mutex cv_mtx;
+
 
     };
 }

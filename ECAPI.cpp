@@ -35,6 +35,7 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
 //    ec::Facade::DeployFacade::Deploy deployment;
     uint32_t podNameIndex = 0;
     for (const auto &app_image: app_images) {
+        std::cout << "app image: " << app_image << std::endl;
         // Step 1: Create a Pod on each of the nodes running an agent - k8s takes care of this
         //         todo: this will change we implement k8-yaml support (still brainstorming how best to do that)           
         std::cout << "[DEPLOY LOG] Generating JSON POD File for image: " << app_image << std::endl;
@@ -64,9 +65,21 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
 
         for (const auto &node_ip : node_ips) {
             // Get the Agent with this node ip first (this needs to change to a singleton class)
-            //for (const auto &agentClient : _ec->get_agent_clients()) { 
-            const AgentClient* target_agent = acdb->get_agent_client_by_ip(om::net::ip4_addr::from_string(node_ip));
-            if ( target_agent != nullptr  ) {
+            //for (const auto &agentClient : _ec->get_agent_clients()) {
+            auto node_ip_om = om::net::ip4_addr::from_string(node_ip);
+            const AgentClient* target_ac = acdb->get_agent_client_by_ip(node_ip_om);
+            if (target_ac != nullptr  ) {
+
+                std::cout << "getting pod_conn_lock" << std::endl;
+                mtx.lock();
+                std::cout << "got pod_conn_lock" << std::endl;
+                auto itr = pod_conn_check.find(node_ip_om);
+                if(itr == pod_conn_check.end()) {
+                    pod_conn_check.insert(std::make_pair(node_ip_om, std::make_pair(1,0) )); //dep 1 cont
+                } else {
+                    itr->second.first++; //increase new pod deployment
+                }
+                mtx.unlock();
 
                 msg_struct::ECMessage init_msg;
                 init_msg.set_client_ip(gcm_ip); //IP of the GCM
@@ -74,30 +87,49 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
                 init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
                 init_msg.set_cgroup_id(0);
 
-                res = ec::Facade::ProtoBufFacade::ProtoBuf::sendMessage(target_agent->get_socket(), init_msg);
+                res = ec::Facade::ProtoBufFacade::ProtoBuf::sendMessage(target_ac->get_socket(), init_msg);
                 if(res < 0) {
                     std::cout << "[ERROR]: create_ec() - Error in writing to agent_clients socket. " << std::endl;
                     return __FAILED__;
                 }
+                std::cout << "got sendMessage back" << std::endl;
 
+                /* TODO: Get back docker_id, cgroup_id - and note node IP
+                 * keep track of all cgroups/pods that have successfully connected to GCM
+                 * add docker_id to cgroup here.
+                 * delete the get_Sc_from_agent call. we don't need it. delete for loop (but need add docker_id logic)
+                 */
                 msg_struct::ECMessage rx_msg;
-                ec::Facade::ProtoBufFacade::ProtoBuf::recvMessage(target_agent->get_socket(), rx_msg);
+                ec::Facade::ProtoBufFacade::ProtoBuf::recvMessage(target_ac->get_socket(), rx_msg);
                 // This should check if the agent returns a docker id. Solved the bug where agent returns empty string and as a consequence, cadvsior returns stats from root container
-                if (rx_msg.payload_string().size() == 0) {
-                    std::cout << "[deployment error]: No docker id recieved from Agent. " << target_agent->get_agent_ip() << ". Check Agent Logs for more info. " << std::endl;
+                if (rx_msg.payload_string().empty()) {
+                    std::cout << "[deployment error]: No docker id recieved from Agent. " << target_ac->get_agent_ip() << ". Check Agent Logs for more info. " << std::endl;
                     return __FAILED__;
                 }
                 if (rx_msg.rsrc_amnt() == (uint64_t) -1 ) {
-                    std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << target_agent->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
+                    std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << target_ac->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
                     return __FAILED__;
                 }
 //                std::string docker_id = rx_msg.payload_string();
                 //TODO: if I delete this print, GCM fails to read the payload string correctly about 50% of the time
                 std::cout << "docker_id: " << rx_msg.payload_string() << std::endl;
                 std::string docker_id = const_cast<std::string &>(rx_msg.payload_string());
+                //TODO: wait until every pod has been connected to manager
 //                std::cout << "rx docker_id from agent: " << docker_id << std::endl;
-                mtx.lock();	
-                _ec->get_sc_from_agent(target_agent, scs_per_agent);	
+//                mtx.lock();
+
+                std::unique_lock<std::mutex> lk(cv_mtx);
+                cv.wait(lk, [this, node_ip_om] {
+                    auto itr = pod_conn_check.find(node_ip_om);
+                    std::cout << "in lambda" << std::endl;
+                    std::cout << "create_ec() itr->first, second: " << itr->second.first << ", " << itr->second.second << std::endl;
+                    return itr->second.first == itr->second.second;
+                });
+
+                std::cout << "out lambda" << std::endl;
+
+                _ec->get_sc_from_agent(target_ac, scs_per_agent);
+//                mtx.unlock();
                 for (const auto &sc_id: scs_per_agent) {	
                     if(std::count(scs_done.begin(), scs_done.end(), sc_id)) {	
                         continue;	
@@ -114,6 +146,7 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
         }
 
     }
+    std::cout << "[EC LOG]: Done with create_ec()" << std::endl;
     
     return 0;
 }
@@ -147,8 +180,6 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
     _ec->update_fair_cpu_share();
     std::cout << "fair share: " << ec_get_fair_cpu_share() << std::endl;
 
-
-
     // And so once a subcontainer is created and added to the appropriate distributed container,
     // we can now create a map to link the container_id and agent_client
     
@@ -159,11 +190,22 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
     std::cerr << "[dbg] Agent client ip: " << target_agent-> get_agent_ip() << std::endl;
     std::cerr << "[dbg] Agent ip: " << agent_ip << std::endl;
     if ( target_agent ){
+//        mtx.lock();
         _ec->add_to_agent_map(*sc->get_c_id(), target_agent);
-        mtx.unlock();
+//        mtx.unlock();
     } else {
         std::cerr<< "[ERROR] SubContainer's node IP or Agent IP not found!" << std::endl;
     }
+
+    std::lock_guard<std::mutex> lk(cv_mtx);
+    auto itr = pod_conn_check.find(agent_ip);
+    if(itr == pod_conn_check.end()) {
+        std::cout << "[ECAPI ERROR]: Should not reach here. no agent ip found in pod_conn_check map" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    itr->second.second++;
+    std::cout << "handle() itr->first, second: " << itr->second.first << ", " << itr->second.second << std::endl;
+    cv.notify_one();
 
     res->request = 0; //giveback (or send back)
     return ret;

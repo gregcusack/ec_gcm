@@ -19,7 +19,7 @@ ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient 
     std::cout << "[Elastic Container Log] memory_available on init: " << _mem.get_mem_available() << std::endl;
 
     subcontainers = subcontainer_map();
-    sc_agent_map = subcontainer_agent_map();
+    sc_ac_map = subcontainer_agentclient_map();
 
 }
 
@@ -55,17 +55,21 @@ int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
         //TODO: should delete sc
         return __ALLOC_FAILED__;
     }
+//    sc_map_lock.lock();
     subcontainers.insert({*(_sc.get_c_id()), &_sc});
+//    sc_map_lock.unlock();
+    std::cout << "[EC LOG]: sc inserted: " << *_sc.get_c_id() << std::endl;
     return __ALLOC_INIT__;
 }
 
 void ec::ElasticContainer::get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res) {
-    if (sc_agent_map.empty()) {
+//    while(sc_ac_map.empty()) {}
+    if (sc_ac_map.empty()) {
         std::cout << "ERROR: SC-AGENT Map is empty" << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
-    for (const auto &i: sc_agent_map) {
+    for (const auto &i: sc_ac_map) {
         if (i.second == client) {
             //res = i.first;
             res.push_back(i.first);

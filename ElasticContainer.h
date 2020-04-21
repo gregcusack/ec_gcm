@@ -42,7 +42,7 @@ namespace ec {
 //    struct Server;
     class ElasticContainer {
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
-    using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
+    using subcontainer_agentclient_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
     public:
         explicit ElasticContainer(uint32_t _ec_id);
         ElasticContainer(uint32_t _ec_id, std::vector<AgentClient*> &_agent_clients);
@@ -57,9 +57,9 @@ namespace ec {
         uint32_t get_ec_id() { return ec_id; }
         const subcontainer_map &get_subcontainers() {return subcontainers;}
         SubContainer &get_subcontainer(const SubContainer::ContainerId &container_id);
-        AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_agent_map[container_id];}
+        AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_ac_map[container_id];}
         SubContainer *get_sc_for_update(SubContainer::ContainerId &container_id);
-        const subcontainer_agent_map &get_subcontainer_agents() {return sc_agent_map;}
+        const subcontainer_agentclient_map &get_subcontainer_agents() {return sc_ac_map;}
         void get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res);
 
         //CPU
@@ -81,7 +81,7 @@ namespace ec {
          **/
 
         //MISC
-        void add_to_agent_map(SubContainer::ContainerId &id, AgentClient* client) { sc_agent_map.insert({id, client}); }
+        void add_to_agent_map(SubContainer::ContainerId &id, AgentClient* client) { sc_ac_map.insert({id, client}); }
 
         //CPU
         void set_ec_period(int64_t _period)  { _cpu.set_period(_period); }   //will need to update maanger too
@@ -123,7 +123,7 @@ namespace ec {
     private:
         uint32_t ec_id;
         subcontainer_map subcontainers;
-        subcontainer_agent_map sc_agent_map;
+        subcontainer_agentclient_map sc_ac_map;
         uint64_t fair_cpu_share;
 
         //cpu

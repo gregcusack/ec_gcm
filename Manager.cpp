@@ -10,8 +10,6 @@ ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t serv
 
     //init server
     initialize();
-    //TODO: this is temporary. should be fixed. there is no need to have 2 instance of agentClients
-//    AgentClientDB* acdb = acdb->get_agent_client_db_instance();
 }
 
 void ec::Manager::start(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names,  const std::string &gcm_ip) {
@@ -351,7 +349,7 @@ void ec::Manager::run() {
         for(auto sc_ : _ec->get_subcontainers()){
             std::cout << "=================================================================================================\n";
             std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
-            //std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << "---" << get_memory_usage_in_bytes(sc_.first) << std::endl;
+//            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << "---" << get_memory_usage_in_bytes(sc_.first) << std::endl;
             //std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
             std::cout << "=================================================================================================\n";
 //            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
