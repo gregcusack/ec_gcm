@@ -97,6 +97,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
         else {
             sc->set_quota_flag(true);
+            std::cout << "successfully resized quota to (overrun): " << updated_quota << "!" << std::endl;
             sc->get_cpu_stats()->flush();
             ec_decr_overrun(to_sub);
             sc->sc_set_quota(updated_quota);
@@ -120,6 +121,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
             else {
                 sc->set_quota_flag(true);
+                std::cout << "successfully resized quota to (fair share 1): " << updated_quota << "!" << std::endl;
                 ec_decr_unallocated_rt(to_add);
                 sc->sc_set_quota(updated_quota);
                 sc->get_cpu_stats()->flush();
@@ -143,6 +145,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
             else {
                 sc->set_quota_flag(true);
+                std::cout << "successfully resized quota to (fair share 2): " << updated_quota << "!" << std::endl;
                 ec_incr_overrun(overrun);
                 sc->sc_set_quota(updated_quota);
                 sc->get_cpu_stats()->flush();
@@ -159,6 +162,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
             else {
                 sc->set_quota_flag(true);
+                std::cout << "successfully resized quota to (incr): " << rx_quota + extra_rt << "!" << std::endl;
                 ec_decr_unallocated_rt(extra_rt);
                 sc->sc_set_quota(updated_quota);
                 sc->get_cpu_stats()->flush();
@@ -175,6 +179,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
             else {
                 sc->set_quota_flag(true);
+                std::cout << "successfully resized quota to (decr): " << new_quota << "!" << std::endl;
                 ec_incr_unallocated_rt(rx_quota - new_quota); //unalloc_rt <-- old quota - new quota
                 sc->sc_set_quota(new_quota);
                 sc->get_cpu_stats()->flush();
