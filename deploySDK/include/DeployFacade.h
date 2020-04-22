@@ -14,6 +14,7 @@ namespace ec {
                     static int deployPod(const std::string &jsonString);
                     static void getNodesWithPod(const std::string &podName, std::vector<std::string> &resultNodes);
                     static void getNodeIPs(const std::vector<std::string> &nodeNames, std::vector<std::string> &nodeIPs);
+                    static void getPodStatus(const std::string &podName, std::string &status);
             };
         }
     }
@@ -56,6 +57,10 @@ namespace ec {
 //                    if(_deploymentType == K8s) {
 //                        k8Facade::getNodeIPs(nodeNames, nodeIPs);
 //                    }
+                }
+
+                static void getContainerStatus(const std::string &containerName, std::string &status) {
+                    k8Facade::getPodStatus(containerName, status);
                 }
 
             private:

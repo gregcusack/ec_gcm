@@ -261,6 +261,11 @@ void ec::Facade::JSONFacade::json::getNodeIPFromResponse(const std::string &json
     }
 }
 
+void ec::Facade::JSONFacade::json::getPodStatusFromResponse(const std::string &jsonResp, std::string &tmp_ip) {
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    tmp_ip = jsonResponse.at(U("status")).at(U("phase")).as_string();
+}
+
 uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseSpecs(const std::string &jsonResp, const std::string &resource, const std::string &type){
     web::json::value jsonResponse = web::json::value::parse(jsonResp);
     const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
@@ -332,6 +337,4 @@ uint64_t ec::Facade::JSONFacade::json::get_net() {
     }
     return 0;
 }
-
-
 

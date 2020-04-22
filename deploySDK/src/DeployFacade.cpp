@@ -32,3 +32,10 @@ void ec::Facade::DeployFacade::k8Facade::getNodeIPs(const std::vector<std::strin
         nodeIPs.push_back(tmp_ip);
     }
 }
+
+void ec::Facade::DeployFacade::k8Facade::getPodStatus(const std::string &podName, std::string &status) {
+    std::string res;
+    ec::Facade::JSONFacade::json::getJSONRequest("http://localhost:8000/api/v1/namespaces/default/pods/" + podName, res);
+    ec::Facade::JSONFacade::json::getPodStatusFromResponse(res, status);
+
+}

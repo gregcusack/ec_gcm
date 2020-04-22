@@ -68,11 +68,8 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
             //for (const auto &agentClient : _ec->get_agent_clients()) {
             auto node_ip_om = om::net::ip4_addr::from_string(node_ip);
             const AgentClient* target_ac = acdb->get_agent_client_by_ip(node_ip_om);
-            if (target_ac != nullptr  ) {
-
-                std::cout << "getting pod_conn_lock" << std::endl;
+            if (target_ac) {
                 mtx.lock();
-                std::cout << "got pod_conn_lock" << std::endl;
                 auto itr = pod_conn_check.find(node_ip_om);
                 if(itr == pod_conn_check.end()) {
                     pod_conn_check.insert(std::make_pair(node_ip_om, std::make_pair(1,0) )); //dep 1 cont
@@ -80,6 +77,12 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
                     itr->second.first++; //increase new pod deployment
                 }
                 mtx.unlock();
+
+                std::string status;
+                while(status != "Running") {
+                    ec::Facade::DeployFacade::Deploy::getContainerStatus(pod_name, status);
+                }
+                std::cout << "POD STATUS1: " << status << std::endl;
 
                 msg_struct::ECMessage init_msg;
                 init_msg.set_client_ip(gcm_ip); //IP of the GCM
@@ -121,16 +124,12 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
                 std::unique_lock<std::mutex> lk(cv_mtx);
                 cv.wait(lk, [this, node_ip_om] {
                     auto itr = pod_conn_check.find(node_ip_om);
-                    std::cout << "in lambda" << std::endl;
                     std::cout << "create_ec() itr->first, second: " << itr->second.first << ", " << itr->second.second << std::endl;
                     return itr->second.first == itr->second.second;
                 });
 
-                std::cout << "out lambda" << std::endl;
-
                 _ec->get_sc_from_agent(target_ac, scs_per_agent);
-//                mtx.unlock();
-                for (const auto &sc_id: scs_per_agent) {	
+                for (const auto &sc_id: scs_per_agent) {
                     if(std::count(scs_done.begin(), scs_done.end(), sc_id)) {	
                         continue;	
                     } else {	
@@ -252,8 +251,6 @@ uint64_t ec::ECAPI::get_memory_usage_in_bytes(const ec::SubContainer::ContainerI
 uint64_t ec::ECAPI::get_machine_free_memory(const ec::SubContainer::ContainerId &container_id) {
     uint64_t ret = 0;
      // This is where we'll use cAdvisor instead of the agent comm to get the mem limit
-//    std::cout << "CONTAINER ID USED: " << container_id << std::endl;
-//    std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
     AgentClient* ac = _ec->get_corres_agent(container_id);  
     if(!ac) {
         std::cerr << "[ERROR] NO AgentClient found for container id: " << container_id << std::endl;
@@ -267,8 +264,6 @@ uint64_t ec::ECAPI::get_machine_free_memory(const ec::SubContainer::ContainerId 
 int64_t ec::ECAPI::get_cpu_quota_in_us(const ec::SubContainer::ContainerId &container_id) {
     uint64_t ret = 0;
     // This is where we'll use cAdvisor instead of the agent comm to get the mem limit
-//    std::cout << "CONTAINER ID USED: " << container_id << std::endl;
-//    std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
     AgentClient* ac = _ec->get_corres_agent(container_id);
     if(!ac) {
         std::cerr << "[ERROR] NO AgentClient found for container id: " << container_id << std::endl;

@@ -40,6 +40,7 @@ namespace ec {
                 static void getJSONRequest(const std::string &urlRequest, std::string &jsonResp);
                 static void getNodesFromResponse(const std::string &jsonResp, std::vector<std::string> &resultNodes);
                 static void getNodeIPFromResponse(const std::string &jsonResp, std::string &tmp_ip);
+                static void getPodStatusFromResponse(const std::string &jsonResp, std::string &status);
 
                 // Parse Container Stats
                 static void getStringResponseFromURL(const std::string &urlRequest, std::string &jsonResp);
