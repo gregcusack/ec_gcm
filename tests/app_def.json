@@ -1,7 +1,7 @@
 {
 	"name": "app1",
 	"specs": {
-		"mem": 500,
+		"mem": 300,
 		"cpu": 500,
 		"ports": 80,
 		"net": 10

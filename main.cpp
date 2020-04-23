@@ -5,10 +5,12 @@
 #include "ElasticContainer.h"
 #include "SubContainer.h"
 #include "types/msg.h"
+#include "Agents/AgentClientDB.h"
 #include <cpprest/http_client.h>
 #include <cpprest/json.h> // JSON library
 
 #define GCM_PORT        8888             //Not sure if we need a port here tbh
+ec::AgentClientDB* ec::AgentClientDB::agent_clients_db_instance = 0;
 
 int main(int argc, char* argv[]){
 

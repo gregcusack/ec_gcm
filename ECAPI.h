@@ -17,12 +17,14 @@
 #include "deploySDK/include/DeployFacade.h"
 #include "protoBufSDK/include/ProtoBufFacade.h"
 #include "protoBufSDK/msg.pb.h"
-
+#include "cAdvisorSDK/include/cAdvisorFacade.h"
 #define __FAILED__ -1
 
 namespace ec {
     class ECAPI {
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
+    using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
+
     public:
 //        ECAPI(uint32_t _ec_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
         ECAPI(){}
@@ -45,6 +47,8 @@ namespace ec {
         uint32_t get_ec_id() { return _ec->get_ec_id(); }
         //TODO: this should be wrapped in ElasticContainer - shouldn't be able to access from Manager
         [[nodiscard]] const subcontainer_map  &get_subcontainers() const {return _ec->get_subcontainers(); }
+        [[nodiscard]] const subcontainer_agent_map  &get_subcontainer_agents() const {return _ec->get_subcontainer_agents(); }
+
         const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id) {return _ec->get_subcontainer(
                     container_id);}
         SubContainer *ec_get_sc_for_update(SubContainer::ContainerId &container_id) {return _ec->get_sc_for_update(
@@ -59,19 +63,22 @@ namespace ec {
         uint64_t ec_get_fair_cpu_share() { return _ec->get_fair_cpu_share(); }
         uint64_t ec_get_overrun() { return _ec->get_overrun(); }
         uint64_t ec_get_total_cpu() { return _ec->get_total_cpu(); }
+        int64_t get_cpu_quota_in_us(const SubContainer::ContainerId &container_id);
 
 
         //MEM
         uint64_t ec_get_memory_available() { return _ec->get_memory_available(); }
         uint64_t ec_get_memory_slice() { return _ec->get_memory_slice(); }
         uint64_t get_memory_limit_in_bytes(const SubContainer::ContainerId &container_id);
-
+        uint64_t get_memory_usage_in_bytes(const SubContainer::ContainerId &container_id);
+        
+        // Machine Stats
+        uint64_t get_machine_free_memory(const SubContainer::ContainerId &container_id);
 
         //AGENTS
-        uint32_t get_num_agent_clients() { return _ec->get_num_agent_clients(); }
-        [[nodiscard]] const std::vector<AgentClient*> &get_agent_clients() const {return _ec->get_agent_clients(); }
+        //uint32_t get_num_agent_clients() { return _ec->get_num_agent_clients(); }
+        // [[nodiscard]] const std::vector<AgentClient*> &get_agent_clients() const {return _ec->get_agent_clients(); }
         int64_t get_sc_quota(ec::SubContainer *sc);
-
 
         /**
          *******************************************************
@@ -125,11 +132,17 @@ namespace ec {
          * HANDLERS
          */
 
+
     protected:
+        std::mutex mtx;           
         uint32_t manager_id;
-        std::vector<AgentClient *> agent_clients;
         ElasticContainer *_ec;
-        std::mutex sendlock;
+//        std::unordered_map<ec::AgentClient, std::pair<int32_t, int32_t> > pod_conn_check;
+        std::unordered_map<om::net::ip4_addr, std::pair<int32_t, int32_t> > pod_conn_check; //<ip, {depPod, conPod}>
+
+        std::condition_variable cv;
+        std::mutex cv_mtx;
+
 
     };
 }

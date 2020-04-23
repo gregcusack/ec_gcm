@@ -66,7 +66,7 @@ namespace ec {
         uint32_t get_server_id() { return server_id; }
         std::mutex mtx;
 
-        int init_agent_connections();
+        bool init_agent_connections();
     
     private:
 
@@ -81,7 +81,6 @@ namespace ec {
         uint32_t num_of_cli;
 
     protected:
-        std::vector<AgentClient *> agent_clients_;
         uint32_t server_id;
     };
 }

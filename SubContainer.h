@@ -40,6 +40,10 @@ namespace ec {
 
         ContainerId* get_c_id() {return &c_id;}
         int get_fd() { return fd; }
+        
+        void set_docker_id(std::string &docker_id) { _docker_id = docker_id; }
+        std::string get_docker_id() { return _docker_id; }
+
         uint64_t sc_get_quota() { return cpu.get_quota(); }
         uint32_t sc_get_throttled() { return cpu.get_throttled(); }
 
@@ -58,10 +62,10 @@ namespace ec {
         bool get_set_quota_flag() { return cpu.get_set_quota_flag(); }
         void set_quota_flag(bool val) { cpu.set_set_quota_flag(val); }
 
-
     private:
         ContainerId c_id;
         int fd;
+        std::string _docker_id;
 
         local::stats::cpu cpu;
         local::stats::mem mem;

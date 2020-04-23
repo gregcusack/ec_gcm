@@ -3,10 +3,11 @@
 //
 
 #include "Server.h"
+#include "Agents/AgentClientDB.h"
 
 ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents)
     : server_id(_server_id), ip_address(_ip_address), port(_port), agents(_agents), server_initialized(false),
-    agent_clients_({}), num_of_cli(0) {}
+    num_of_cli(0) {}
 
 
 void ec::Server::initialize() {
@@ -149,11 +150,11 @@ void ec::Server::handle_client_reqs(void *args) {
     }
 }
 
-int ec::Server::init_agent_connections() {
+bool ec::Server::init_agent_connections() {
     int sockfd, i;
     struct sockaddr_in servaddr;
-    int num_connections = 0;
-
+    uint32_t num_connections = 0;
+    AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
 //    for(i = 0; i < num_agents; i++) {
     for(const auto &ag : agents) {
         if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -175,11 +176,12 @@ int ec::Server::init_agent_connections() {
         else {
             num_connections++;
         }
-
-        agent_clients_.push_back(new AgentClient(ag, sockfd));
-        std::cout << "[dbg] agent_clients sockfd: " << sockfd << ", " << agent_clients_[agent_clients_.size() - 1]->get_socket() << std::endl;
+        auto* ac = new AgentClient(ag, sockfd);
+        agent_clients_db->add_agent_client(ac);
+        std::cout << "[dbg] Agent client added to db and agent_clients sockfd: " << sockfd << ", " << agent_clients_db->get_agent_client_by_ip(ag->get_ip())->get_socket()
+        <<" agent db size is: " << agent_clients_db->get_agent_clients_db_size()<< std::endl;
     }
-    return num_connections == agent_clients_.size();
+    return num_connections == agent_clients_db->get_agent_clients_db_size();
 
 }
 

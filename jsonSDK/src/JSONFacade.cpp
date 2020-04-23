@@ -106,8 +106,6 @@ int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
     return 0;
 }
 
-
-
 void ec::Facade::JSONFacade::json::createJSONPodDef(const std::string &app_name, const std::string &app_image, const std::string &pod_name, std::string &response) {
     // Create a JSON object (the pod)
     web::json::value pod;
@@ -226,6 +224,24 @@ void ec::Facade::JSONFacade::json::getJSONRequest(const std::string &urlRequest,
     // return json_return.serialize();
 }
 
+void ec::Facade::JSONFacade::json::getStringResponseFromURL(const std::string &urlRequest, std::string &jsonResp) {
+
+    web::http::client::http_client client(urlRequest);
+    client.request(web::http::methods::GET)
+    .then([](const web::http::http_response& response) {
+        return response.extract_string(); 
+    })
+    .then([&jsonResp](const pplx::task<std::string>& task) {
+        try {
+            jsonResp = task.get();
+        }
+        catch (const web::http::http_exception& e) {                    
+            std::cout << "error " << e.what() << std::endl;
+        }
+    })
+    .wait();
+}
+
 void ec::Facade::JSONFacade::json::getNodesFromResponse(const std::string &jsonResp, std::vector<std::string> &resultNodes) {
     web::json::value jsonResponse = web::json::value::parse(jsonResp);
     // Todo - check what happens if 2 nodes have the same container name:
@@ -242,6 +258,51 @@ void ec::Facade::JSONFacade::json::getNodeIPFromResponse(const std::string &json
         }
     }
 }
+
+void ec::Facade::JSONFacade::json::getPodStatusFromResponse(const std::string &jsonResp, std::string &tmp_ip) {
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    tmp_ip = jsonResponse.at(U("status")).at(U("phase")).as_string();
+}
+
+uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseSpecs(const std::string &jsonResp, const std::string &resource, const std::string &type){
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
+    const web::json::value &kubePodSpecs = jsonResponse.as_object().cbegin()->second;
+    const web::json::object &k = kubePodSpecs.as_object();//["spec"]]["memory"]["limit"]
+//    std::cout << "resource: " << resource << ", type: " << type << std::endl;
+    return k.at("spec").at(resource).at(type).as_number().to_uint64();
+}
+
+uint64_t ec::Facade::JSONFacade::json::parseCAdvisorCPUResponseStats(const std::string &jsonResp, const std::string &resource, const std::string &type){
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
+    const web::json::value &kubePodStats = jsonResponse.as_object().cbegin()->second;
+    const web::json::object &k = kubePodStats.as_object();//["stats"]{["memory"]["limit"]}{}{}{}..
+//    std::cout << "resource: " << resource << ", type: " << type << std::endl;
+    const auto len = k.at("stats").as_array().size();
+//    std::cout << "length of array response " << len << std::endl;
+    const auto &last = k.at("stats").as_array().at(len-1).as_object();
+    return last.at(resource).at('cfs').at(type).as_number().to_uint64();
+}
+
+uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseStats(const std::string &jsonResp, const std::string &resource, const std::string &type){
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
+    const web::json::value &kubePodStats = jsonResponse.as_object().cbegin()->second;
+    const web::json::object &k = kubePodStats.as_object();//["stats"]{["memory"]["limit"]}{}{}{}..
+//    std::cout << "resource: " << resource << ", type: " << type << std::endl;
+    const auto len = k.at("stats").as_array().size();
+//    std::cout << "length of array response " << len << std::endl;
+    const auto &last = k.at("stats").as_array().at(len-1).as_object();
+    return last.at(resource).at(type).as_number().to_uint64();
+}
+
+uint64_t ec::Facade::JSONFacade::json::parseCAdvisorMachineStats(const std::string &jsonResp, const std::string &type) {
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    const web::json::object &machineSpecs = jsonResponse.as_object();
+    return machineSpecs.at(type).as_number().to_uint64();
+}
+
 
 uint64_t ec::Facade::JSONFacade::json::get_mem() {
     auto itr = _specs.find("mem");
@@ -274,8 +335,4 @@ uint64_t ec::Facade::JSONFacade::json::get_net() {
     }
     return 0;
 }
-
-
-
-
 
