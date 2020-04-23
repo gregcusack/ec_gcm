@@ -11,7 +11,7 @@
 //}
 
 int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &gcm_ip) {
-    _ec = new ElasticContainer(manager_id);      
+    _ec = new ElasticContainer(manager_id);
 
     /* This is the highest level of abstraction provided to the end application developer. 
     Steps to create and deploy the "distributed container":

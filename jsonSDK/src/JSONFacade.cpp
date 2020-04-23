@@ -106,8 +106,6 @@ int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
     return 0;
 }
 
-
-
 void ec::Facade::JSONFacade::json::createJSONPodDef(const std::string &app_name, const std::string &app_image, const std::string &pod_name, std::string &response) {
     // Create a JSON object (the pod)
     web::json::value pod;

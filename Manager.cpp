@@ -66,7 +66,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //    std::cout << "total rt given to containers: " << total_rt << std::endl;
     total_rt += ec_get_cpu_unallocated_rt();
     auto tot_rt_and_overrun = total_rt + ec_get_overrun();
-//    std::cout << "total rt in system: " << total_rt << std::endl;
+    std::cout << "total rt in system: " << total_rt << std::endl;
 //    std::cout << "total rt + overrun in system: " << tot_rt_and_overrun << std::endl;
 
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
@@ -307,7 +307,7 @@ void ec::Manager::run() {
     std::cout << "EC Map Size: " << _ec->get_subcontainers().size() << std::endl;
     while(true){
         for(auto sc_ : _ec->get_subcontainers()){
-            std::cout << "=================================================================================================\n";
+            std::cout << "=================================================================================================" << std::endl;
             std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
             std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << "---" << get_memory_usage_in_bytes(sc_.first) << std::endl;
             std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
@@ -315,6 +315,7 @@ void ec::Manager::run() {
             std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
             sleep(1);
         }
+        std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << std::endl;
         sleep(1);
     }
 }
