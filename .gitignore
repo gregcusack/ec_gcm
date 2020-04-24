@@ -5,15 +5,13 @@ cmake-build-release/
 CMakeFiles/
 CMakeCache.txt
 Makefile
-cmake_install.cmake
 ec_gcm
+ec_gcm.cbp
 loop_test
 tester
 protoBufSDK/Makefile
 protoBufSDK/CMakeFiles
-protoBufSDK/cmake_install.cmake
 protoBufSDK/CMakeCache.txt
 protoBufSDK/msg.pb.cc
 protoBufSDK/msg.pb.h
 minikube
-*.txt

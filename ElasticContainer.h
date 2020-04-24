@@ -42,7 +42,7 @@ namespace ec {
 //    struct Server;
     class ElasticContainer {
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
-    using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
+    using subcontainer_agentclient_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
     public:
         explicit ElasticContainer(uint32_t _ec_id);
         ElasticContainer(uint32_t _ec_id, std::vector<AgentClient*> &_agent_clients);
@@ -56,9 +56,11 @@ namespace ec {
         //MISC
         uint32_t get_ec_id() { return ec_id; }
         const subcontainer_map &get_subcontainers() {return subcontainers;}
-        const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id);
-        AgentClient *get_corres_agent(const SubContainer::ContainerId &container_id){return sc_agent_map[container_id];}
+        SubContainer &get_subcontainer(const SubContainer::ContainerId &container_id);
+        AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_ac_map[container_id];}
         SubContainer *get_sc_for_update(SubContainer::ContainerId &container_id);
+        const subcontainer_agentclient_map &get_subcontainer_agents() {return sc_ac_map;}
+        void get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res);
 
         //CPU
         uint64_t get_cpu_rt_remaining() { return _cpu.get_runtime_remaining(); }
@@ -72,10 +74,6 @@ namespace ec {
         uint64_t get_memory_available() { return _mem.get_mem_available(); }
         uint64_t get_memory_slice() { return _mem.get_slice_size(); }
 
-        //AGENTS
-        uint32_t get_num_agent_clients() { return agent_clients.size(); }
-        const std::vector<AgentClient *> &get_agent_clients() const { return agent_clients; };
-
         /**
          *******************************************************
          * SETTERS
@@ -83,7 +81,7 @@ namespace ec {
          **/
 
         //MISC
-        void add_to_agent_map(SubContainer::ContainerId &id, AgentClient* client) { sc_agent_map.insert({id, client}); }
+        void add_to_agent_map(SubContainer::ContainerId &id, AgentClient* client) { sc_ac_map.insert({id, client}); }
 
         //CPU
         void set_ec_period(int64_t _period)  { _cpu.set_period(_period); }   //will need to update maanger too
@@ -125,12 +123,17 @@ namespace ec {
     private:
         uint32_t ec_id;
         subcontainer_map subcontainers;
-        subcontainer_agent_map sc_agent_map;
+        subcontainer_agentclient_map sc_ac_map;
         uint64_t fair_cpu_share;
 
-        //Passed by reference from ECAPI but owned by GCM
-        std::vector<AgentClient *> agent_clients;
+        //cpu
+//        uint64_t runtime_remaining;
+        //TODO: need file/struct of macros - like slice, failed, etc
+        //mem
+        std::ofstream test_file;
 
+        //test
+        int flag;
 
         global::stats::mem _mem;
         global::stats::cpu _cpu;

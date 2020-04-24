@@ -27,9 +27,16 @@ namespace ec {
         int handle_mem_req(const msg_t *req, msg_t *res, int clifd) override;
         uint64_t handle_reclaim_memory(int client_fd) override;
 
-        int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd);
+        int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) override;
         void start(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &gcm_ip);
         virtual void run();
+
+        // Need to remove this when Agent code gets merged with the correct codebase version
+        struct reclaim_msg {
+            uint16_t cgroup_id;
+            uint32_t is_mem;
+            //...maybe it needs more things
+        };
 
     private:
         std::mutex cpulock;
