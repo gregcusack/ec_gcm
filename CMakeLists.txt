@@ -30,7 +30,7 @@ add_executable(ec_gcm main.cpp
         ElasticContainer.h                      ElasticContainer.cpp
         SubContainer.h                          SubContainer.cpp
         ECAPI.h                                 ECAPI.cpp
-        GlobalCloudManager.h                    GlobalCloudManager.cpp
+        GlobalControlManager.h GlobalControlManager.cpp
         types/msg.h                             types/msg.cpp
         types/types.h                           types/k_msg.h
         Server.h                                Server.cpp

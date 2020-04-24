@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "GlobalCloudManager.h"
+#include "GlobalControlManager.h"
 #include "ElasticContainer.h"
 #include "SubContainer.h"
 #include "types/msg.h"
@@ -36,7 +36,7 @@ int main(int argc, char* argv[]){
     
     std::vector<uint16_t>       server_ports{4444};
 
-    auto *gcm = new ec::GlobalCloudManager(gcm_ip, GCM_PORT, agent_ips, server_ports);
+    auto *gcm = new ec::GlobalControlManager(gcm_ip, GCM_PORT, agent_ips, server_ports);
     
     for(const auto &i : server_ports) {
         gcm->create_server();

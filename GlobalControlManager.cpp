@@ -2,12 +2,12 @@
 // Created by greg on 9/12/19.
 //
 
-#include "GlobalCloudManager.h"
+#include "GlobalControlManager.h"
 
-//_ec::GlobalCloudManager::GlobalCloudManager()
+//_ec::GlobalControlManager::GlobalControlManager()
 //    : gcm_ip(_ec::ip4_addr::from_string("127.0.0.1")), gcm_port(4444), server_counts(1) {}
 
-ec::GlobalCloudManager::GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &_agent_ips, std::vector<uint16_t> &_server_ports)
+ec::GlobalControlManager::GlobalControlManager(std::string ip_addr, uint16_t port, agents_ip_list &_agent_ips, std::vector<uint16_t> &_server_ports)
     : gcm_ip(ec::ip4_addr::from_string(std::move(ip_addr))), gcm_port(port), server_ports(_server_ports), server_counts(1) {
 
     for(const auto &i : _agent_ips) {
@@ -23,7 +23,7 @@ ec::GlobalCloudManager::GlobalCloudManager(std::string ip_addr, uint16_t port, a
     }
 }
 
-uint32_t ec::GlobalCloudManager::create_server() {
+uint32_t ec::GlobalControlManager::create_server() {
     if(servers.find(server_counts) != servers.end()) {
         std::cout << "ERROR: Error allocating new Server. Server IDs not correct" << std::endl;
         return 0;
@@ -40,7 +40,7 @@ uint32_t ec::GlobalCloudManager::create_server() {
     return mngr->get_server_id();
 }
 
-const ec::Manager &ec::GlobalCloudManager::get_server(const uint32_t server_id) const {
+const ec::Manager &ec::GlobalControlManager::get_server(const uint32_t server_id) const {
     auto itr = servers.find(server_id);
     if(itr == servers.end()) {
         std::cout << "ERROR: No Server with server_id: " << server_id << ". Exiting...." << std::endl;
@@ -50,7 +50,7 @@ const ec::Manager &ec::GlobalCloudManager::get_server(const uint32_t server_id) 
 }
 
 
-ec::GlobalCloudManager::~GlobalCloudManager() {
+ec::GlobalControlManager::~GlobalControlManager() {
     for(auto a : agents) {
         delete a;
     }
@@ -61,7 +61,7 @@ ec::GlobalCloudManager::~GlobalCloudManager() {
     servers.clear();
 }
 
-void ec::GlobalCloudManager::run(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &_gcm_ip) {
+void ec::GlobalControlManager::run(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &_gcm_ip) {
 
     std::thread threads[__NUM_THREADS__];
     //app_thread_args *args;

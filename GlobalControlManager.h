@@ -2,8 +2,8 @@
 // Created by greg on 9/12/19.
 //
 
-#ifndef EC_GCM_GLOBALCLOUDMANAGER_H
-#define EC_GCM_GLOBALCLOUDMANAGER_H
+#ifndef EC_GCM_GLOBALCONTROLMANAGER_H
+#define EC_GCM_GLOBALCONTROLMANAGER_H
 
 #include <iostream>
 #include <cstdint>
@@ -22,13 +22,13 @@
 //std::mutex eclock;
 
 namespace ec {
-    class GlobalCloudManager {
+    class GlobalControlManager {
         using agents_ip_list = std::vector<std::string>;
         using server_map = std::unordered_map<uint16_t, ec::Manager*>;
     public:
-//        GlobalCloudManager();
-        GlobalCloudManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<uint16_t> &_server_ports);
-        ~GlobalCloudManager();
+//        GlobalControlManager();
+        GlobalControlManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<uint16_t> &_server_ports);
+        ~GlobalControlManager();
 
         void run(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &_gcm_ip);
 
@@ -62,4 +62,4 @@ namespace ec {
 }
 
 
-#endif //EC_GCM_GLOBALCLOUDMANAGER_H
+#endif //EC_GCM_GLOBALCONTROLMANAGER_H
