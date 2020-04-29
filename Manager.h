@@ -13,6 +13,8 @@
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
+#define byte_to_page(x) ceil(x/4096)
+#define _SAFE_MARGIN_ 1024 //1KB
 
 namespace ec {
     class Manager : public ECAPI, public Server {

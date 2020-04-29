@@ -237,42 +237,23 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
 }
 
 uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
-    int j = 0;
-    char buffer[__BUFF_SIZE__] = {0};
     uint64_t total_reclaimed = 0;
-    uint64_t reclaimed = 0;
-    uint64_t rx_buff;
-    int ret;
-    AgentClientDB* acdb = AgentClientDB::get_agent_client_db_instance();
+
     std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
     for (const auto &container : get_subcontainers()) {
         if (container.second->get_fd() == client_fd) {
             continue;
         }
-        auto ip = container.second->get_c_id()->server_ip;
-        std::cout << "ac.size(): " << acdb->get_agent_clients_db_size() << std::endl;
-        //for (const auto &agentClient : get_agent_clients()) {
-            const auto* target_agent = acdb->get_agent_client_by_ip(ip);
-            std::cout << "(agentClient->ip, container ip): (" << target_agent->get_agent_ip() << ", " << ip << ")" << std::endl;
-            if (target_agent) {
-                auto *reclaim_req = new reclaim_msg;
-                reclaim_req->cgroup_id = container.second->get_c_id()->cgroup_id;
-                reclaim_req->is_mem = 1;
-                //TODO: anyway to get the server to do this?
-                if (write(target_agent->get_socket(), (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
-                    std::cout << "[ERROR]: GCM EC Manager id: " << get_manager_id() << ". Failed writing to agent_clients socket"
-                              << std::endl;
-                }
-                ret = read(target_agent->get_socket(), buffer, sizeof(buffer));
-                if (ret <= 0) {
-                    std::cout << "[ERROR]: GCM. Can't read from socke to reclaim memory" << std::endl;
-                }
-                rx_buff = *((uint64_t *) buffer);
-                reclaimed += rx_buff;
-                std::cout << "[INFO] GCM: reclaimed: " << rx_buff << " bytes" << std::endl;
-                std::cout << "[INFO] GCM: Current amount of reclaimed memory: " << reclaimed << std::endl;
-            }
+        
+        auto ac = _ec->get_corres_agent(*container.second->get_c_id());
+        auto mem_limit = get_memory_limit_in_bytes(*container.second->get_c_id());
+        auto mem_usage = get_memory_usage_in_bytes(*container.second->get_c_id());
+        if(mem_limit - mem_usage > _SAFE_MARGIN_){
+            auto is_max_mem_resized = resize_memory_limit_in_pages(*container.second->get_c_id(), byte_to_page(mem_usage + _SAFE_MARGIN_));
+
+            total_reclaimed += !is_max_mem_resized ? byte_to_page(mem_limit - (mem_usage+_SAFE_MARGIN_)) : 0;
         }
+    }
     std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << total_reclaimed << std::endl;
     return total_reclaimed;
 }
@@ -316,7 +297,7 @@ void ec::Manager::run() {
             sleep(1);
         }
         std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << std::endl;
-        sleep(1);
+        sleep(10);
     }
 }
 
