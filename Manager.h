@@ -43,6 +43,8 @@ namespace ec {
         std::mutex memlock;
         int64_t seq_number;
 
+        //TODO: Create GRPC server to accept data from Deploy to update SubContainers
+
     };
 }
 

@@ -303,18 +303,18 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
 //TODO: this should be separated out into own file
 void ec::Manager::run() {
     //ec::SubContainer::ContainerId x ;
-    std::cout << "[dbg] In Manager Run function" << std::endl;
-    std::cout << "EC Map Size: " << _ec->get_subcontainers().size() << std::endl;
+//    std::cout << "[dbg] In Manager Run function" << std::endl;
+//    std::cout << "EC Map Size: " << _ec->get_subcontainers().size() << std::endl;
     while(true){
-        for(auto sc_ : _ec->get_subcontainers()){
-            std::cout << "=================================================================================================" << std::endl;
-            std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
-            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << "---" << get_memory_usage_in_bytes(sc_.first) << std::endl;
-            std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
-            std::cout << "=================================================================================================\n";
-            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
-            sleep(1);
-        }
+//        for(auto sc_ : _ec->get_subcontainers()){
+////            std::cout << "=================================================================================================" << std::endl;
+////            std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
+////            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << "---" << get_memory_usage_in_bytes(sc_.first) << std::endl;
+////            std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
+////            std::cout << "=================================================================================================\n";
+////            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
+//            sleep(1);
+//        }
         std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << std::endl;
         sleep(1);
     }

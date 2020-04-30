@@ -15,3 +15,6 @@ protoBufSDK/CMakeCache.txt
 protoBufSDK/msg.pb.cc
 protoBufSDK/msg.pb.h
 minikube
+*.grpc*
+*.pb*
+

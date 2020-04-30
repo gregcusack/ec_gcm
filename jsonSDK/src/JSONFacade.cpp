@@ -112,7 +112,7 @@ void ec::Facade::JSONFacade::json::createJSONPodDef(const std::string &app_name,
     pod[U("kind")] = web::json::value::string(U("Pod"));
     pod[U("apiVersion")] = web::json::value::string(U("v1"));
 
-//    std::string pod_name_ = web::json::value::string(U())
+//    std::string pod_name_ = web::json::value::string(U())]]
 
     // Create a JSON object (the metadata)
     web::json::value metadata;
@@ -282,7 +282,7 @@ uint64_t ec::Facade::JSONFacade::json::parseCAdvisorCPUResponseStats(const std::
     const auto len = k.at("stats").as_array().size();
 //    std::cout << "length of array response " << len << std::endl;
     const auto &last = k.at("stats").as_array().at(len-1).as_object();
-    return last.at(resource).at('cfs').at(type).as_number().to_uint64();
+    return last.at(resource).at("cfs").at(type).as_number().to_uint64();
 }
 
 uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseStats(const std::string &jsonResp, const std::string &resource, const std::string &type){

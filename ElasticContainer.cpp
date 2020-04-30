@@ -10,7 +10,7 @@ ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id), fair_cp
 ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients)
     : ec_id(_ec_id), fair_cpu_share(0) {
 
-    //TODO: change num_agents to however many servers we have. IDK how to set it rn.
+    //TODO: change num_agents to however many managers we have. IDK how to set it rn.
 
     _mem = global::stats::mem();
     _cpu = global::stats::cpu();

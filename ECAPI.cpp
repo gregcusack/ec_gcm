@@ -84,6 +84,7 @@ int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::str
                 }
                 std::cout << "POD STATUS1: " << status << std::endl;
 
+                //Call sysconnect on pod
                 msg_struct::ECMessage init_msg;
                 init_msg.set_client_ip(gcm_ip); //IP of the GCM
                 init_msg.set_req_type(4);

@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(PTHREAD_LIB pthread)
 
 include(FindProtobuf)
+include(cmake/grpc.cmake)
+
 
 find_package(Protobuf REQUIRED)
 find_package(cpprestsdk REQUIRED)
@@ -22,9 +24,31 @@ add_custom_command(
         ARGS --proto_path=. --cpp_out=. msg.proto
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/protoBufSDK)
 
+add_custom_command(
+        OUTPUT
+        ${CMAKE_CURRENT_LIST_DIR}/DeployServerGRPC/deploy.pb.h
+        ${CMAKE_CURRENT_LIST_DIR}/DeployServerGRPC/deploy.pb.cc
+        ${CMAKE_CURRENT_LIST_DIR}/DeployServerGRPC/deploy.grpc.pb.h
+        ${CMAKE_CURRENT_LIST_DIR}/DeployServerGRPC/deploy.grpc.pb.cc
+        MAIN_DEPENDENCY ${CMAKE_CURRENT_LIST_DIR}/DeployServerGRPC/deploy.proto
+        COMMAND ${PROTOBUF_PROTOC}
+        ARGS --proto_path=. --cpp_out=. deploy.proto
+        COMMAND ${PROTOBUF_PROTOC}
+        ARGS --proto_path=. --grpc_out=. --plugin=protoc-gen-grpc=${GRPC_CPP_GEN} deploy.proto
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/DeployServerGRPC)
+
 set(GCM_PROTO_SRC
         protoBufSDK/msg.pb.h
         protoBufSDK/msg.pb.cc)
+
+set(GCM_GRPC_SRC
+        DeployServerGRPC/deploy.grpc.pb.h
+        DeployServerGRPC/deploy.grpc.pb.cc
+        DeployServerGRPC/deploy.pb.h
+        DeployServerGRPC/deploy.pb.cc
+        DeployServerGRPC/DeployerExportService.cpp DeployServerGRPC/DeployerExportService.h)
+
+
 
 add_executable(ec_gcm main.cpp
         ElasticContainer.h                      ElasticContainer.cpp
@@ -47,7 +71,7 @@ add_executable(ec_gcm main.cpp
         protoBufSDK/include/ProtoBufFacade.h    protoBufSDK/src/ProtoBufFacade.cpp
         cAdvisorSDK/include/cAdvisorFacade.h    cAdvisorSDK/src/cAdvisorFacade.cpp  
         stats/window/Window.h                   stats/window/Window_impl.h
-        ${GCM_PROTO_SRC})
+        ${GCM_PROTO_SRC}    ${GCM_GRPC_SRC})
 
 
 add_executable(tester tests/run_test.cpp
@@ -60,4 +84,4 @@ add_executable(loop_test tests/run_continuous.cpp
         om.h
         )
 
-target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY})
+target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB})

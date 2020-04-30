@@ -41,9 +41,9 @@ int main(int argc, char* argv[]){
     auto *gcm = new ec::GlobalControlManager(gcm_ip, GCM_PORT, agent_ips, server_ports);
     
     for(const auto &i : server_ports) {
-        gcm->create_server();
+        gcm->create_manager();
     }
-    std::cout << "[dbg] num servers: " << gcm->get_servers().size() << std::endl;
+    std::cout << "[dbg] num managers: " << gcm->get_managers().size() << std::endl;
     
     gcm->run(app_name, app_images, pod_names, gcm_ip);
 
