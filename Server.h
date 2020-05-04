@@ -17,6 +17,7 @@
 //#include "ElasticContainer.h"
 #include "om.h"
 #include "types/types.h"
+#include "DeployServerGRPC/DeployerExportServiceImpl.h"
 
 
 #define __MAX_CLIENT__ 30
@@ -48,6 +49,8 @@ namespace ec {
         };
 
         void serve();
+
+//        virtual void serveGrpcDeployExport() = 0;
 
         void handle_client_reqs(void *clifd);
         virtual int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) = 0;
@@ -82,6 +85,8 @@ namespace ec {
 
     protected:
         uint32_t server_id;
+
+//        ec::rpc::DeployerExportServiceImpl grpcServer;
     };
 }
 

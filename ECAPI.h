@@ -18,6 +18,9 @@
 #include "protoBufSDK/include/ProtoBufFacade.h"
 #include "protoBufSDK/msg.pb.h"
 #include "cAdvisorSDK/include/cAdvisorFacade.h"
+#include "DeployServerGRPC/DeployerExportServiceImpl.h"
+#include "Agents/AgentClientDB.h"
+
 #define __FAILED__ -1
 
 namespace ec {
@@ -35,7 +38,7 @@ namespace ec {
 
         [[nodiscard]] const ElasticContainer& get_elastic_container() const;
 
-        uint32_t get_manager_id() { return manager_id; };
+        uint32_t get_manager_id() const { return manager_id; };
 
         /**
          *******************************************************
@@ -131,6 +134,7 @@ namespace ec {
         /**
          * HANDLERS
          */
+        void serveGrpcDeployExport();
 
 
     protected:
@@ -142,6 +146,8 @@ namespace ec {
 
         std::condition_variable cv;
         std::mutex cv_mtx;
+
+        ec::rpc::DeployerExportServiceImpl *grpcServer;
 
 
     };

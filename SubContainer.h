@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <utility>
 #include "types/types.h"
 #include "stats/local/cpu_l.h"
 #include "stats/local/mem_l.h"
@@ -26,6 +27,8 @@ namespace ec {
         struct ContainerId {
             ContainerId(uint32_t _cgroup_id, ip4_addr _ip)
                 : cgroup_id(_cgroup_id), server_ip(_ip) {};
+            ContainerId(uint32_t _cgroup_id, std::string _ip)
+                    : cgroup_id(_cgroup_id), server_ip(om::net::ip4_addr::from_string(std::move(_ip))) {};
 
             ContainerId() = default;
             uint32_t cgroup_id          = 0;

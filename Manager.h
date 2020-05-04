@@ -8,6 +8,8 @@
 #include "ECAPI.h"
 #include "Server.h"
 //#include "Agents/AgentClient.h"
+#include "DeployServerGRPC/DeployerExportServiceImpl.h"
+#include "Agents/AgentClientDB.h"
 #include <cstdint>
 #include <mutex>
 
@@ -27,6 +29,7 @@ namespace ec {
         int handle_mem_req(const msg_t *req, msg_t *res, int clifd) override;
         uint64_t handle_reclaim_memory(int client_fd) override;
 
+//        void serveGrpcDeployExport() override;
         int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) override;
         void start(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &gcm_ip);
         virtual void run();
@@ -43,7 +46,8 @@ namespace ec {
         std::mutex memlock;
         int64_t seq_number;
 
-        //TODO: Create GRPC server to accept data from Deploy to update SubContainers
+//        ec::rpc::DeployerExportServiceImpl grpcServer;
+
 
     };
 }

@@ -46,11 +46,15 @@ set(GCM_GRPC_SRC
         DeployServerGRPC/deploy.grpc.pb.cc
         DeployServerGRPC/deploy.pb.h
         DeployServerGRPC/deploy.pb.cc
-        DeployServerGRPC/DeployerExportService.cpp DeployServerGRPC/DeployerExportService.h)
+        DeployServerGRPC/DeployerExportServiceImpl.cpp DeployServerGRPC/DeployerExportServiceImpl.h)
 
+set(AGENTS
+        Agents/Agent.h                          Agents/Agent.cpp
+        Agents/AgentClientDB.h                  Agents/AgentClientDB.cpp
+        Agents/AgentClient.h                    Agents/AgentClient.cpp
+        )
 
-
-add_executable(ec_gcm main.cpp
+set(GCM_CORE
         ElasticContainer.h                      ElasticContainer.cpp
         SubContainer.h                          SubContainer.cpp
         ECAPI.h                                 ECAPI.cpp
@@ -58,21 +62,27 @@ add_executable(ec_gcm main.cpp
         types/msg.h                             types/msg.cpp
         types/types.h                           types/k_msg.h
         Server.h                                Server.cpp
-        Agents/Agent.h                          Agents/Agent.cpp
+#        Agents/Agent.h                          Agents/Agent.cpp
         stats/local/cpu_l.h                     stats/local/cpu_l.cpp
         stats/local/mem_l.h                     stats/local/mem_l.cpp
         stats/global/cpu_g.h                    stats/global/cpu_g.cpp
         stats/global/mem_g.h                    stats/global/mem_g.cpp
         Manager.h                               Manager.cpp
-        Agents/AgentClient.h                    Agents/AgentClient.cpp
-        Agents/AgentClientDB.h                  Agents/AgentClientDB.cpp
+#        Agents/AgentClient.h                    Agents/AgentClient.cpp
+#        Agents/AgentClientDB.h                  Agents/AgentClientDB.cpp
         jsonSDK/include/JSONFacade.h            jsonSDK/src/JSONFacade.cpp
         deploySDK/include/DeployFacade.h        deploySDK/src/DeployFacade.cpp
         protoBufSDK/include/ProtoBufFacade.h    protoBufSDK/src/ProtoBufFacade.cpp
-        cAdvisorSDK/include/cAdvisorFacade.h    cAdvisorSDK/src/cAdvisorFacade.cpp  
+        cAdvisorSDK/include/cAdvisorFacade.h    cAdvisorSDK/src/cAdvisorFacade.cpp
         stats/window/Window.h                   stats/window/Window_impl.h
-        ${GCM_PROTO_SRC}    ${GCM_GRPC_SRC})
+        ${GCM_PROTO_SRC}    ${GCM_GRPC_SRC} ${AGENTS}
+        )
 
+add_executable(ec_gcm main.cpp
+        ${GCM_CORE})
+
+add_executable(deploy_test tests/grpc_test.cpp
+        ${GCM_CORE})
 
 add_executable(tester tests/run_test.cpp
         types/msg.cpp                   types/msg.h
@@ -81,7 +91,10 @@ add_executable(tester tests/run_test.cpp
 
 add_executable(loop_test tests/run_continuous.cpp
         types/msg.cpp                   types/msg.h
-        om.h
-        )
+        om.h)
+
+
+
 
 target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB})
+target_link_libraries(deploy_test PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB})

@@ -3,10 +3,9 @@
 //
 
 #include "Manager.h"
-#include "Agents/AgentClientDB.h"
 
 ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
-            : Server(server_counts, gcm_ip, server_port, agents), seq_number(0) {
+            : Server(server_counts, gcm_ip, server_port, agents), seq_number(0) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
 
     //init server
     initialize();
@@ -16,13 +15,17 @@ void ec::Manager::start(const std::string &app_name, const std::vector<std::stri
     //A thread to listen for subcontainers' events
     std::thread event_handler_thread(&ec::Server::serve, this);
     std::thread application_deployment_thread(&ec::ECAPI::create_ec, this, app_name, app_images, pod_names, gcm_ip);
-    // //Another thread to run a management application
-    application_deployment_thread.join();
+    std::thread grpc_handler_thread(&ec::ECAPI::serveGrpcDeployExport, this);
+//    // //Another thread to run a management application
+//    application_deployment_thread.join();
     sleep(10);
     std::cerr<<"[dbg] manager::just before running the app thread\n";
     std::thread application_thread(&ec::Manager::run, this);
     application_thread.join();
     event_handler_thread.join();
+    grpc_handler_thread.join();
+
+//    ec::Server::serveGrpcDeployExport();
 }
 
 int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
@@ -278,7 +281,7 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
 }
 
 int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd){
-    if(req == nullptr || res == nullptr) {
+    if(!req || !res) {
         std::cout << "req or res == null in handle_req()" << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -300,21 +303,35 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
     return ret;
 }
 
+//void ec::Manager::serveGrpcDeployExport() {
+//    std::string server_addr("10.0.2.15:4447");
+//    rpc::DeployerExportServiceImpl service;
+//    grpc::ServerBuilder builder;
+//
+//    builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
+//    builder.RegisterService(&service);
+//    std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
+//
+//    std::cout << "Grpc Server listening on: " << server_addr << std::endl;
+//    server->Wait();
+//
+//}
+
 //TODO: this should be separated out into own file
 void ec::Manager::run() {
     //ec::SubContainer::ContainerId x ;
 //    std::cout << "[dbg] In Manager Run function" << std::endl;
 //    std::cout << "EC Map Size: " << _ec->get_subcontainers().size() << std::endl;
     while(true){
-//        for(auto sc_ : _ec->get_subcontainers()){
-////            std::cout << "=================================================================================================" << std::endl;
-////            std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
-////            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << "---" << get_memory_usage_in_bytes(sc_.first) << std::endl;
-////            std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
-////            std::cout << "=================================================================================================\n";
-////            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
-//            sleep(1);
-//        }
+        for(auto sc_ : _ec->get_subcontainers()){
+            std::cout << "=================================================================================================" << std::endl;
+            std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
+            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << "---" << get_memory_usage_in_bytes(sc_.first) << std::endl;
+            std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
+            std::cout << "=================================================================================================\n";
+            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
+            sleep(1);
+        }
         std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << std::endl;
         sleep(1);
     }

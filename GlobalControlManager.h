@@ -39,7 +39,7 @@ namespace ec {
 
         struct app_thread_args {
             app_thread_args()              = default;
-            std::string app_name           = nullptr;
+            std::string app_name           = "";
             std::vector<std::string> *app_images = nullptr;
         };
 

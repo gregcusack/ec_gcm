@@ -60,6 +60,7 @@ namespace ec {
         AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_ac_map[container_id];}
         SubContainer *get_sc_for_update(SubContainer::ContainerId &container_id);
         const subcontainer_agentclient_map &get_subcontainer_agents() {return sc_ac_map;}
+        subcontainer_agentclient_map *get_sc_ac_map_for_update() {return &sc_ac_map; }
         void get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res);
 
         //CPU
@@ -81,7 +82,7 @@ namespace ec {
          **/
 
         //MISC
-        void add_to_agent_map(SubContainer::ContainerId &id, AgentClient* client) { sc_ac_map.insert({id, client}); }
+        void add_to_sc_ac_map(SubContainer::ContainerId &id, AgentClient* client) { sc_ac_map.insert({id, client}); }
 
         //CPU
         void set_ec_period(int64_t _period)  { _cpu.set_period(_period); }   //will need to update maanger too
