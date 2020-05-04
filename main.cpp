@@ -21,7 +21,7 @@ int main(int argc, char* argv[]){
         return 1;
     }
     const std::string &jsonFile = argv[1];
-    
+
     int status;
     ec::Facade::JSONFacade::json jsonFacade;
     status = jsonFacade.parseFile(jsonFile);
@@ -31,9 +31,7 @@ int main(int argc, char* argv[]){
         return 1;
     }
     auto app_name = jsonFacade.getAppName();
-    auto app_images = jsonFacade.getAppImages(); 
     auto agent_ips = jsonFacade.getAgentIPs();
-    auto pod_names = jsonFacade.getPodNames();
     auto gcm_ip = jsonFacade.getGCMIP();
     
     std::vector<uint16_t>       server_ports{4444};
@@ -45,7 +43,7 @@ int main(int argc, char* argv[]){
     }
     std::cout << "[dbg] num managers: " << gcm->get_managers().size() << std::endl;
     
-    gcm->run(app_name, app_images, pod_names, gcm_ip);
+    gcm->run(app_name, gcm_ip);
 
     delete gcm;
 

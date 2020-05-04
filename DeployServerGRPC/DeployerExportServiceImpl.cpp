@@ -58,27 +58,12 @@ void ec::rpc::DeployerExportServiceImpl::spinUpDockerIdThread(const ec::SubConta
     auto *args = new matchingThreadArgs(sc_id, docker_id);
     std::cout << "created matching args: " << args->sc_id << ", " << args->docker_id << std::endl;
     std::thread match_sc_id_thread(&DeployerExportServiceImpl::scIdToDockerIdMatcherThread, this, (void*)args);
-    std::cout << "Created thread" << std::endl;
-    match_sc_id_thread.join();
+    match_sc_id_thread.detach();
+//    match_sc_id_thread.join();
 }
 
 void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* arguments) {
-    std::cout << "in scIdToDockerIdThread" << std::endl;
     auto threadArgs = reinterpret_cast<matchingThreadArgs*>(arguments);
-
-//    std::cout << threadArgs->sc_id << std::endl;
-
-    std::cout << "got matching threadArgs: " << threadArgs->sc_id << ", " << threadArgs->docker_id << std::endl;
-    if(!ec) {
-        std::cout << "ec is null fam" << std::endl;
-    }
-    else {
-        std::cout << "ec_id in being matcher thread: " << ec->get_ec_id() << std::endl;
-    }
-    std::cout << "sup" << std::endl;
-    for(const auto &i : *ec->get_sc_ac_map_for_update()) {
-        std::cout << "map vals: " << i.first << ", " << i.second->get_agent_ip() << std::endl;
-    }
 
     std::cout << "sup1" << std::endl;
     std::unique_lock<std::mutex> lk(cv_mtx);
@@ -87,18 +72,15 @@ void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* argum
         auto itr = ec->get_sc_ac_map_for_update()->find(threadArgs->sc_id);
         std::cout << "wait for sc_id to exist in sc_ac_map: " << threadArgs->sc_id << ", d_id: " << threadArgs->docker_id << std::endl;
         return itr != ec->get_sc_ac_map_for_update()->end();
-//        std::cout << "create_ec() itr->first, second: " << itr->second.first << ", " << itr->second.second << std::endl;
-//        return itr->second.first == itr->second.second;
     });
 
     std::cout << "sc in sc_ac map. set docker_id" << std::endl;
     ec->get_subcontainer(threadArgs->sc_id).set_docker_id(threadArgs->docker_id);
-    std::cout << "docker_id set: " << ec->get_subcontainer(threadArgs->sc_id).get_docker_id() << std::endl;
-
-//    delete threadArgs;
-//    std::cout << "deleting threadArgs" << std::endl;
-
-
+    if(unlikely(ec->get_subcontainer(threadArgs->sc_id).get_docker_id().empty())) {
+        std::cout << "docker_id set failed in grpcDockerIdMatcher()!" << std::endl;
+    } else {
+        std::cout << "docker_id set: " << ec->get_subcontainer(threadArgs->sc_id).get_docker_id() << std::endl;
+    }
 
 }
 

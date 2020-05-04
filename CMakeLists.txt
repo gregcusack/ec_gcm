@@ -54,6 +54,13 @@ set(AGENTS
         Agents/AgentClient.h                    Agents/AgentClient.cpp
         )
 
+set(STATS
+        stats/local/cpu_l.h                     stats/local/cpu_l.cpp
+        stats/local/mem_l.h                     stats/local/mem_l.cpp
+        stats/global/cpu_g.h                    stats/global/cpu_g.cpp
+        stats/global/mem_g.h                    stats/global/mem_g.cpp
+        )
+
 set(GCM_CORE
         ElasticContainer.h                      ElasticContainer.cpp
         SubContainer.h                          SubContainer.cpp
@@ -62,20 +69,12 @@ set(GCM_CORE
         types/msg.h                             types/msg.cpp
         types/types.h                           types/k_msg.h
         Server.h                                Server.cpp
-#        Agents/Agent.h                          Agents/Agent.cpp
-        stats/local/cpu_l.h                     stats/local/cpu_l.cpp
-        stats/local/mem_l.h                     stats/local/mem_l.cpp
-        stats/global/cpu_g.h                    stats/global/cpu_g.cpp
-        stats/global/mem_g.h                    stats/global/mem_g.cpp
         Manager.h                               Manager.cpp
-#        Agents/AgentClient.h                    Agents/AgentClient.cpp
-#        Agents/AgentClientDB.h                  Agents/AgentClientDB.cpp
         jsonSDK/include/JSONFacade.h            jsonSDK/src/JSONFacade.cpp
-        deploySDK/include/DeployFacade.h        deploySDK/src/DeployFacade.cpp
         protoBufSDK/include/ProtoBufFacade.h    protoBufSDK/src/ProtoBufFacade.cpp
         cAdvisorSDK/include/cAdvisorFacade.h    cAdvisorSDK/src/cAdvisorFacade.cpp
         stats/window/Window.h                   stats/window/Window_impl.h
-        ${GCM_PROTO_SRC}    ${GCM_GRPC_SRC} ${AGENTS}
+        ${GCM_PROTO_SRC}    ${GCM_GRPC_SRC} ${AGENTS} ${STATS}
         )
 
 add_executable(ec_gcm main.cpp

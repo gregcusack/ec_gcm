@@ -9,150 +9,12 @@
  //   // _ec = new ElasticContainer(manager_id, agent_clients);
 //}
 
-int ec::ECAPI::create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &gcm_ip) {
+int ec::ECAPI::create_ec() {
 //    _ec = new ElasticContainer(manager_id);
     _ec = new ElasticContainer(23);
     grpcServer = new rpc::DeployerExportServiceImpl(_ec, cv, cv_mtx);
     return 0;
 }
-//    /* This is the highest level of abstraction provided to the end application developer.
-//    Steps to create and deploy the "distributed container":
-//        1. Create a Pod deployment strategy
-//        2. Communicate with K8 REST API to deploy the pod on all nodes (based on default kube-scheduler)
-//        3. Send a request to the specific agent on a node to call sys_connect
-//    */
-//
-//    // Step 1: Create a Pod on each of the nodes running an agent
-//    AgentClientDB* acdb = AgentClientDB::get_agent_client_db_instance();
-//
-//    int pod_creation;
-//    int res;
-//    std::string response;
-//    std::vector<std::string> node_names;
-//    std::vector<std::string> node_ips;
-//
-//    std::vector<SubContainer::ContainerId> scs_per_agent;
-//    std::vector<SubContainer::ContainerId> scs_done;
-//
-////    ec::Facade::DeployFacade::Deploy deployment;
-//    uint32_t podNameIndex = 0;
-//    for (const auto &app_image: app_images) {
-//        std::cout << "app image: " << app_image << std::endl;
-//        // Step 1: Create a Pod on each of the nodes running an agent - k8s takes care of this
-//        //         todo: this will change we implement k8-yaml support (still brainstorming how best to do that)
-//        std::cout << "[DEPLOY LOG] Generating JSON POD File for image: " << app_image << std::endl;
-//        //TODO: need to add pod_name config so it only contains alphanumeric characters
-//        std::string pod_name = pod_names[podNameIndex];
-//        ec::Facade::JSONFacade::json::createJSONPodDef(app_name, app_image, pod_name, response);
-//        podNameIndex++;
-//        // Step 2
-//        std::cout << "[DEPLOY LOG] Deploying Container With Image: " << app_image << std::endl;
-//        pod_creation = ec::Facade::DeployFacade::Deploy::deployContainers(response);
-//        if (pod_creation != 0) {
-//            std::cout << "[DEPLOY ERROR]:  Error in deploying Container with image: "<< app_image <<".. Exiting" << std::endl;
-//            return -1;
-//        }
-//
-//        // Step 3: Instruct the Agent to look for this container and call sys_connect on it
-//        //         Note that the following code simply waits for a response from Agent on the status of running sys_connect
-//        //         i.e. this is where we can use RPC
-//        //         Once the container actually establishes a connection to the GCM, the container will send it's own init
-//        //         message to the server which will call: handle_add_cgroup_to_ec
-//
-//        std::cout << "[K8s LOG] Looking for node running container with image: " << app_image << std::endl;
-//        node_names.clear();
-//        ec::Facade::DeployFacade::Deploy::getNodesWithContainer(pod_name, node_names);
-//        node_ips.clear();
-//        ec::Facade::DeployFacade::Deploy::getNodeIPs(node_names, node_ips);
-//
-//        for (const auto &node_ip : node_ips) {
-//            // Get the Agent with this node ip first (this needs to change to a singleton class)
-//            //for (const auto &agentClient : _ec->get_agent_clients()) {
-//            auto node_ip_om = om::net::ip4_addr::from_string(node_ip);
-//            const AgentClient* target_ac = acdb->get_agent_client_by_ip(node_ip_om);
-//            if (target_ac) {
-//                mtx.lock();
-//                auto itr = pod_conn_check.find(node_ip_om);
-//                if(itr == pod_conn_check.end()) {
-//                    pod_conn_check.insert(std::make_pair(node_ip_om, std::make_pair(1,0) )); //dep 1 cont
-//                } else {
-//                    itr->second.first++; //increase new pod deployment
-//                }
-//                mtx.unlock();
-//
-//                std::string status;
-//                while(status != "Running") {
-//                    ec::Facade::DeployFacade::Deploy::getContainerStatus(pod_name, status);
-//                }
-//                std::cout << "POD STATUS1: " << status << std::endl;
-//
-//                //Call sysconnect on pod
-//                msg_struct::ECMessage init_msg;
-//                init_msg.set_client_ip(gcm_ip); //IP of the GCM
-//                init_msg.set_req_type(4);
-//                init_msg.set_payload_string(pod_name + " "); // Todo: unknown bug where protobuf removes last character from this..
-//                init_msg.set_cgroup_id(0);
-//
-//                res = ec::Facade::ProtoBufFacade::ProtoBuf::sendMessage(target_ac->get_socket(), init_msg);
-//                if(res < 0) {
-//                    std::cout << "[ERROR]: create_ec() - Error in writing to agent_clients socket. " << std::endl;
-//                    return __FAILED__;
-//                }
-//                std::cout << "got sendMessage back" << std::endl;
-//
-//                /* TODO: Get back docker_id, cgroup_id - and note node IP
-//                 * keep track of all cgroups/pods that have successfully connected to GCM
-//                 * add docker_id to cgroup here.
-//                 * delete the get_Sc_from_agent call. we don't need it. delete for loop (but need add docker_id logic)
-//                 */
-//                msg_struct::ECMessage rx_msg;
-//                ec::Facade::ProtoBufFacade::ProtoBuf::recvMessage(target_ac->get_socket(), rx_msg);
-//                // This should check if the agent returns a docker id. Solved the bug where agent returns empty string and as a consequence, cadvsior returns stats from root container
-//                if (rx_msg.payload_string().empty()) {
-//                    std::cout << "[deployment error]: No docker id recieved from Agent. " << target_ac->get_agent_ip() << ". Check Agent Logs for more info. " << std::endl;
-//                    return __FAILED__;
-//                }
-//                if (rx_msg.rsrc_amnt() == (uint64_t) -1 ) {
-//                    std::cout << "[deployment error]: Error in creating a container on agent client with ip: " << target_ac->get_agent_ip() << ". Check Agent Logs for more info" << std::endl;
-//                    return __FAILED__;
-//                }
-////                std::string docker_id = rx_msg.payload_string();
-//                //TODO: if I delete this print, GCM fails to read the payload string correctly about 50% of the time
-//                std::cout << "docker_id: " << rx_msg.payload_string() << std::endl;
-//                std::string docker_id = const_cast<std::string &>(rx_msg.payload_string());
-//                //TODO: wait until every pod has been connected to manager
-////                std::cout << "rx docker_id from agent: " << docker_id << std::endl;
-////                mtx.lock();
-//
-//                std::unique_lock<std::mutex> lk(cv_mtx);
-//                cv.wait(lk, [this, node_ip_om] {
-//                    auto itr = pod_conn_check.find(node_ip_om);
-//                    std::cout << "create_ec() itr->first, second: " << itr->second.first << ", " << itr->second.second << std::endl;
-//                    return itr->second.first == itr->second.second;
-//                });
-//
-//                _ec->get_sc_from_agent(target_ac, scs_per_agent);
-//                for (const auto &sc_id: scs_per_agent) {
-//                    if(std::count(scs_done.begin(), scs_done.end(), sc_id)) {
-//                        continue;
-//                    } else {
-//                        std::cout << "current sc with id: " << sc_id << std::endl;
-//                        std::cout << "current sc with id: " << sc_id << std::endl;
-//                        _ec->get_subcontainer(sc_id).set_docker_id(docker_id);
-//                        std::cout << "docker id set: " << _ec->get_subcontainer(sc_id).get_docker_id() << std::endl;
-//                        scs_done.push_back(sc_id);
-//                    }
-//                }
-//            } else {
-//                continue;
-//            }
-//        }
-//
-//    }
-//    std::cout << "[EC LOG]: Done with create_ec()" << std::endl;
-//
-//    return 0;
-//}
 
 const ec::ElasticContainer& ec::ECAPI::get_elastic_container() const {
     if(_ec == nullptr) {
@@ -235,6 +97,10 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(const ec::SubContainer::ContainerI
     ec::SubContainer sc = _ec->get_subcontainer(container_id);
 
 //    std::cout << "docker id used:" <<  sc.get_docker_id() << std::endl;
+    if(sc.get_docker_id().empty()) {
+        std::cout << "docker_id is 0!" << std::endl;
+        return 0;
+    }
     ret = ec::Facade::MonitorFacade::CAdvisor::getContMemLimit(ac->get_agent_ip().to_string(), sc.get_docker_id());
     return ret;
 }
@@ -252,6 +118,11 @@ uint64_t ec::ECAPI::get_memory_usage_in_bytes(const ec::SubContainer::ContainerI
     ec::SubContainer sc = _ec->get_subcontainer(container_id);
 
 //    std::cout << "docker id used:" <<  sc.get_docker_id() << std::endl;
+//    std::cout << "docker id used:" <<  sc.get_docker_id() << std::endl;
+    if(sc.get_docker_id().empty()) {
+        std::cout << "docker_id is 0!" << std::endl;
+        return 0;
+    }
     ret = ec::Facade::MonitorFacade::CAdvisor::getContMemUsage(ac->get_agent_ip().to_string(), sc.get_docker_id());
     return ret;
 }
@@ -280,6 +151,10 @@ int64_t ec::ECAPI::get_cpu_quota_in_us(const ec::SubContainer::ContainerId &cont
     ec::SubContainer sc = _ec->get_subcontainer(container_id);
 
 //    std::cout << "docker id used:" <<  sc.get_docker_id() << std::endl;
+    if(sc.get_docker_id().empty()) {
+        std::cout << "docker_id is 0!" << std::endl;
+        return 0;
+    }
     ret = ec::Facade::MonitorFacade::CAdvisor::getContCPUQuota(ac->get_agent_ip().to_string(), sc.get_docker_id());
     return ret;
 }

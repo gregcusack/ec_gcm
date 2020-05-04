@@ -20,7 +20,7 @@ namespace ec {
     class Manager : public ECAPI, public Server {
     public:
         //TODO: initialize ECAPI and SERVER here?
-        Manager(uint32_t server_counts, ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents);
+        Manager(int server_counts, ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents);
 //        Manager(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients) : ECAPI(_ec_id, _agent_clients) {};
 
         int handle_cpu_usage_report(const msg_t *req, msg_t *res) override;
@@ -31,7 +31,7 @@ namespace ec {
 
 //        void serveGrpcDeployExport() override;
         int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) override;
-        void start(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &gcm_ip);
+        void start(const std::string &app_name, const std::string &gcm_ip);
         virtual void run();
 
         // Need to remove this when Agent code gets merged with the correct codebase version
@@ -42,6 +42,7 @@ namespace ec {
         };
 
     private:
+        int manager_id;
         std::mutex cpulock;
         std::mutex memlock;
         int64_t seq_number;

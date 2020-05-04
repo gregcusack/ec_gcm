@@ -8,7 +8,7 @@
 //    : gcm_ip(_ec::ip4_addr::from_string("127.0.0.1")), gcm_port(4444), manager_counts(1) {}
 
 ec::GlobalControlManager::GlobalControlManager(std::string ip_addr, uint16_t port, agents_ip_list &_agent_ips, std::vector<uint16_t> &_server_ports)
-    : gcm_ip(ec::ip4_addr::from_string(std::move(ip_addr))), gcm_port(port), server_ports(_server_ports), manager_counts(1) {
+    : gcm_ip(ec::ip4_addr::from_string(std::move(ip_addr))), mngr(nullptr), gcm_port(port), server_ports(_server_ports), manager_counts(1) {
 
     for(const auto &i : _agent_ips) {
         agents.emplace_back(new Agent(i));
@@ -40,7 +40,7 @@ uint32_t ec::GlobalControlManager::create_manager() {
     return mngr->get_server_id();
 }
 
-const ec::Manager &ec::GlobalControlManager::get_manager(const uint32_t manager_id) const {
+const ec::Manager &ec::GlobalControlManager::get_manager(const int manager_id) const {
     auto itr = managers.find(manager_id);
     if(itr == managers.end()) {
         std::cout << "ERROR: No Server with manager_id: " << manager_id << ". Exiting...." << std::endl;
@@ -61,7 +61,7 @@ ec::GlobalControlManager::~GlobalControlManager() {
     managers.clear();
 }
 
-void ec::GlobalControlManager::run(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &_gcm_ip) {
+void ec::GlobalControlManager::run(const std::string &app_name, const std::string &_gcm_ip) {
 
     std::thread threads[__NUM_THREADS__];
     //app_thread_args *args;
@@ -70,7 +70,7 @@ void ec::GlobalControlManager::run(const std::string &app_name, const std::vecto
         if(fork() == 0) {
             // std::cout << "[child] pid: " << getpid() << ", [parent] pid: " <<  getppid() << std::endl;
             std::cout << "New Server with ID: " << s.second->get_server_id() << std::endl;
-            s.second->start(app_name, app_images, pod_names, _gcm_ip);
+            s.second->start(app_name, _gcm_ip);
         }
         else {
             continue;

@@ -4,28 +4,26 @@
 
 #include "Manager.h"
 
-ec::Manager::Manager( uint32_t server_counts, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
-            : Server(server_counts, gcm_ip, server_port, agents), seq_number(0) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
+ec::Manager::Manager( int _manager_id, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
+            : Server(_manager_id, gcm_ip, server_port, agents), ECAPI(_manager_id), manager_id(_manager_id), seq_number(0) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
 
     //init server
     initialize();
 }
 
-void ec::Manager::start(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names,  const std::string &gcm_ip) {
+void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip) {
     //A thread to listen for subcontainers' events
     std::thread event_handler_thread(&ec::Server::serve, this);
-    std::thread application_deployment_thread(&ec::ECAPI::create_ec, this, app_name, app_images, pod_names, gcm_ip);
+    ec::ECAPI::create_ec();
     std::thread grpc_handler_thread(&ec::ECAPI::serveGrpcDeployExport, this);
-//    // //Another thread to run a management application
-//    application_deployment_thread.join();
     sleep(10);
     std::cerr<<"[dbg] manager::just before running the app thread\n";
     std::thread application_thread(&ec::Manager::run, this);
-    application_thread.join();
     event_handler_thread.join();
     grpc_handler_thread.join();
 
-//    ec::Server::serveGrpcDeployExport();
+//    delete get
+    delete getGrpcServer();
 }
 
 int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
@@ -263,7 +261,7 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
                 reclaim_req->is_mem = 1;
                 //TODO: anyway to get the server to do this?
                 if (write(target_agent->get_socket(), (char *) reclaim_req, sizeof(*reclaim_req)) < 0) {
-                    std::cout << "[ERROR]: GCM EC Manager id: " << get_manager_id() << ". Failed writing to agent_clients socket"
+                    std::cout << "[ERROR]: GCM EC Manager id: " << get_ecapi_id() << ". Failed writing to agent_clients socket"
                               << std::endl;
                 }
                 ret = read(target_agent->get_socket(), buffer, sizeof(buffer));

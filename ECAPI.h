@@ -14,7 +14,6 @@
 #include <functional> //for std::hash
 #include <string>
 #include "jsonSDK/include/JSONFacade.h"
-#include "deploySDK/include/DeployFacade.h"
 #include "protoBufSDK/include/ProtoBufFacade.h"
 #include "protoBufSDK/msg.pb.h"
 #include "cAdvisorSDK/include/cAdvisorFacade.h"
@@ -31,14 +30,14 @@ namespace ec {
     public:
 //        ECAPI(uint32_t _ec_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
         ECAPI(){}
-        ECAPI(uint32_t _ec_id);
+        ECAPI(int _ec_id) : ecapi_id(_ec_id){}
         ~ECAPI();
         //creates _ec and server and connects them
-        int create_ec(const std::string &app_name, const std::vector<std::string> &app_images, const std::vector<std::string> &pod_names, const std::string &gcm_ip);
+        int create_ec();
 
         [[nodiscard]] const ElasticContainer& get_elastic_container() const;
 
-        uint32_t get_manager_id() const { return manager_id; };
+        int get_ecapi_id() const { return ecapi_id; };
 
         /**
          *******************************************************
@@ -137,9 +136,9 @@ namespace ec {
         void serveGrpcDeployExport();
 
 
+        ec::rpc::DeployerExportServiceImpl* getGrpcServer() {return grpcServer; }
     protected:
-        std::mutex mtx;           
-        uint32_t manager_id;
+        int ecapi_id;
         ElasticContainer *_ec;
 //        std::unordered_map<ec::AgentClient, std::pair<int32_t, int32_t> > pod_conn_check;
         std::unordered_map<om::net::ip4_addr, std::pair<int32_t, int32_t> > pod_conn_check; //<ip, {depPod, conPod}>

@@ -134,7 +134,7 @@ namespace ec {
         std::ofstream test_file;
 
         //test
-        int flag;
+        int flag{};
 
         global::stats::mem _mem;
         global::stats::cpu _cpu;

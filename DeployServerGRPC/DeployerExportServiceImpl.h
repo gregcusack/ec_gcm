@@ -27,16 +27,7 @@ namespace ec {
         public:
             DeployerExportServiceImpl(ElasticContainer *_ec, std::condition_variable &_cv,
                     std::mutex &_cv_mtx)
-                : success("thx"), fail("fail"), ec(_ec), cv(_cv), cv_mtx(_cv_mtx) {
-                if(!_ec) {
-                    std::cout << "_ec is null!" << std::endl;
-                } else if(!ec) {
-                    std::cout << "ec is null" << std::endl;
-                }
-                else {
-                        std::cout << "ec_id in constrcutor: " << _ec->get_ec_id() << std::endl;
-                }
-            }
+                : success("thx"), fail("fail"), ec(_ec), cv(_cv), cv_mtx(_cv_mtx) {}
 
             grpc::Status ReportPodSpec(grpc::ServerContext* context,
                     const ExportPodSpec* pod, PodSpecReply* reply) override;

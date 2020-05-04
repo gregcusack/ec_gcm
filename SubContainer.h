@@ -42,7 +42,7 @@ namespace ec {
         };
 
         ContainerId* get_c_id() {return &c_id;}
-        int get_fd() { return fd; }
+        [[nodiscard]] int get_fd() const { return fd; }
         
         void set_docker_id(std::string &docker_id) { _docker_id = docker_id; }
         std::string get_docker_id() { return _docker_id; }
@@ -56,7 +56,7 @@ namespace ec {
         uint32_t sc_get_throttle_increase(uint32_t _throttled) { return cpu.get_throttle_increase(_throttled); }
         uint32_t sc_get_thr_incr_and_set_thr(uint32_t _throttled);
 
-        int get_counter() { return counter; }
+        [[nodiscard]] int get_counter() const { return counter; }
         void incr_counter() { counter++; }
 
         local::stats::cpu *get_cpu_stats() { return &cpu; }
