@@ -227,7 +227,8 @@ int64_t ec::ECAPI::resize_memory_limit_in_bytes(ec::SubContainer::ContainerId co
 }
 
 void ec::ECAPI::serveGrpcDeployExport() {
-    std::string server_addr("10.0.2.15:4447");
+//    std::cout << deploy_service_ip << std::endl;
+    std::string server_addr(deploy_service_ip + ":4447");
 //    rpc::DeployerExportServiceImpl service;
     grpc::ServerBuilder builder;
 

@@ -30,7 +30,8 @@ namespace ec {
     public:
 //        ECAPI(uint32_t _ec_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
         ECAPI(){}
-        ECAPI(int _ec_id) : ecapi_id(_ec_id){}
+        ECAPI(int _ec_id, ip4_addr _deploy_service_ip)
+            : ecapi_id(_ec_id), deploy_service_ip(_deploy_service_ip.to_string()) {}
         ~ECAPI();
         //creates _ec and server and connects them
         int create_ec();
@@ -147,6 +148,7 @@ namespace ec {
         std::mutex cv_mtx;
 
         ec::rpc::DeployerExportServiceImpl *grpcServer;
+        std::string deploy_service_ip;
 
 
     };

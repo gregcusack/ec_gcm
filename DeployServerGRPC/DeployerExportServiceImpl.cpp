@@ -64,8 +64,6 @@ void ec::rpc::DeployerExportServiceImpl::spinUpDockerIdThread(const ec::SubConta
 
 void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* arguments) {
     auto threadArgs = reinterpret_cast<matchingThreadArgs*>(arguments);
-
-    std::cout << "sup1" << std::endl;
     std::unique_lock<std::mutex> lk(cv_mtx);
     cv.wait(lk, [this, threadArgs] {
             std::cout << "in cv wait" << std::endl;

@@ -5,7 +5,7 @@
 #include "Manager.h"
 
 ec::Manager::Manager( int _manager_id, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
-            : Server(_manager_id, gcm_ip, server_port, agents), ECAPI(_manager_id), manager_id(_manager_id), seq_number(0) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
+            : Server(_manager_id, gcm_ip, server_port, agents), ECAPI(_manager_id, gcm_ip), manager_id(_manager_id), seq_number(0) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
 
     //init server
     initialize();
