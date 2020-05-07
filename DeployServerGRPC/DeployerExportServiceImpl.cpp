@@ -7,16 +7,17 @@
 grpc::Status
 ec::rpc::DeployerExportServiceImpl::ReportPodSpec(grpc::ServerContext *context, const ec::rpc::ExportPodSpec *pod,
                                                   ec::rpc::PodSpecReply *reply) {
-    std::cout << "New Report Exported" << std::endl;
+    std::cout << "<------------------------- REPORT POD with CGID" << pod->cgroup_id() <<  "SPEC GRPC CALL START ------------------------->" << std::endl;
     std::string status;
     int ret = insertPodSpec(pod);
-    std::cout << "ret: " << ret << std::endl;
+    std::cout << "Insert Pod Spec ret: " << ret << std::endl;
     status = ret ? fail : success;
     if(status =="thx") {
         std::cout << "spinning up matching thread" << std::endl;
         spinUpDockerIdThread(SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()), pod->docker_id());
     }
     setPodSpecReply(pod, reply, status);
+    std::cout << "<------------------------- REPORT POD SPEC GRPC CALL END ------------------------->" << std::endl;
     return grpc::Status::OK;
 }
 
@@ -24,7 +25,7 @@ int ec::rpc::DeployerExportServiceImpl::insertPodSpec(const ec::rpc::ExportPodSp
     if(!pod) { std::cout << "[ERROR DeployService]: ExportPodSpec *pod is NULL"; return -1; }
 
     mapLock.lock();
-    auto inserted = deployedPods.try_emplace(
+    auto inserted = deployedPods.emplace(
             SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()),
             pod->docker_id()
             ).second;
@@ -56,6 +57,7 @@ void ec::rpc::DeployerExportServiceImpl::spinUpDockerIdThread(const ec::SubConta
                                                               const std::string &docker_id) {
 
     auto *args = new matchingThreadArgs(sc_id, docker_id);
+    std::cout << "<-------------------------  spinUpDockerIdThread " << args->sc_id <<  "START ------------------------->" << std::endl;
     std::cout << "created matching args: " << args->sc_id << ", " << args->docker_id << std::endl;
     std::thread match_sc_id_thread(&DeployerExportServiceImpl::scIdToDockerIdMatcherThread, this, (void*)args);
     match_sc_id_thread.detach();
@@ -79,6 +81,7 @@ void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* argum
     } else {
         std::cout << "docker_id set: " << ec->get_subcontainer(threadArgs->sc_id).get_docker_id() << std::endl;
     }
+    std::cout << "<-------------------------  spinUpDockerIdThread " << threadArgs->sc_id <<  "END ------------------------->" << std::endl;
 
 }
 

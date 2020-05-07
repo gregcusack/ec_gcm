@@ -82,11 +82,14 @@ void ec::Server::serve() {
 
         if(FD_ISSET(server_socket.sock_fd, &readfds)) {
             if((clifd = accept(server_socket.sock_fd, (struct sockaddr *)&server_socket.addr, (socklen_t*)&cliaddr_len)) > 0) {
-                std::cout << "[dgb]: Container tried to request a connection. EC Server id: " << server_id << std::endl;
+                std::cout << "=================================================================================================" << std::endl;
+                std::cout << "[SERVER DBG]: Container tried to request a connection. EC Server id: " << server_id << std::endl;
                 args = new serv_thread_args();
                 args->clifd = clifd;
                 args->cliaddr = &server_socket.addr;
                 threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)args);
+                std::cout << "[SERVER DBG]: Client Thread # id: " << num_of_cli << std::endl;
+                std::cout << "=================================================================================================" << std::endl;
             }
             else {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Unable to accept connection. "

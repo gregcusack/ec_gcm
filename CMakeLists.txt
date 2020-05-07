@@ -7,13 +7,13 @@ set(PTHREAD_LIB pthread)
 include(FindProtobuf)
 include(cmake/grpc.cmake)
 
-
 find_package(Protobuf REQUIRED)
 find_package(cpprestsdk REQUIRED)
 find_package(Boost REQUIRED system)
 
 add_subdirectory(protoBufSDK)
 include_directories(${PROTOBUF_INCLUDE_DIR})
+
 
 add_custom_command(
         OUTPUT
@@ -96,4 +96,4 @@ add_executable(loop_test tests/run_continuous.cpp
 
 
 target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB})
-target_link_libraries(deploy_test PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB})
+target_link_libraries(deploy_test PRIVATE ${PTHREAD_LIB} -lssl -lcrypto  cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB})
