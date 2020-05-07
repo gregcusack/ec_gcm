@@ -117,10 +117,7 @@ void ec::Server::handle_client_reqs(void *args) {
 //        ret = handle_req(req, res, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
         ret = handle_req(req, res, om::net::ip4_addr::from_net(arguments->cliaddr->sin_addr.s_addr).to_uint32(), arguments->clifd);
 
-        if(ret == __ALLOC_INIT__) {  //TODO: fix this.
-            std::cout << "sending back init req: " << *res << std::endl;
-            std::cout << "size of *res: " << sizeof(*res) << std::endl;
-            std::cout << "size of msg_t: " << sizeof(msg_t) << std::endl;
+        if(ret == __ALLOC_INIT__) { 
             if (write(client_fd, (const char *) &*res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
                 break;
@@ -134,9 +131,6 @@ void ec::Server::handle_client_reqs(void *args) {
             }
         }
         else if(ret == __ALLOC_SUCCESS__ && !res->request) {
-            std::cout << "sending back non-cpu req: " << *res << std::endl;
-            std::cout << "size of *res: " << sizeof(*res) << std::endl;
-            std::cout << "size of msg_t: " << sizeof(msg_t) << std::endl;
             if(write(client_fd, (const char*) res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
                 break;
