@@ -87,6 +87,7 @@ void ec::Server::serve() {
                 args->clifd = clifd;
                 args->cliaddr = &server_socket.addr;
                 threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)args);
+                threads[num_of_cli].detach();
             }
             else {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Unable to accept connection. "

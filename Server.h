@@ -20,7 +20,7 @@
 #include "DeployServerGRPC/DeployerExportServiceImpl.h"
 
 
-#define __MAX_CLIENT__ 30
+#define __MAX_CLIENT__ 128
 #define __HANDLE_REQ_BUFF__ 40 //TODO: may need to add back in
 #define __FAILED__ -1
 

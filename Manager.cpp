@@ -21,6 +21,7 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     std::thread application_thread(&ec::Manager::run, this);
     event_handler_thread.join();
     grpc_handler_thread.join();
+    application_thread.join();
 
 //    delete get
     delete getGrpcServer();
