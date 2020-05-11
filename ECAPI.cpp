@@ -11,8 +11,8 @@
 
 int ec::ECAPI::create_ec() {
 //    _ec = new ElasticContainer(manager_id);
-    _ec = new ElasticContainer(23);
-    grpcServer = new rpc::DeployerExportServiceImpl(_ec, cv, cv_mtx);
+    _ec = new ElasticContainer(ecapi_id);
+//    grpcServer = new rpc::DeployerExportServiceImpl(_ec, cv, cv_mtx, sc_map_lock);
     return 0;
 }
 
@@ -40,7 +40,9 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
         return __ALLOC_FAILED__;
     }
 
+    //todo: possibly lock subcontainers map here
     int ret = _ec->insert_sc(*sc);
+    //todo: Delete sc if ret == alloc_failed!
     _ec->incr_total_cpu(sc->sc_get_quota());
     _ec->update_fair_cpu_share();
     std::cout << "fair share: " << ec_get_fair_cpu_share() << std::endl;
@@ -220,19 +222,24 @@ int64_t ec::ECAPI::resize_memory_limit_in_pages(ec::SubContainer::ContainerId co
     return ret;
 }
 
-void ec::ECAPI::serveGrpcDeployExport() {
-//    std::cout << deploy_service_ip << std::endl;
-    std::string server_addr(deploy_service_ip + ":4447");
-//    rpc::DeployerExportServiceImpl service;
-    grpc::ServerBuilder builder;
+//void ec::ECAPI::serveGrpcDeployExport() {
+////    std::cout << deploy_service_ip << std::endl;
+//    std::string server_addr(deploy_service_ip + ":4447");
+////    rpc::DeployerExportServiceImpl service;
+//    grpc::ServerBuilder builder;
+//
+//    builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
+//    builder.RegisterService(grpcServer);
+//    std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
+//
+//    std::cout << "Grpc Server listening on: " << server_addr << std::endl;
+//    server->Wait();
+//
+//}
 
-    builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
-    builder.RegisterService(grpcServer);
-    std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-
-    std::cout << "Grpc Server listening on: " << server_addr << std::endl;
-    server->Wait();
-
-}
+//void ec::ECAPI::deleteFromSubcontainersMap(ec::SubContainer::ContainerId &sc_id) {
+//    std::unique_lock<std::mutex> lk(sc_map_lock);
+//    _ec->ec_delete_from_subcontainers_map(sc_id);
+//}
 
 

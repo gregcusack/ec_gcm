@@ -92,3 +92,18 @@ void ec::ElasticContainer::update_fair_cpu_share() {
     fair_cpu_share = (uint64_t)(_cpu.get_total_cpu() / subcontainers.size());
 }
 
+int ec::ElasticContainer::ec_delete_from_subcontainers_map(const SubContainer::ContainerId &sc_id) {
+    //todo: delete reduce pod fair share!
+    auto itr = subcontainers.find(sc_id);
+    if(itr != subcontainers.end()) {
+        auto tmp = itr->second;
+        subcontainers.erase(sc_id);
+        delete tmp;
+    }
+    else {
+        std::cerr << "[EC ERROR]: Can't find sc_id in subcontainers map! sc_id: " << sc_id << std::endl;
+        return -1;
+    }
+    return 0;
+}
+

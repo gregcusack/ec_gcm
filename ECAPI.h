@@ -30,8 +30,8 @@ namespace ec {
     public:
 //        ECAPI(uint32_t _ec_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
         ECAPI(){}
-        ECAPI(int _ec_id, ip4_addr _deploy_service_ip)
-            : ecapi_id(_ec_id), deploy_service_ip(_deploy_service_ip.to_string()) {}
+        ECAPI(int _ec_id) //, ip4_addr _deploy_service_ip)
+            : ecapi_id(_ec_id) {}//, deploy_service_ip(_deploy_service_ip.to_string()) {}
         ~ECAPI();
         //creates _ec and server and connects them
         int create_ec();
@@ -49,8 +49,8 @@ namespace ec {
         //MISC
         uint32_t get_ec_id() { return _ec->get_ec_id(); }
         //TODO: this should be wrapped in ElasticContainer - shouldn't be able to access from Manager
-        [[nodiscard]] const subcontainer_map  &get_subcontainers() const {return _ec->get_subcontainers(); }
-        [[nodiscard]] const subcontainer_agent_map  &get_subcontainer_agents() const {return _ec->get_subcontainer_agents(); }
+        [[nodiscard]] const subcontainer_map  &get_subcontainers() const {return _ec->ec_get_subcontainers(); }
+        [[nodiscard]] const subcontainer_agent_map  &get_subcontainer_agents() const {return _ec->get_sc_ac_map(); }
 
         const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id) {return _ec->get_subcontainer(
                     container_id);}
@@ -134,10 +134,17 @@ namespace ec {
         /**
          * HANDLERS
          */
-        void serveGrpcDeployExport();
+//        void serveGrpcDeployExport();
+//        ec::rpc::DeployerExportServiceImpl* getGrpcServer() {return grpcServer; }
 
+        /**
+         * MISC
+         */
+//         void deleteFromSubcontainersMap(SubContainer::ContainerId &sc_id);
+        std::condition_variable &get_cv() { return cv; }
+        std::mutex &get_cv_mtx() { return cv_mtx; }
+        std::mutex &get_sc_map_lock() { return sc_map_lock; }
 
-        ec::rpc::DeployerExportServiceImpl* getGrpcServer() {return grpcServer; }
     protected:
         int ecapi_id;
         ElasticContainer *_ec;
@@ -145,10 +152,10 @@ namespace ec {
         std::unordered_map<om::net::ip4_addr, std::pair<int32_t, int32_t> > pod_conn_check; //<ip, {depPod, conPod}>
 
         std::condition_variable cv;
-        std::mutex cv_mtx;
+        std::mutex cv_mtx, sc_map_lock;
 
-        ec::rpc::DeployerExportServiceImpl *grpcServer;
-        std::string deploy_service_ip;
+//        ec::rpc::DeployerExportServiceImpl *grpcServer;
+//        std::string deploy_service_ip;
 
 
     };

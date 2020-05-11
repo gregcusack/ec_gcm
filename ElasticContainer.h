@@ -55,11 +55,12 @@ namespace ec {
          **/
         //MISC
         uint32_t get_ec_id() { return ec_id; }
-        const subcontainer_map &get_subcontainers() {return subcontainers;}
+        const subcontainer_map &ec_get_subcontainers() {return subcontainers;}
+        subcontainer_map *get_subcontainers_map_for_update() { return &subcontainers; }
         SubContainer &get_subcontainer(const SubContainer::ContainerId &container_id);
         AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_ac_map[container_id];}
         SubContainer *get_sc_for_update(SubContainer::ContainerId &container_id);
-        const subcontainer_agentclient_map &get_subcontainer_agents() {return sc_ac_map;}
+        const subcontainer_agentclient_map &get_sc_ac_map() {return sc_ac_map;}
         subcontainer_agentclient_map *get_sc_ac_map_for_update() {return &sc_ac_map; }
         void get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res);
 
@@ -114,6 +115,8 @@ namespace ec {
         SubContainer* create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd, uint64_t quota, uint32_t nr_throttled);
         int insert_sc(SubContainer &_sc);
 
+        int ec_delete_from_subcontainers_map(const SubContainer::ContainerId &sc_id);
+
         // int insert_pid(int pid);
         // std::vector<int> get_pids();
 
@@ -126,6 +129,7 @@ namespace ec {
         subcontainer_map subcontainers;
         subcontainer_agentclient_map sc_ac_map;
         uint64_t fair_cpu_share;
+        std::mutex sc_lock;
 
         //cpu
 //        uint64_t runtime_remaining;

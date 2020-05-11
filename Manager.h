@@ -43,13 +43,21 @@ namespace ec {
             //...maybe it needs more things
         };
 
+        /**
+         * GRPC
+         */
+        void serveGrpcDeployExport();
+        ec::rpc::DeployerExportServiceImpl* getGrpcServer() {return grpcServer; }
+
+
     private:
         int manager_id;
         std::mutex cpulock;
         std::mutex memlock;
         int64_t seq_number;
 
-//        ec::rpc::DeployerExportServiceImpl grpcServer;
+        ec::rpc::DeployerExportServiceImpl *grpcServer;
+        std::string deploy_service_ip;
 
 
     };

@@ -5,7 +5,8 @@
 #include "Manager.h"
 
 ec::Manager::Manager( int _manager_id, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
-            : Server(_manager_id, gcm_ip, server_port, agents), ECAPI(_manager_id, gcm_ip), manager_id(_manager_id), seq_number(0) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
+            : Server(_manager_id, gcm_ip, server_port, agents), ECAPI(_manager_id), manager_id(_manager_id),
+            seq_number(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
 
     //init server
     initialize();
@@ -15,7 +16,9 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     //A thread to listen for subcontainers' events
     std::thread event_handler_thread(&ec::Server::serve, this);
     ec::ECAPI::create_ec();
-    std::thread grpc_handler_thread(&ec::ECAPI::serveGrpcDeployExport, this);
+//    std::thread grpc_handler_thread(&ec::ECAPI::serveGrpcDeployExport, this);
+    grpcServer = new rpc::DeployerExportServiceImpl(_ec, cv, cv_mtx, sc_map_lock);
+    std::thread grpc_handler_thread(&ec::Manager::serveGrpcDeployExport, this);
     sleep(10);
     std::cerr<<"[dbg] manager::just before running the app thread\n";
     std::thread application_thread(&ec::Manager::run, this);
@@ -62,9 +65,12 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         return __ALLOC_SUCCESS__;
     }
 
+//    sc_map_lock.lock();
     for (const auto &i : get_subcontainers()) {
         total_rt += i.second->sc_get_quota();
     }
+//    sc_map_lock.unlock();
+
 //    std::cout << "total rt given to containers: " << total_rt << std::endl;
     total_rt += ec_get_cpu_unallocated_rt();
     auto tot_rt_and_overrun = total_rt + ec_get_overrun();
@@ -242,6 +248,7 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     uint64_t total_reclaimed = 0;
 
     std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
+//    std::unique_lock<std::mutex> lk(sc_map_lock);
     for (const auto &container : get_subcontainers()) {
         if (container.second->get_fd() == client_fd) {
             continue;
@@ -282,13 +289,26 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
     return ret;
 }
 
+void ec::Manager::serveGrpcDeployExport() {
+    std::string server_addr(deploy_service_ip + ":4447");
+    grpc::ServerBuilder builder;
+
+    builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
+    builder.RegisterService(grpcServer);
+    std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
+
+    std::cout << "Grpc Server listening on: " << server_addr << std::endl;
+    server->Wait();
+
+}
+
 //TODO: this should be separated out into own file
 void ec::Manager::run() {
     //ec::SubContainer::ContainerId x ;
 //    std::cout << "[dbg] In Manager Run function" << std::endl;
-//    std::cout << "EC Map Size: " << _ec->get_subcontainers().size() << std::endl;
+//    std::cout << "EC Map Size: " << _ec->ec_get_subcontainers().size() << std::endl;
     while(true){
-        for(auto sc_ : _ec->get_subcontainers()){
+        for(auto sc_ : _ec->ec_get_subcontainers()){
             std::cout << "=================================================================================================" << std::endl;
             std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
             std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << "---" << get_memory_usage_in_bytes(sc_.first) << std::endl;

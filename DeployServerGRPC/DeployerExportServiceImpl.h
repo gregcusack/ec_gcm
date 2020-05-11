@@ -19,6 +19,7 @@
 #include "../SubContainer.h"
 #include "../Agents/AgentClient.h"
 #include "../ElasticContainer.h"
+//#include "../Manager.h"
 
 namespace ec {
     namespace rpc {
@@ -26,11 +27,16 @@ namespace ec {
             using sc_ac_map_type = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
         public:
             DeployerExportServiceImpl(ElasticContainer *_ec, std::condition_variable &_cv,
-                    std::mutex &_cv_mtx)
-                : success("thx"), fail("fail"), ec(_ec), cv(_cv), cv_mtx(_cv_mtx) {}
+                    std::mutex &_cv_mtx, std::mutex &_sc_lock)
+                : success("thx"), fail("fail"), ec(_ec), cv(_cv), cv_mtx(_cv_mtx),
+                  sc_lock(_sc_lock) {}
 
             grpc::Status ReportPodSpec(grpc::ServerContext* context,
                     const ExportPodSpec* pod, PodSpecReply* reply) override;
+
+            grpc::Status DeletePod(grpc::ServerContext* context,
+                    const ExportDeletePod* pod, DeletePodReply* reply) override;
+
 
             const std::unordered_map<SubContainer::ContainerId, std::string>& getDeployedPods() { return deployedPods; }
 
@@ -43,12 +49,22 @@ namespace ec {
 
         private:
             std::unordered_map<SubContainer::ContainerId, std::string> deployedPods;
+            std::unordered_map<std::string, SubContainer::ContainerId> dockerToSubContainer;
             int insertPodSpec(const ExportPodSpec* pod);
             static void setPodSpecReply(const ExportPodSpec* pod, PodSpecReply* reply, std::string &status);
             void spinUpDockerIdThread(const SubContainer::ContainerId& sc_id, const std::string& docker_id);
             void scIdToDockerIdMatcherThread(void* args);
 
-            std::mutex mapLock, &cv_mtx;
+            int deleteFromScAcMap(const SubContainer::ContainerId &sc_id);
+            int deleteFromSubcontainersMap(const SubContainer::ContainerId &sc_id);
+            int deleteFromDeployedPodsMap(const SubContainer::ContainerId &sc_id);
+            int deleteFromDockerIdScMap(const std::string &docker_id);
+
+            void setDeletePodReply(const ExportDeletePod* pod, DeletePodReply* reply, const std::string &status);
+
+            SubContainer::ContainerId getScIdFromDockerId(const std::string &docker_id);
+
+            std::mutex dep_pod_lock, dockId_sc_lock, &cv_mtx, &sc_lock;
             std::condition_variable &cv;
             const std::string success, fail;
             ElasticContainer *ec;
