@@ -17,4 +17,4 @@ protoBufSDK/msg.pb.h
 minikube
 *.grpc*
 *.pb*
-
+cmake-build-relwithdebinfo/
