@@ -22,7 +22,7 @@ namespace ec {
                  uint64_t get_mem_limit() { return memory_limit; }
                  uint64_t get_current_usage() { return current_usage; }
                  uint64_t get_slice_size() { return slice_size; }
-                 int64_t get_mem_available() { return memory_available; }
+                 [[nodiscard]] int64_t get_mem_available() const { return memory_available; }
 
                 /**
                  * SETTERS
@@ -33,6 +33,9 @@ namespace ec {
                 void set_slice_size(uint64_t _ss) { slice_size = _ss; }
                 int64_t set_memory_available(int64_t _ma) { memory_available = _ma; return memory_available; }
                 void decr_memory_available(uint64_t _to_decr);
+
+                void incr_total_memory(uint64_t _incr) { memory_limit += _incr; }
+                void decr_total_memory(uint64_t _decr);
 
 
             private:

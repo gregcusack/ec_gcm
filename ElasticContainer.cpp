@@ -5,7 +5,10 @@
 #include "ElasticContainer.h"
 
 
-ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id), fair_cpu_share(0) {}
+ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id), fair_cpu_share(0) {
+    _mem = global::stats::mem();
+    _cpu = global::stats::cpu();
+}
 
 ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients)
     : ec_id(_ec_id), fair_cpu_share(0) {

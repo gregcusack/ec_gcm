@@ -112,6 +112,8 @@ namespace ec {
         uint64_t ec_set_memory_available(uint64_t mem) { return _ec->ec_set_memory_available(mem); }
 
         int64_t resize_memory_limit_in_pages(ec::SubContainer::ContainerId container_idm, uint64_t new_mem_limit);
+        void ecapi_incr_total_memory(uint64_t _incr) { _ec->ec_incr_total_memory(_incr); }
+        void ecapi_decr_total_memory(uint64_t _decr) { _ec->ec_decr_total_memory(_decr); }
 
         /**
          *******************************************************

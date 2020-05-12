@@ -104,6 +104,8 @@ namespace ec {
         void ec_resize_memory_max(int64_t _max_mem) { _mem.set_mem_limit(_max_mem); }
         void ec_decrement_memory_available(uint64_t _mem_to_reduce) { _mem.decr_memory_available(_mem_to_reduce); }
         int64_t ec_set_memory_available(uint64_t mem) { return _mem.set_memory_available(mem); }
+        void ec_incr_total_memory(uint64_t _incr) { _mem.incr_total_memory(_incr); }
+        void ec_decr_total_memory(uint64_t _decr) { _mem.decr_total_memory(_decr); }
 
         /**
          *******************************************************

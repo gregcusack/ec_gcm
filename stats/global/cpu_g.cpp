@@ -5,7 +5,7 @@
 #include "cpu_g.h"
 
 ec::global::stats::cpu::cpu()
-    : quota(100000000), period(100000000),
+    : quota(0), period(100000000),
     slice_size(10000000), runtime_remaining(100000000),
     unallocated_rt(0), total_cpu(0), overrun(0) {}
 

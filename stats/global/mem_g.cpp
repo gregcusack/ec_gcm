@@ -19,3 +19,12 @@ void ec::global::stats::mem::decr_memory_available(uint64_t _to_decr) {
 
 }
 
+void ec::global::stats::mem::decr_total_memory(uint64_t _decr) {
+    if(memory_limit < _decr) {
+        memory_limit = 0;
+    } else {
+        memory_limit -= _decr;
+    }
+
+}
+

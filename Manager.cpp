@@ -244,6 +244,7 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
     return __ALLOC_SUCCESS__;
 }
 
+//todo: reclaim memory should already know what each container mem limit is
 uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     uint64_t total_reclaimed = 0;
 
