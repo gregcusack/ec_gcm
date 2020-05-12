@@ -86,9 +86,6 @@ void ec::ECAPI::ec_decrement_memory_available(uint64_t mem_to_reduce) {
 
 uint64_t ec::ECAPI::get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &container_id) {
     uint64_t ret = 0;
-     // This is where we'll use cAdvisor instead of the agent comm to get the mem limit
-//    std::cout << "CONTAINER ID USED: " << container_id << std::endl;
-//    std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
     AgentClient* ac = _ec->get_corres_agent(container_id);
     if(!ac) {
         std::cerr << "[ERROR] NO AgentClient found for container id: " << container_id << std::endl;
@@ -107,9 +104,6 @@ uint64_t ec::ECAPI::get_memory_limit_in_bytes(const ec::SubContainer::ContainerI
 
 uint64_t ec::ECAPI::get_memory_usage_in_bytes(const ec::SubContainer::ContainerId &container_id) {
     uint64_t ret = 0;
-     // This is where we'll use cAdvisor instead of the agent comm to get the mem limit
-//    std::cout << "CONTAINER ID USED: " << container_id << std::endl;
-//    std::cerr << "[dbg] get_memory_limit_in_bytes: get the corresponding agent\n";
     AgentClient* ac = _ec->get_corres_agent(container_id);
     if(!ac) {
         std::cerr << "[ERROR] NO AgentClient found for container id: " << container_id << std::endl;
@@ -207,10 +201,10 @@ int64_t ec::ECAPI::get_sc_quota(ec::SubContainer *sc) {
 }
 
 
-int64_t ec::ECAPI::resize_memory_limit_in_bytes(ec::SubContainer::ContainerId container_id, uint64_t new_mem_limit) {
+int64_t ec::ECAPI::resize_memory_limit_in_pages(ec::SubContainer::ContainerId container_id, uint64_t new_mem_limit) {
     uint64_t ret = 0;
     msg_struct::ECMessage msg_req;
-    msg_req.set_req_type(6); //RESIZE_MEM_LIMIT
+    msg_req.set_req_type(5); //RESIZE_MEM_LIMIT
     msg_req.set_cgroup_id(container_id.cgroup_id);
     msg_req.set_payload_string("test");
     msg_req.set_rsrc_amnt(new_mem_limit);
