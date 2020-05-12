@@ -7,7 +7,6 @@
 grpc::Status
 ec::rpc::DeployerExportServiceImpl::ReportPodSpec(grpc::ServerContext *context, const ec::rpc::ExportPodSpec *pod,
                                                   ec::rpc::PodSpecReply *reply) {
-    std::cout << "<------------------------- REPORT POD with CGID" << pod->cgroup_id() <<  "SPEC GRPC CALL START ------------------------->" << std::endl;
     std::string status;
     int ret = insertPodSpec(pod);
     std::cout << "Insert Pod Spec ret: " << ret << std::endl;
@@ -17,7 +16,6 @@ ec::rpc::DeployerExportServiceImpl::ReportPodSpec(grpc::ServerContext *context, 
         spinUpDockerIdThread(SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()), pod->docker_id());
     }
     setPodSpecReply(pod, reply, status);
-    std::cout << "<------------------------- REPORT POD SPEC GRPC CALL END ------------------------->" << std::endl;
     return grpc::Status::OK;
 }
 
@@ -57,7 +55,6 @@ void ec::rpc::DeployerExportServiceImpl::spinUpDockerIdThread(const ec::SubConta
                                                               const std::string &docker_id) {
 
     auto *args = new matchingThreadArgs(sc_id, docker_id);
-    std::cout << "<-------------------------  spinUpDockerIdThread " << args->sc_id <<  "START ------------------------->" << std::endl;
     std::cout << "created matching args: " << args->sc_id << ", " << args->docker_id << std::endl;
     std::thread match_sc_id_thread(&DeployerExportServiceImpl::scIdToDockerIdMatcherThread, this, (void*)args);
     match_sc_id_thread.detach();
@@ -81,8 +78,44 @@ void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* argum
     } else {
         std::cout << "docker_id set: " << ec->get_subcontainer(threadArgs->sc_id).get_docker_id() << std::endl;
     }
-    std::cout << "<-------------------------  spinUpDockerIdThread " << threadArgs->sc_id <<  "END ------------------------->" << std::endl;
+    // std::cout << "<-------------------------  spinUpDockerIdThread " << threadArgs->sc_id <<  "END ------------------------->" << std::endl;
 
+}
+
+grpc::Status
+ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, const ec::rpc::ExportAppSpec *appSpec,
+                                                  ec::rpc::AppSpecReply *reply) {
+    // std::cout << "Report App Spec Values: " << std::endl;
+    // std::cout << "App Name: " <<  appSpec->app_name() << std::endl;
+    // std::cout << "CPU Limit: " << appSpec->cpu_limit()  << std::endl;
+    // std::cout << "Mem Limit " << appSpec->mem_limit()  << std::endl;
+
+    // Set Application Global limits here:
+    if (!ec){
+        std::cout << "[ERROR DeployService]: EC is NULL in ReportAppSpec";
+        return grpc::Status::CANCELLED;
+    }
+    // Passed in value is in mi but set_total_cpu takes ns 
+    ec->set_total_cpu((uint64_t) (appSpec->cpu_limit()*100000));
+    // Passed in value is in MiB but ec_resize_memory_max takes in number of pages
+    ec->ec_resize_memory_max((uint64_t) ((appSpec->mem_limit()*1048576)/4000));
+
+    std::cout << "Set CPU Limit: " << ec->get_total_cpu()  << std::endl;
+    std::cout << "Set Mem Limit " << ec->get_mem_limit()  << std::endl;
+
+    // Set response here
+    if(!reply || !appSpec) {
+        std::cout << "[ERROR DeployService]: ReportAppSpec reply or appSpec is NULL";
+        return grpc::Status::CANCELLED;
+    }
+    std::string status = "thx";
+    reply->set_app_name(appSpec->app_name());
+    reply->set_cpu_limit(appSpec->cpu_limit());
+    reply->set_mem_limit(appSpec->mem_limit());
+    reply->set_thanks(status);
+
+
+    return grpc::Status::OK;
 }
 
 
