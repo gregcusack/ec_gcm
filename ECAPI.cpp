@@ -47,8 +47,8 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
     _ec->update_fair_cpu_share();
     std::cout << "fair share: " << ec_get_fair_cpu_share() << std::endl;
 
-    auto mem = get_memory_limit_in_bytes(*sc->get_c_id());
-    ecapi_incr_total_memory(mem);
+//    auto mem = get_memory_limit_in_bytes(*sc->get_c_id());
+//    ecapi_incr_total_memory(mem);
 
     // And so once a subcontainer is created and added to the appropriate distributed container,
     // we can now create a map to link the container_id and agent_client
