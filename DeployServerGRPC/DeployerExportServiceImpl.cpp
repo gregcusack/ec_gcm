@@ -90,29 +90,29 @@ ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, 
     // std::cout << "CPU Limit: " << appSpec->cpu_limit()  << std::endl;
     // std::cout << "Mem Limit " << appSpec->mem_limit()  << std::endl;
 
+    if(!reply || !appSpec) {
+        std::cout << "[ERROR DeployService]: ReportAppSpec reply or appSpec is NULL";
+        return grpc::Status::CANCELLED;
+    }
+
     // Set Application Global limits here:
     if (!ec){
         std::cout << "[ERROR DeployService]: EC is NULL in ReportAppSpec";
         return grpc::Status::CANCELLED;
     }
     // Passed in value is in mi but set_total_cpu takes ns 
-    ec->set_total_cpu((uint64_t) (appSpec->cpu_limit()*100000));
+    ec->set_total_cpu(appSpec->cpu_limit()*100000);
     // Passed in value is in MiB but ec_resize_memory_max takes in number of pages
-    ec->ec_resize_memory_max((uint64_t) ((appSpec->mem_limit()*1048576)/4000));
+    ec->ec_resize_memory_max((appSpec->mem_limit()*1048576)/4000);
 
     std::cout << "Set CPU Limit: " << ec->get_total_cpu()  << std::endl;
     std::cout << "Set Mem Limit " << ec->get_mem_limit()  << std::endl;
 
     // Set response here
-    if(!reply || !appSpec) {
-        std::cout << "[ERROR DeployService]: ReportAppSpec reply or appSpec is NULL";
-        return grpc::Status::CANCELLED;
-    }
-    std::string status = "thx";
     reply->set_app_name(appSpec->app_name());
     reply->set_cpu_limit(appSpec->cpu_limit());
     reply->set_mem_limit(appSpec->mem_limit());
-    reply->set_thanks(status);
+    reply->set_thanks(success);
 
 
     return grpc::Status::OK;
