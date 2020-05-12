@@ -43,7 +43,7 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
     //todo: possibly lock subcontainers map here
     int ret = _ec->insert_sc(*sc);
     //todo: Delete sc if ret == alloc_failed!
-    ec_incr_total_cpu(sc->sc_get_quota());
+//    _ec->incr_total_cpu(sc->sc_get_quota());
     _ec->update_fair_cpu_share();
     std::cout << "fair share: " << ec_get_fair_cpu_share() << std::endl;
 

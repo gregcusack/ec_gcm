@@ -47,6 +47,9 @@ namespace ec {
                 std::string docker_id = "";
             };
 
+            grpc::Status ReportAppSpec(grpc::ServerContext *context, const ec::rpc::ExportAppSpec *appSpec,
+                    ec::rpc::AppSpecReply *reply) override;
+
         private:
             std::unordered_map<SubContainer::ContainerId, std::string> deployedPods;
             std::unordered_map<std::string, SubContainer::ContainerId> dockerToSubContainer;

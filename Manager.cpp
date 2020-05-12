@@ -16,15 +16,15 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     //A thread to listen for subcontainers' events
     std::thread event_handler_thread(&ec::Server::serve, this);
     ec::ECAPI::create_ec();
-//    std::thread grpc_handler_thread(&ec::ECAPI::serveGrpcDeployExport, this);
     grpcServer = new rpc::DeployerExportServiceImpl(_ec, cv, cv_mtx, sc_map_lock);
     std::thread grpc_handler_thread(&ec::Manager::serveGrpcDeployExport, this);
     sleep(10);
+
     std::cerr<<"[dbg] manager::just before running the app thread\n";
     std::thread application_thread(&ec::Manager::run, this);
-    event_handler_thread.join();
-    grpc_handler_thread.join();
     application_thread.join();
+    grpc_handler_thread.join();
+    event_handler_thread.join();
 
 //    delete get
     delete getGrpcServer();

@@ -75,6 +75,7 @@ namespace ec {
         //MEM
         uint64_t get_memory_available() { return _mem.get_mem_available(); }
         uint64_t get_memory_slice() { return _mem.get_slice_size(); }
+        uint64_t get_mem_limit() { return _mem.get_mem_limit(); }
 
         /**
          *******************************************************
@@ -99,6 +100,7 @@ namespace ec {
         void incr_overrun(uint64_t _incr) { _cpu.incr_overrun(_incr); }
         void decr_overrun(uint64_t _decr) { _cpu.decr_overrun(_decr); }
         void set_overrun(uint64_t _val) { _cpu.set_overrun(_val); }
+        void set_total_cpu(uint64_t _val) { _cpu.set_total_cpu(_val); }
 
         //MEM
         void ec_resize_memory_max(int64_t _max_mem) { _mem.set_mem_limit(_max_mem); }
