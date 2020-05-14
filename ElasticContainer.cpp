@@ -92,6 +92,10 @@ ec::ElasticContainer::~ElasticContainer() {
 }
 void ec::ElasticContainer::update_fair_cpu_share() {
     std::cout << "update fair share. (tot_cpu, # subconts): (" << _cpu.get_total_cpu() << ", " << subcontainers.size() << ")" << std::endl;
+    if(subcontainers.empty()) {
+        fair_cpu_share = _cpu.get_total_cpu();
+        return;
+    }
     fair_cpu_share = (uint64_t)(_cpu.get_total_cpu() / subcontainers.size());
 }
 

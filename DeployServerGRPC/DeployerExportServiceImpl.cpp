@@ -41,9 +41,14 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     std::string s1, s2, s3, s4, status;
 
     s1 = deleteFromScAcMap(sc_id) ? fail : success;
+    uint64_t quota = ec->get_subcontainer(sc_id).get_cpu_stats()->get_quota(); //todo: race condition
     s2 = deleteFromSubcontainersMap(sc_id) ? fail : success;
     s3 = deleteFromDeployedPodsMap(sc_id) ? fail : success;
     s4 = deleteFromDockerIdScMap(pod->docker_id()) ? fail : success;
+
+    ec->update_fair_cpu_share();
+    ec->incr_unallocated_rt(quota);
+
 
     status = (s1 != success || s2 != success || s3 != success || s4 != success) ? fail : success;
 
@@ -51,6 +56,46 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
 
     return grpc::Status::OK;
 }
+
+
+grpc::Status
+ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, const ec::rpc::ExportAppSpec *appSpec,
+                                                  ec::rpc::AppSpecReply *reply) {
+    // std::cout << "Report App Spec Values: " << std::endl;
+    // std::cout << "App Name: " <<  appSpec->app_name() << std::endl;
+    // std::cout << "CPU Limit: " << appSpec->cpu_limit()  << std::endl;
+    // std::cout << "Mem Limit " << appSpec->mem_limit()  << std::endl;
+
+    if(!reply || !appSpec) {
+        std::cout << "[ERROR DeployService]: ReportAppSpec reply or appSpec is NULL";
+        return grpc::Status::CANCELLED;
+    }
+
+    // Set Application Global limits here:
+    if (!ec){
+        std::cout << "[ERROR DeployService]: EC is NULL in ReportAppSpec";
+        return grpc::Status::CANCELLED;
+    }
+    // Passed in value is in mi but set_total_cpu takes ns
+    ec->set_total_cpu(appSpec->cpu_limit()*100000);
+    ec->set_unallocated_rt(ec->get_total_cpu());
+    // Passed in value is in MiB but ec_resize_memory_max takes in number of pages
+    ec->ec_resize_memory_max((appSpec->mem_limit()*1048576)/4000);
+
+    std::cout << "Set CPU Limit: " << ec->get_total_cpu()  << std::endl;
+    std::cout << "Set Mem Limit " << ec->get_mem_limit()  << std::endl;
+
+    // Set response here
+    reply->set_app_name(appSpec->app_name());
+    reply->set_cpu_limit(appSpec->cpu_limit());
+    reply->set_mem_limit(appSpec->mem_limit());
+    reply->set_thanks(success);
+
+
+    return grpc::Status::OK;
+}
+
+
 
 int ec::rpc::DeployerExportServiceImpl::insertPodSpec(const ec::rpc::ExportPodSpec *pod) {
     if(!pod) { std::cout << "[ERROR DeployService]: ExportPodSpec *pod is NULL"; return -1; }
@@ -123,7 +168,7 @@ void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* argum
         std::cout << "docker_id set: " << ec->get_subcontainer(threadArgs->sc_id).get_docker_id() << std::endl;
     }
     // std::cout << "<-------------------------  spinUpDockerIdThread " << threadArgs->sc_id <<  "END ------------------------->" << std::endl;
-
+    std::cout << "match thread end" << std::endl;
 }
 
 int ec::rpc::DeployerExportServiceImpl::deleteFromScAcMap(const ec::SubContainer::ContainerId &sc_id) {
@@ -193,41 +238,4 @@ void ec::rpc::DeployerExportServiceImpl::setDeletePodReply(const ec::rpc::Export
     reply->set_docker_id(pod->docker_id());
     reply->set_thanks(status);
 }
-
-grpc::Status
-ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, const ec::rpc::ExportAppSpec *appSpec,
-                                                  ec::rpc::AppSpecReply *reply) {
-    // std::cout << "Report App Spec Values: " << std::endl;
-    // std::cout << "App Name: " <<  appSpec->app_name() << std::endl;
-    // std::cout << "CPU Limit: " << appSpec->cpu_limit()  << std::endl;
-    // std::cout << "Mem Limit " << appSpec->mem_limit()  << std::endl;
-
-    if(!reply || !appSpec) {
-        std::cout << "[ERROR DeployService]: ReportAppSpec reply or appSpec is NULL";
-        return grpc::Status::CANCELLED;
-    }
-
-    // Set Application Global limits here:
-    if (!ec){
-        std::cout << "[ERROR DeployService]: EC is NULL in ReportAppSpec";
-        return grpc::Status::CANCELLED;
-    }
-    // Passed in value is in mi but set_total_cpu takes ns 
-    ec->set_total_cpu(appSpec->cpu_limit()*100000);
-    // Passed in value is in MiB but ec_resize_memory_max takes in number of pages
-    ec->ec_resize_memory_max((appSpec->mem_limit()*1048576)/4000);
-
-    std::cout << "Set CPU Limit: " << ec->get_total_cpu()  << std::endl;
-    std::cout << "Set Mem Limit " << ec->get_mem_limit()  << std::endl;
-
-    // Set response here
-    reply->set_app_name(appSpec->app_name());
-    reply->set_cpu_limit(appSpec->cpu_limit());
-    reply->set_mem_limit(appSpec->mem_limit());
-    reply->set_thanks(success);
-
-
-    return grpc::Status::OK;
-}
-
 

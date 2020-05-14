@@ -33,8 +33,26 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
         std::cout << "ERROR. res or req == null in handle_add_cgroup_to_ec()" << std::endl;
         return __ALLOC_FAILED__;
     }
-    // This is where we see the connection be initiated by a container on some node  
-    auto *sc = _ec->create_new_sc(req->cgroup_id, ip, fd, req->rsrc_amnt, req->request); //update with throttle and quota
+    // This is where we see the connection be initiated by a container on some node
+    int update_quota_flag = 0;
+    uint64_t quota = req->rsrc_amnt;
+    if(quota <= ec_get_cpu_unallocated_rt()) {
+        ec_decr_unallocated_rt(req->rsrc_amnt);
+    }
+    else if(!ec_get_cpu_unallocated_rt()) {
+        quota = ec_get_cpu_slice();
+        ec_incr_overrun(quota);
+        update_quota_flag = 1;
+    }
+    else if(quota > ec_get_cpu_unallocated_rt()){
+        quota = ec_get_cpu_unallocated_rt();
+        ec_set_unallocated_rt(0);
+        update_quota_flag = 1;
+    }
+    std::cout << "quota: " << quota << std::endl;
+    std::cout << "rsrc_amnt: " << req->rsrc_amnt << std::endl;
+
+    auto *sc = _ec->create_new_sc(req->cgroup_id, ip, fd, quota, req->request); //update with throttle and quota
     if (!sc) {
         std::cerr << "[ERROR] Unable to create new sc object: Line 147" << std::endl;
         return __ALLOC_FAILED__;
@@ -42,6 +60,7 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
 
     //todo: possibly lock subcontainers map here
     int ret = _ec->insert_sc(*sc);
+
     //todo: Delete sc if ret == alloc_failed!
 //    _ec->incr_total_cpu(sc->sc_get_quota());
     _ec->update_fair_cpu_share();
@@ -71,6 +90,15 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
         std::cerr<< "[ERROR] SubContainer's node IP or Agent IP not found!" << std::endl;
     }
 
+    //Update pod quota
+    if(update_quota_flag) {
+        int sys_ret = set_sc_quota_syscall(sc, quota, 13); // 13 seq number???
+        if (sys_ret) {
+            std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (on sc insert!). ret: " << ret
+                      << std::endl;
+        }
+    }
+
 //    std::lock_guard<std::mutex> lk(cv_mtx);
 //    auto itr = pod_conn_check.find(agent_ip);
 //    if(itr == pod_conn_check.end()) {
@@ -80,7 +108,7 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
 //    itr->second.second++;
 //    std::cout << "handle() itr->first, second: " << itr->second.first << ", " << itr->second.second << std::endl;
 //    cv.notify_one();
-    std::cout << "returning from handle_Add_cgroup_to_ec()" << std::endl;
+    std::cout << "returning from handle_Add_cgroup_to_ec(): ret: " << ret << std::endl;
     res->request = 0; //giveback (or send back)
     return ret;
 }
@@ -159,9 +187,9 @@ int64_t ec::ECAPI::get_cpu_quota_in_us(const ec::SubContainer::ContainerId &cont
 }
 
 
-int64_t ec::ECAPI::set_sc_quota(ec::SubContainer *sc, uint64_t _quota, uint32_t seq_number) {
+int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, uint32_t seq_number) {
     if(!sc) {
-        std::cout << "sc == NULL in manager set_sc_quota()" << std::endl;
+        std::cout << "sc == NULL in manager set_sc_quota_syscall()" << std::endl;
         std::exit(EXIT_FAILURE);
     }
 

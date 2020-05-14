@@ -56,7 +56,7 @@ void ec::Server::initialize() {
     
 }
 
-void ec::Server::serve() {
+[[noreturn]] void ec::Server::serve() {
     if(!server_initialized) {
         std::cout << "ERROR: Server has not been initialized! Must call initialize() before serve()" << std::endl;
         exit(EXIT_FAILURE);
@@ -87,6 +87,7 @@ void ec::Server::serve() {
                 args = new serv_thread_args();
                 args->clifd = clifd;
                 args->cliaddr = &server_socket.addr;
+                std::cout << "server sock addr: " << om::net::ip4_addr::from_net(reinterpret_cast<struct sockaddr_in*>(&server_socket.addr)->sin_addr.s_addr) << std::endl;
                 threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)args);
                 threads[num_of_cli].detach();
             }
@@ -107,10 +108,16 @@ void ec::Server::handle_client_reqs(void *args) {
 //    char *buff_out;
     auto *arguments = reinterpret_cast<serv_thread_args*>(args);
     int client_fd = arguments->clifd;
+//    std::cout << "handle client reqs - out" << std::endl;
+//    std::cout << "*arguments - out: " << arguments << std::endl;
+//    std::cout << "arguments-clidaddr - out: " << arguments->cliaddr << std::endl;
 
     num_of_cli++;
     while((num_bytes = read(client_fd, buff_in, __HANDLE_REQ_BUFF__)) > 0 ) {
 //        std::cout << "num bytes read: " << num_bytes << std::endl;
+//        std::cout << "handle client reqs (in while loop)" << std::endl;
+//        std::cout << "*arguments - in: " << arguments << std::endl;
+//        std::cout << "arguments-clidaddr - in: " << arguments->cliaddr << std::endl;
         auto *req = reinterpret_cast<msg_t*>(buff_in);
         req->set_ip_from_net(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
 //        req->set_ip_from_string("10.0.2.15"); //TODO: this needs to be changed. but here for testing merge
@@ -142,6 +149,7 @@ void ec::Server::handle_client_reqs(void *args) {
             std::cout << "[ERROR]: handle_req() failed!" << std::endl;
             break;
         }
+//        delete arguments;
         delete res;
     }
 }

@@ -48,7 +48,7 @@ namespace ec {
             struct sockaddr_in *cliaddr     = nullptr;
         };
 
-        void serve();
+        [[noreturn]] void serve();
 
 //        virtual void serveGrpcDeployExport() = 0;
 

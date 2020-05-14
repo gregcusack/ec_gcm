@@ -69,6 +69,12 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     for (const auto &i : get_subcontainers()) {
         total_rt += i.second->sc_get_quota();
     }
+    std::cout << "rt in subcontainers: " << total_rt << std::endl;
+    std::cout << "rt in unallocated pool: " << ec_get_cpu_unallocated_rt() << std::endl;
+    std::cout << "fair_share: " << ec_get_fair_cpu_share() << std::endl;
+    std::cout << "max cpu: " << ec_get_total_cpu() << std::endl;
+
+
 //    sc_map_lock.unlock();
 
 //    std::cout << "total rt given to containers: " << total_rt << std::endl;
@@ -99,7 +105,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
         to_sub = std::min(overrun, to_sub);
         updated_quota = rx_quota - to_sub;
-        ret = set_sc_quota(sc, updated_quota, seq_num);
+        ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
         if(ret) {
             std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (overrun sub quota). ret: " << ret << std::endl;
         }
@@ -123,7 +129,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
                 to_add = amnt_share_lacking;
             }
             updated_quota = rx_quota + to_add;
-            ret = set_sc_quota(sc, updated_quota, seq_num);
+            ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
             if(ret) {
                 std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (incr fair share). ret: " << ret << std::endl;
             }
@@ -147,7 +153,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
                 overrun = amnt_share_lacking;
             }
             updated_quota = rx_quota + overrun;
-            ret = set_sc_quota(sc, updated_quota, seq_num);
+            ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
             if(ret) {
                 std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (incr fair share overrun). ret: " << ret << std::endl;
             }
@@ -164,7 +170,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(2 * thr_mean * ec_get_cpu_slice()));
         if(extra_rt > 0) {
             updated_quota = rx_quota + extra_rt;
-            ret = set_sc_quota(sc, updated_quota, seq_num);
+            ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
             if(ret) {
                 std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (incr). ret: " << ret << std::endl;
             }
@@ -181,7 +187,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         uint64_t new_quota = rx_quota * (1 - 0.2); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
         if(new_quota != rx_quota) {
-            ret = set_sc_quota(sc, new_quota, seq_num); //give back what was used + 5ms
+            ret = set_sc_quota_syscall(sc, new_quota, seq_num); //give back what was used + 5ms
             if(ret) {
                 std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (decr). ret: " << ret << std::endl;
             }
@@ -310,13 +316,13 @@ void ec::Manager::run() {
 //    std::cout << "EC Map Size: " << _ec->ec_get_subcontainers().size() << std::endl;
     while(true){
         for(auto sc_ : _ec->ec_get_subcontainers()){
-            std::cout << "=================================================================================================" << std::endl;
-            std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
-            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << "---" << get_memory_usage_in_bytes(sc_.first) << std::endl;
-            std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
-            std::cout << "=================================================================================================\n";
-            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
-            sleep(1);
+//            std::cout << "=================================================================================================" << std::endl;
+//            std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
+//            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << "---" << get_memory_usage_in_bytes(sc_.first) << std::endl;
+//            std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
+//            std::cout << "=================================================================================================\n";
+//            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
+//            sleep(1);
         }
         std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << std::endl;
         sleep(10);
