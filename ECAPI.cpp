@@ -28,29 +28,17 @@ ec::ECAPI::~ECAPI() {
     delete _ec;
 }
 
+//// This is where we see the connection be initiated by a container on some node
 int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, const uint32_t ip, int fd) {
     if(!req || !res) {
         std::cout << "ERROR. res or req == null in handle_add_cgroup_to_ec()" << std::endl;
         return __ALLOC_FAILED__;
     }
-    // This is where we see the connection be initiated by a container on some node
-    int update_quota_flag = 0;
-    uint64_t quota = req->rsrc_amnt;
-    if(quota <= ec_get_cpu_unallocated_rt()) {
-        ec_decr_unallocated_rt(req->rsrc_amnt);
-    }
-    else if(!ec_get_cpu_unallocated_rt()) {
-        quota = ec_get_cpu_slice();
-        ec_incr_overrun(quota);
-        update_quota_flag = 1;
-    }
-    else if(quota > ec_get_cpu_unallocated_rt()){
-        quota = ec_get_cpu_unallocated_rt();
-        ec_set_unallocated_rt(0);
-        update_quota_flag = 1;
-    }
-    std::cout << "quota: " << quota << std::endl;
-    std::cout << "rsrc_amnt: " << req->rsrc_amnt << std::endl;
+
+    //Check quota
+    uint64_t quota;
+    int update_quota = determine_quota_for_new_pod(req->rsrc_amnt, quota);
+
 
     auto *sc = _ec->create_new_sc(req->cgroup_id, ip, fd, quota, req->request); //update with throttle and quota
     if (!sc) {
@@ -66,7 +54,7 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
     _ec->update_fair_cpu_share();
     std::cout << "fair share: " << ec_get_fair_cpu_share() << std::endl;
 
-//    auto mem = get_memory_limit_in_bytes(*sc->get_c_id());
+//    auto mem = ecapi_get_memory_limit_in_bytes(*sc->get_c_id());
 //    ecapi_incr_total_memory(mem);
 
     // And so once a subcontainer is created and added to the appropriate distributed container,
@@ -91,7 +79,7 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
     }
 
     //Update pod quota
-    if(update_quota_flag) {
+    if(update_quota) {
         int sys_ret = set_sc_quota_syscall(sc, quota, 13); // 13 seq number???
         if (sys_ret) {
             std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (on sc insert!). ret: " << ret
@@ -99,40 +87,23 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
         }
     }
 
-//    std::lock_guard<std::mutex> lk(cv_mtx);
-//    auto itr = pod_conn_check.find(agent_ip);
-//    if(itr == pod_conn_check.end()) {
-//        std::cout << "[ECAPI ERROR]: Should not reach here. no agent ip found in pod_conn_check map" << std::endl;
-//        std::exit(EXIT_FAILURE);
-//    }
-//    itr->second.second++;
-//    std::cout << "handle() itr->first, second: " << itr->second.first << ", " << itr->second.second << std::endl;
-//    cv.notify_one();
+
     std::cout << "returning from handle_Add_cgroup_to_ec(): ret: " << ret << std::endl;
     res->request = 0; //giveback (or send back)
     return ret;
 }
 
-void ec::ECAPI::ec_decrement_memory_available(uint64_t mem_to_reduce) {
-    _ec->ec_decrement_memory_available(mem_to_reduce);
+void ec::ECAPI::ecapi_decrement_memory_available(uint64_t mem_to_reduce) {
+    _ec->ec_decrement_memory_available_in_pages(mem_to_reduce);
 }
 
-uint64_t ec::ECAPI::get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &container_id) {
-    uint64_t ret = 0;
-    AgentClient* ac = _ec->get_corres_agent(container_id);
-    if(!ac) {
-        std::cerr << "[ERROR] NO AgentClient found for container id: " << container_id << std::endl;
-        return 0;
-    }
-    ec::SubContainer sc = _ec->get_subcontainer(container_id);
+void ec::ECAPI::ecapi_increase_memory_available(uint64_t mem_to_incr) {
+    _ec->ec_increment_memory_available_in_pages(mem_to_incr);
+}
 
-//    std::cout << "docker id used:" <<  sc.get_docker_id() << std::endl;
-    if(sc.get_docker_id().empty()) {
-        std::cout << "docker_id is 0!" << std::endl;
-        return 0;
-    }
-    ret = ec::Facade::MonitorFacade::CAdvisor::getContMemLimit(ac->get_agent_ip().to_string(), sc.get_docker_id());
-    return ret;
+
+uint64_t ec::ECAPI::ecapi_get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
+    return _ec->ec_get_memory_limit_in_bytes(sc_id);
 }
 
 uint64_t ec::ECAPI::get_memory_usage_in_bytes(const ec::SubContainer::ContainerId &container_id) {
@@ -253,24 +224,24 @@ int64_t ec::ECAPI::resize_memory_limit_in_pages(ec::SubContainer::ContainerId co
     return ret;
 }
 
-//void ec::ECAPI::serveGrpcDeployExport() {
-////    std::cout << deploy_service_ip << std::endl;
-//    std::string server_addr(deploy_service_ip + ":4447");
-////    rpc::DeployerExportServiceImpl service;
-//    grpc::ServerBuilder builder;
-//
-//    builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
-//    builder.RegisterService(grpcServer);
-//    std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-//
-//    std::cout << "Grpc Server listening on: " << server_addr << std::endl;
-//    server->Wait();
-//
-//}
-
-//void ec::ECAPI::deleteFromSubcontainersMap(ec::SubContainer::ContainerId &sc_id) {
-//    std::unique_lock<std::mutex> lk(sc_map_lock);
-//    _ec->ec_delete_from_subcontainers_map(sc_id);
-//}
-
+int ec::ECAPI::determine_quota_for_new_pod(uint64_t req_quota, uint64_t &quota) {
+    int update_quota_flag = 0;
+    quota = req_quota;
+    if(quota <= ec_get_cpu_unallocated_rt()) {
+        ec_decr_unallocated_rt(req_quota);
+    }
+    else if(!ec_get_cpu_unallocated_rt()) {
+        quota = ec_get_cpu_slice();
+        ec_incr_overrun(quota);
+        update_quota_flag = 1;
+    }
+    else if(quota > ec_get_cpu_unallocated_rt()) {
+        quota = ec_get_cpu_unallocated_rt();
+        ec_set_unallocated_rt(0);
+        update_quota_flag = 1;
+    }
+    std::cout << "quota: " << quota << std::endl;
+    std::cout << "rsrc_amnt: " << req_quota << std::endl;
+    return update_quota_flag;
+}
 

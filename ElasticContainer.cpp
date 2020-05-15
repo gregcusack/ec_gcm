@@ -19,7 +19,7 @@ ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient 
     _cpu = global::stats::cpu();
 
     std::cout << "[Elastic Container Log] runtime_remaining on init: " << _cpu.get_runtime_remaining() << std::endl;
-    std::cout << "[Elastic Container Log] memory_available on init: " << _mem.get_mem_available() << std::endl;
+    std::cout << "[Elastic Container Log] memory_available_in_pages on init: " << _mem.get_mem_available_in_pages() << std::endl;
 
     subcontainers = subcontainer_map();
     sc_ac_map = subcontainer_agentclient_map();
@@ -112,5 +112,23 @@ int ec::ElasticContainer::ec_delete_from_subcontainers_map(const SubContainer::C
         return -1;
     }
     return 0;
+}
+
+uint64_t ec::ElasticContainer::ec_get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
+    uint64_t ret = 0;
+    auto *ac = get_corres_agent(sc_id);
+    if(!ac) {
+        std::cerr << "[ERROR] NO AgentClient found for container id: " << sc_id << " get_mem_limit_in_bytes()" <<  std::endl;
+        return 0;
+    }
+    auto sc = get_subcontainer(sc_id);
+
+//    std::cout << "docker id used:" <<  sc.get_docker_id() << std::endl;
+    if(sc.get_docker_id().empty()) {
+        std::cout << "docker_id is 0!" << std::endl;
+        return 0;
+    }
+    ret = ec::Facade::MonitorFacade::CAdvisor::getContMemLimit(ac->get_agent_ip().to_string(), sc.get_docker_id());
+    return ret;
 }
 

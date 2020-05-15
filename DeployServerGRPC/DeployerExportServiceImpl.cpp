@@ -40,14 +40,22 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     std::cout << "Sc_id to delete: " << sc_id << std::endl;
     std::string s1, s2, s3, s4, status;
 
-    s1 = deleteFromScAcMap(sc_id) ? fail : success;
+    uint64_t mem_limit = ec->get_subcontainer(sc_id).sc_get_mem_limit_in_pages();
     uint64_t quota = ec->get_subcontainer(sc_id).get_cpu_stats()->get_quota(); //todo: race condition
+    s1 = deleteFromScAcMap(sc_id) ? fail : success;
     s2 = deleteFromSubcontainersMap(sc_id) ? fail : success;
     s3 = deleteFromDeployedPodsMap(sc_id) ? fail : success;
     s4 = deleteFromDockerIdScMap(pod->docker_id()) ? fail : success;
 
+    //CPU
     ec->update_fair_cpu_share();
     ec->incr_unallocated_rt(quota);
+
+    //MEM
+    std::cout << "delete pod mem_limit to ret to global pool: " << mem_limit << std::endl;
+    std::cout << "ec_mem_avail pre delete: " << ec->get_memory_available() << std::endl;
+    ec->ec_increment_memory_available_in_pages(mem_limit);
+    std::cout << "ec_mem_avail post delete: " << ec->get_memory_available() << std::endl;
 
 
     status = (s1 != success || s2 != success || s3 != success || s4 != success) ? fail : success;
@@ -64,7 +72,7 @@ ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, 
     // std::cout << "Report App Spec Values: " << std::endl;
     // std::cout << "App Name: " <<  appSpec->app_name() << std::endl;
     // std::cout << "CPU Limit: " << appSpec->cpu_limit()  << std::endl;
-    // std::cout << "Mem Limit " << appSpec->mem_limit()  << std::endl;
+    // std::cout << "Mem Limit " << appSpec->mem_limit_in_pages()  << std::endl;
 
     if(!reply || !appSpec) {
         std::cout << "[ERROR DeployService]: ReportAppSpec reply or appSpec is NULL";
@@ -81,6 +89,7 @@ ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, 
     ec->set_unallocated_rt(ec->get_total_cpu());
     // Passed in value is in MiB but ec_resize_memory_max takes in number of pages
     ec->ec_resize_memory_max((appSpec->mem_limit()*1048576)/4000);
+    ec->ec_set_memory_available((appSpec->mem_limit()*1048576)/4000);
 
     std::cout << "Set CPU Limit: " << ec->get_total_cpu()  << std::endl;
     std::cout << "Set Mem Limit " << ec->get_mem_limit()  << std::endl;
@@ -161,12 +170,14 @@ void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* argum
     });
 
     std::cout << "sc in sc_ac map. set docker_id" << std::endl;
+    std::lock_guard<std::mutex> lk_dock(cv_mtx_dock);
     ec->get_subcontainer(threadArgs->sc_id).set_docker_id(threadArgs->docker_id);
     if(unlikely(ec->get_subcontainer(threadArgs->sc_id).get_docker_id().empty())) {
         std::cout << "docker_id set failed in grpcDockerIdMatcher()!" << std::endl;
     } else {
         std::cout << "docker_id set: " << ec->get_subcontainer(threadArgs->sc_id).get_docker_id() << std::endl;
     }
+    cv_dock.notify_one();
     // std::cout << "<-------------------------  spinUpDockerIdThread " << threadArgs->sc_id <<  "END ------------------------->" << std::endl;
     std::cout << "match thread end" << std::endl;
 }

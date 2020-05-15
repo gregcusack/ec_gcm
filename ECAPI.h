@@ -72,9 +72,9 @@ namespace ec {
         //MEM
         uint64_t ec_get_memory_available() { return _ec->get_memory_available(); }
         uint64_t ec_get_memory_slice() { return _ec->get_memory_slice(); }
-        uint64_t get_memory_limit_in_bytes(const SubContainer::ContainerId &container_id);
+        uint64_t ecapi_get_memory_limit_in_bytes(const SubContainer::ContainerId &sc_id);
         uint64_t get_memory_usage_in_bytes(const SubContainer::ContainerId &container_id);
-        
+
         // Machine Stats
         uint64_t get_machine_free_memory(const SubContainer::ContainerId &container_id);
 
@@ -108,7 +108,8 @@ namespace ec {
 
         //MEM
         void ec_resize_memory_max(int64_t _max_mem) { _ec->ec_resize_memory_max(_max_mem); }
-        void ec_decrement_memory_available(uint64_t mem_to_reduce);
+        void ecapi_decrement_memory_available(uint64_t mem_to_reduce);
+        void ecapi_increase_memory_available(uint64_t mem_to_incr);
         uint64_t ec_set_memory_available(uint64_t mem) { return _ec->ec_set_memory_available(mem); }
 
         int64_t resize_memory_limit_in_pages(ec::SubContainer::ContainerId container_idm, uint64_t new_mem_limit);
@@ -123,7 +124,7 @@ namespace ec {
          **/
         
         //TODO: implement these here in a class that inherits from manager
-        int handle_add_cgroup_to_ec(const msg_t *req, msg_t *res, uint32_t ip, int fd);
+        virtual int handle_add_cgroup_to_ec(const msg_t *req, msg_t *res, uint32_t ip, int fd);
         //CPU
         virtual int handle_cpu_usage_report(const msg_t *req, msg_t *res) = 0;
 //        virtual int64_t set_sc_quota_syscall(SubContainer *sc, uint64_t _quota) = 0;
@@ -153,8 +154,10 @@ namespace ec {
 //        std::unordered_map<ec::AgentClient, std::pair<int32_t, int32_t> > pod_conn_check;
         std::unordered_map<om::net::ip4_addr, std::pair<int32_t, int32_t> > pod_conn_check; //<ip, {depPod, conPod}>
 
-        std::condition_variable cv;
-        std::mutex cv_mtx, sc_map_lock;
+        std::condition_variable cv, cv_dock;
+        std::mutex cv_mtx, cv_mtx_dock, sc_map_lock;
+
+        int determine_quota_for_new_pod(uint64_t req_quota, uint64_t &quota);
 
 //        ec::rpc::DeployerExportServiceImpl *grpcServer;
 //        std::string deploy_service_ip;

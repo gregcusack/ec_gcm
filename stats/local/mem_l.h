@@ -14,9 +14,14 @@ namespace ec {
             public:
                 mem();
 
+                [[nodiscard]] uint64_t get_mem_limit_in_pages() const { return mem_limit_in_pages; }
+                void set_mem_limit_in_pages(uint64_t _new_limit) { mem_limit_in_pages = _new_limit; }
+                void incr_mem_limit(uint64_t _incr) { mem_limit_in_pages += _incr; }
+                void decr_mem_limit(uint64_t _decr);
+
             private:
-                uint32_t mem_limit;
-                uint32_t current_usage;
+                uint64_t mem_limit_in_pages;
+                uint64_t current_usage;
 
 
             };

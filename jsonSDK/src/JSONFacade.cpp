@@ -209,7 +209,12 @@ void ec::Facade::JSONFacade::json::getJSONRequest(const std::string &urlRequest,
     web::http::client::http_client client(urlRequest);
     client.request(web::http::methods::GET, U("/"))
     .then([](const web::http::http_response& response) {
-        return response.extract_json(); 
+        if (response.status_code() == web::http::status_codes::OK) {
+            return response.extract_json();
+        } else {
+            std::cout << "status code not OK! it is: " << response.status_code() << std::endl;
+            return pplx::task_from_result(web::json::value());
+        }
     })
     .then([&json_return](const pplx::task<web::json::value>& task) {
         try {

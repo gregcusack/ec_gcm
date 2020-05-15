@@ -24,6 +24,7 @@
 #include "om.h"
 #include "stats/global/mem_g.h"
 #include "stats/global/cpu_g.h"
+#include "cAdvisorSDK/include/cAdvisorFacade.h"
 
 #define __ALLOC_FAILED__ 0
 #define __ALLOC_SUCCESS__ 1
@@ -73,9 +74,9 @@ namespace ec {
         uint64_t get_total_cpu() { return _cpu.get_total_cpu(); }
 
         //MEM
-        uint64_t get_memory_available() { return _mem.get_mem_available(); }
+        uint64_t get_memory_available() { return _mem.get_mem_available_in_pages(); }
         uint64_t get_memory_slice() { return _mem.get_slice_size(); }
-        uint64_t get_mem_limit() { return _mem.get_mem_limit(); }
+        uint64_t get_mem_limit() { return _mem.get_mem_limit_in_pages(); }
 
         /**
          *******************************************************
@@ -103,11 +104,14 @@ namespace ec {
         void set_total_cpu(uint64_t _val) { _cpu.set_total_cpu(_val); }
 
         //MEM
-        void ec_resize_memory_max(int64_t _max_mem) { _mem.set_mem_limit(_max_mem); }
-        void ec_decrement_memory_available(uint64_t _mem_to_reduce) { _mem.decr_memory_available(_mem_to_reduce); }
-        int64_t ec_set_memory_available(uint64_t mem) { return _mem.set_memory_available(mem); }
+        void ec_resize_memory_max(int64_t _max_mem) { _mem.set_mem_limit_in_pages(_max_mem); }
+        void ec_decrement_memory_available_in_pages(uint64_t _mem_to_reduce) { _mem.decr_memory_available_in_pages(_mem_to_reduce); }
+        void ec_increment_memory_available_in_pages(uint64_t _mem_to_incr) { _mem.incr_memory_available_in_pages(_mem_to_incr); }
+        int64_t ec_set_memory_available(uint64_t mem) { return _mem.set_memory_available_in_pages(mem); }
         void ec_incr_total_memory(uint64_t _incr) { _mem.incr_total_memory(_incr); }
         void ec_decr_total_memory(uint64_t _decr) { _mem.decr_total_memory(_decr); }
+        uint64_t ec_get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id);
+
 
         /**
          *******************************************************

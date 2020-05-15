@@ -25,7 +25,6 @@ namespace ec {
 //        Manager(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients) : ECAPI(_ec_id, _agent_clients) {};
 
         int handle_cpu_usage_report(const msg_t *req, msg_t *res) override;
-        int allocate_cpu(ec::SubContainer *sc, int64_t rx_quota);
 
         int handle_mem_req(const msg_t *req, msg_t *res, int clifd) override;
         uint64_t handle_reclaim_memory(int client_fd) override;
@@ -34,6 +33,7 @@ namespace ec {
         int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) override;
         void start(const std::string &app_name, const std::string &gcm_ip);
         virtual void run();
+        int handle_add_cgroup_to_ec(const msg_t *req, msg_t *res, uint32_t ip, int fd) override;
 
         // Need to remove this when Agent code gets merged with the correct codebase version
         struct reclaim_msg {
@@ -57,6 +57,8 @@ namespace ec {
 
         ec::rpc::DeployerExportServiceImpl *grpcServer;
         std::string deploy_service_ip;
+
+        void determine_mem_limit_for_new_pod(SubContainer *sc, int clifd);
 
 
     };

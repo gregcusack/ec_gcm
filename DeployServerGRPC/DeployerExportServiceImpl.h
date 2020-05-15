@@ -27,9 +27,9 @@ namespace ec {
             using sc_ac_map_type = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
         public:
             DeployerExportServiceImpl(ElasticContainer *_ec, std::condition_variable &_cv,
-                    std::mutex &_cv_mtx, std::mutex &_sc_lock)
-                : success("thx"), fail("fail"), ec(_ec), cv(_cv), cv_mtx(_cv_mtx),
-                  sc_lock(_sc_lock) {}
+                std::condition_variable &_cv_dock, std::mutex &_cv_mtx, std::mutex &_cv_mtx_dock, std::mutex &_sc_lock)
+                : success("thx"), fail("fail"), ec(_ec), cv(_cv), cv_dock(_cv_dock), cv_mtx(_cv_mtx),
+                  cv_mtx_dock(_cv_mtx_dock), sc_lock(_sc_lock) {}
 
             grpc::Status ReportPodSpec(grpc::ServerContext* context,
                     const ExportPodSpec* pod, PodSpecReply* reply) override;
@@ -67,8 +67,8 @@ namespace ec {
 
             SubContainer::ContainerId getScIdFromDockerId(const std::string &docker_id);
 
-            std::mutex dep_pod_lock, dockId_sc_lock, &cv_mtx, &sc_lock;
-            std::condition_variable &cv;
+            std::mutex dep_pod_lock, dockId_sc_lock, &cv_mtx, &cv_mtx_dock, &sc_lock;
+            std::condition_variable &cv, &cv_dock;
             const std::string success, fail;
             ElasticContainer *ec;
 

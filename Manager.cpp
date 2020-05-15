@@ -16,7 +16,7 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     //A thread to listen for subcontainers' events
     std::thread event_handler_thread(&ec::Server::serve, this);
     ec::ECAPI::create_ec();
-    grpcServer = new rpc::DeployerExportServiceImpl(_ec, cv, cv_mtx, sc_map_lock);
+    grpcServer = new rpc::DeployerExportServiceImpl(_ec, cv, cv_dock, cv_mtx, cv_mtx_dock,sc_map_lock);
     std::thread grpc_handler_thread(&ec::Manager::serveGrpcDeployExport, this);
     sleep(10);
 
@@ -69,10 +69,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     for (const auto &i : get_subcontainers()) {
         total_rt += i.second->sc_get_quota();
     }
-    std::cout << "rt in subcontainers: " << total_rt << std::endl;
-    std::cout << "rt in unallocated pool: " << ec_get_cpu_unallocated_rt() << std::endl;
-    std::cout << "fair_share: " << ec_get_fair_cpu_share() << std::endl;
-    std::cout << "max cpu: " << ec_get_total_cpu() << std::endl;
+//    std::cout << "rt in subcontainers: " << total_rt << std::endl;
+//    std::cout << "rt in unallocated pool: " << ec_get_cpu_unallocated_rt() << std::endl;
+//    std::cout << "fair_share: " << ec_get_fair_cpu_share() << std::endl;
+//    std::cout << "max cpu: " << ec_get_total_cpu() << std::endl;
 
 
 //    sc_map_lock.unlock();
@@ -212,6 +212,7 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
         std::cout << "req or res == null in handle_mem_req()" << std::endl;
         exit(EXIT_FAILURE);
     }
+    std::cout << "handle_mem_req()" << std::endl;
     uint64_t ret = 0;
     if(req->req_type != _MEM_) { return __ALLOC_FAILED__; }
     memlock.lock();
@@ -235,12 +236,15 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
 
     std::cout << "mem amnt to ret: " << ret << std::endl;
 
-    ec_decrement_memory_available(ret);
-//        memory_available -= ret;
+    ecapi_decrement_memory_available(ret);
+//        memory_available_in_pages -= ret;
 
     std::cout << "successfully decrease remaining mem to: " << ec_get_memory_available() << std::endl;
 
     res->rsrc_amnt = req->rsrc_amnt + ret;   //give back "ret" pages
+    auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
+    auto sc = ec_get_sc_for_update(sc_id);
+    sc->sc_set_mem_limit_in_pages(res->rsrc_amnt);
 //    auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
 //    res->rsrc_amnt = resize_memory_limit_in_bytes(sc_id, res->rsrc_amnt);
 
@@ -260,12 +264,12 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
         if (container.second->get_fd() == client_fd) {
             continue;
         }
-        auto ac = _ec->get_corres_agent(*container.second->get_c_id());
-        auto mem_limit = get_memory_limit_in_bytes(*container.second->get_c_id());
+        auto mem_limit = ecapi_get_memory_limit_in_bytes(*container.second->get_c_id());
         auto mem_usage = get_memory_usage_in_bytes(*container.second->get_c_id());
         if(mem_limit - mem_usage > _SAFE_MARGIN_) {
             auto is_max_mem_resized = resize_memory_limit_in_pages(*container.second->get_c_id(), byte_to_page(mem_usage + _SAFE_MARGIN_));
             std::cout << "[dbg] byte to page macro output: " << byte_to_page(mem_limit - (mem_usage+_SAFE_MARGIN_)) << std :: endl;
+            std::cout << "[dbg] is_max_mem_resized: " << is_max_mem_resized << std::endl;
             total_reclaimed += !is_max_mem_resized ? byte_to_page(mem_limit - (mem_usage+_SAFE_MARGIN_)) : 0;
         }
     }
@@ -288,13 +292,121 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
             ret = handle_cpu_usage_report(req, res);
             break;
         case _INIT_:
-            ret = handle_add_cgroup_to_ec(req, res, host_ip, clifd);
+            ret = Manager::handle_add_cgroup_to_ec(req, res, host_ip, clifd);
             break;
         default:
             std::cout << "[Error]: ECAPI: " << manager_id << ". Handling memory/cpu request failed!" << std::endl;
     }
     return ret;
 }
+
+int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, uint32_t ip, int fd) {
+    if(!req || !res) {
+        std::cout << "ERROR. res or req == null in handle_add_cgroup_to_ec()" << std::endl;
+        return __ALLOC_FAILED__;
+    }
+
+    //Check quota
+    uint64_t quota;
+    int update_quota = determine_quota_for_new_pod(req->rsrc_amnt, quota);
+
+    auto *sc = _ec->create_new_sc(req->cgroup_id, ip, fd, quota, req->request); //update with throttle and quota
+    if (!sc) {
+        std::cerr << "[ERROR] Unable to create new sc object: Line 147" << std::endl;
+        return __ALLOC_FAILED__;
+    }
+
+    //todo: possibly lock subcontainers map here
+    int ret = _ec->insert_sc(*sc);
+
+    //todo: Delete sc if ret == alloc_failed!
+//    _ec->incr_total_cpu(sc->sc_get_quota());
+    _ec->update_fair_cpu_share();
+    std::cout << "fair share: " << ec_get_fair_cpu_share() << std::endl;
+
+//    auto mem = ecapi_get_memory_limit_in_bytes(*sc->get_c_id());
+//    ecapi_incr_total_memory(mem);
+
+    // And so once a subcontainer is created and added to the appropriate distributed container,
+    // we can now create a map to link the container_id and agent_client
+
+    std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
+    AgentClientDB* acdb = AgentClientDB::get_agent_client_db_instance();
+    auto agent_ip = sc->get_c_id()->server_ip;
+    auto target_agent = acdb->get_agent_client_by_ip(agent_ip);
+    std::cout << "[dbg] Agent client ip: " << target_agent-> get_agent_ip() << std::endl;
+    std::cout << "[dbg] Agent ip: " << agent_ip << std::endl;
+    if ( target_agent ){
+//        mtx.lock();
+        std::cout << "add to sc_ac map" << std::endl;
+        std::lock_guard<std::mutex> lk(cv_mtx);
+        _ec->add_to_sc_ac_map(*sc->get_c_id(), target_agent);
+        std::cout << "handle() sc_id, agent_ip: " << *sc->get_c_id() << ", " << target_agent->get_agent_ip() << std::endl;
+        cv.notify_one();
+//        mtx.unlock();
+    } else {
+        std::cerr<< "[ERROR] SubContainer's node IP or Agent IP not found!" << std::endl;
+    }
+
+    //Update pod quota
+    if(update_quota) {
+        std::thread update_quota_thread(&ec::Manager::set_sc_quota_syscall, this, sc, quota, 13);
+        update_quota_thread.detach();
+    }
+
+    //update pod mem limit
+    std::thread update_mem_limit_thread(&ec::Manager::determine_mem_limit_for_new_pod, this, sc, fd);
+    update_mem_limit_thread.detach();
+
+    std::cout << "returning from handle_Add_cgroup_to_ec(): ret: " << ret << std::endl;
+    res->request = 0; //giveback (or send back)
+    return ret;
+}
+
+void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clifd) {
+    if(!sc) {
+        std::cerr << "sc in determine_mem_limit_for_new_pod() is NULL" << std::endl;
+        return;
+    }
+//    uint64_t mem_limit = 0;
+    std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
+    cv_dock.wait(lk_dock, [this, sc] {
+        std::cout << "in wait for docker id to be set" << std::endl;
+        return !sc->get_docker_id().empty();
+    });
+    auto mem_limit = byte_to_page(ecapi_get_memory_limit_in_bytes(*sc->get_c_id()));
+    std::cout << "ec_get_mem_Avail init: " << ec_get_memory_available() << std::endl;
+    std::cout << "mem_limit init: " << mem_limit << std::endl;
+    if(mem_limit <= ec_get_memory_available()) {
+        ecapi_decrement_memory_available(mem_limit);
+    }
+    else if(!ec_get_memory_available()) {
+        std::cerr << "[ERROR]: No Memory available to allocate to newly connected container!" << std::endl;
+        std::cerr << "tbh not sure how to handle this" << std::endl;
+    }
+    else if(mem_limit > ec_get_memory_available()) {
+        //need to get back memory from other pods
+        ecapi_increase_memory_available(handle_reclaim_memory(clifd));
+        std::cout << "ec_get_mem_Avail after reclaim: " << ec_get_memory_available() << std::endl;
+        if(mem_limit <= ec_get_memory_available()) {
+            ecapi_decrement_memory_available(mem_limit);
+        }
+        else {
+            //mem_limit_in_pages still to high for mem_avail. try to reduce mem_limit_in_pages on pod
+            auto is_max_mem_resized = resize_memory_limit_in_pages(*sc->get_c_id(), ec_get_memory_available());
+            if(is_max_mem_resized) {
+                std::cerr << "[ERROR]: Can't reclaim enough memory to deploy this new pod" << std::endl;
+                std::cout << "tbh don't know how to handle this." << std::endl;
+            }
+            else {
+                ecapi_decrement_memory_available(mem_limit);
+            }
+        }
+    }
+    std::cout << "ec_get_mem_Avail end: " << ec_get_memory_available() << std::endl;
+    sc->sc_set_mem_limit_in_pages(mem_limit);
+}
+
 
 void ec::Manager::serveGrpcDeployExport() {
     std::string server_addr(deploy_service_ip + ":4447");
@@ -318,7 +430,7 @@ void ec::Manager::run() {
         for(auto sc_ : _ec->ec_get_subcontainers()){
 //            std::cout << "=================================================================================================" << std::endl;
 //            std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
-//            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << get_memory_limit_in_bytes(sc_.first) << "---" << get_memory_usage_in_bytes(sc_.first) << std::endl;
+//            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << ecapi_get_memory_limit_in_bytes(sc_.first) << "---" << get_memory_usage_in_bytes(sc_.first) << std::endl;
 //            std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
 //            std::cout << "=================================================================================================\n";
 //            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
@@ -328,6 +440,7 @@ void ec::Manager::run() {
         sleep(10);
     }
 }
+
 
 
 

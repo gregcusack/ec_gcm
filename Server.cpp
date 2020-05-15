@@ -130,13 +130,6 @@ void ec::Server::handle_client_reqs(void *args) {
             if (write(client_fd, (const char *) &*res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
                 break;
-//        // req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
-//        auto *res = new msg_t(*req);
-//        ret = handle_req(req, res, om::net::ip4_addr::reverse_byte_order(req->client_ip).to_uint32(), arguments->clifd);
-//        if(ret == __ALLOC_SUCCESS__) {  //TODO: fix this.
-//            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
-//                    std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
-//                    break;
             }
         }
         else if(ret == __ALLOC_SUCCESS__ && !res->request) {
@@ -188,19 +181,3 @@ bool ec::Server::init_agent_connections() {
     return num_connections == agent_clients_db->get_agent_clients_db_size();
 
 }
-
-//void ec::Server::serveGrpcDeployExport() {
-//    std::string server_addr("10.0.2.15:4447");
-//    rpc::DeployerExportServiceImpl service;
-//    grpc::ServerBuilder builder;
-//
-//    builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
-//    builder.RegisterService(&service);
-//    std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-//
-//    std::cout << "Grpc Server listening on: " << server_addr << std::endl;
-//    server->Wait();
-//
-//}
-
-

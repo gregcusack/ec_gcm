@@ -65,6 +65,12 @@ namespace ec {
         bool get_set_quota_flag() { return cpu.get_set_quota_flag(); }
         void set_quota_flag(bool val) { cpu.set_set_quota_flag(val); }
 
+        //Mem
+        uint64_t sc_get_mem_limit_in_pages() { return mem.get_mem_limit_in_pages(); }
+        void sc_set_mem_limit_in_pages(uint64_t _new_limit) { mem.set_mem_limit_in_pages(_new_limit); }
+        void sc_incr_mem_limit(uint64_t _incr) { mem.incr_mem_limit(_incr); }
+        void sc_decr_mem_limit(uint64_t _decr) { mem.decr_mem_limit(_decr); }
+
     private:
         ContainerId c_id;
         int fd;
