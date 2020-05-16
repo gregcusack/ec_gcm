@@ -16,6 +16,8 @@
 #define unlikely(x)     __builtin_expect((x),0)
 #define byte_to_page(x) ceil((x)/4096)
 #define _SAFE_MARGIN_ 4096*250 //1MB/250 pages
+#define _MAX_CPU_LOSS_IN_NS_ 1000
+#define _MAX_UNUSED_RT_IN_NS_ 5000000
 
 namespace ec {
     class Manager : public ECAPI, public Server {

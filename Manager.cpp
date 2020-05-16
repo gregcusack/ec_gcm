@@ -81,6 +81,9 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     total_rt += ec_get_cpu_unallocated_rt();
     auto tot_rt_and_overrun = total_rt + ec_get_overrun();
     std::cout << "total rt in system: " << total_rt << std::endl;
+    if(ec_get_total_cpu() - tot_rt_and_overrun > _MAX_CPU_LOSS_IN_NS_) {
+        ec_incr_unallocated_rt(ec_get_total_cpu() - tot_rt_and_overrun);
+    }
 //    std::cout << "total rt + overrun in system: " << tot_rt_and_overrun << std::endl;
 
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
@@ -194,6 +197,23 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             else {
                 sc->set_quota_flag(true);
                 std::cout << "successfully resized quota to (decr): " << new_quota << "!" << std::endl;
+                ec_incr_unallocated_rt(rx_quota - new_quota); //unalloc_rt <-- old quota - new quota
+                sc->sc_set_quota(new_quota);
+                sc->get_cpu_stats()->flush();
+            }
+        }
+    }
+    else if(rt_mean > _MAX_UNUSED_RT_IN_NS_) {
+        uint64_t new_quota = rx_quota - _MAX_UNUSED_RT_IN_NS_;
+        new_quota = std::max(ec_get_cpu_slice(), new_quota);
+        if(new_quota != rx_quota) {
+            ret = set_sc_quota_syscall(sc, new_quota, seq_num); //give back what was used + 5ms
+            if(ret) {
+                std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (decr 5ms diff). ret: " << ret << std::endl;
+            }
+            else {
+                sc->set_quota_flag(true);
+                std::cout << "successfully resized quota to (decr 5ms diff): " << new_quota << "!" << std::endl;
                 ec_incr_unallocated_rt(rx_quota - new_quota); //unalloc_rt <-- old quota - new quota
                 sc->sc_set_quota(new_quota);
                 sc->get_cpu_stats()->flush();
