@@ -379,6 +379,7 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
     update_mem_limit_thread.detach();
 
     std::cout << "returning from handle_Add_cgroup_to_ec(): ret: " << ret << std::endl;
+    std::cout << "total pods added to map: " << ecapi_get_num_subcontainers() << std::endl;
     res->request = 0; //giveback (or send back)
     return ret;
 }

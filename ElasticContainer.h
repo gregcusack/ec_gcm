@@ -57,6 +57,7 @@ namespace ec {
         //MISC
         uint32_t get_ec_id() { return ec_id; }
         const subcontainer_map &ec_get_subcontainers() {return subcontainers;}
+        const int ec_get_num_subcontainers() { return subcontainers.size(); }
         subcontainer_map *get_subcontainers_map_for_update() { return &subcontainers; }
         SubContainer &get_subcontainer(const SubContainer::ContainerId &container_id);
         AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_ac_map[container_id];}

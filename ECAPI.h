@@ -50,6 +50,7 @@ namespace ec {
         uint32_t get_ec_id() { return _ec->get_ec_id(); }
         //TODO: this should be wrapped in ElasticContainer - shouldn't be able to access from Manager
         [[nodiscard]] const subcontainer_map  &get_subcontainers() const {return _ec->ec_get_subcontainers(); }
+        const int ecapi_get_num_subcontainers() { return _ec->ec_get_num_subcontainers(); }
         [[nodiscard]] const subcontainer_agent_map  &get_subcontainer_agents() const {return _ec->get_sc_ac_map(); }
 
         const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id) {return _ec->get_subcontainer(
