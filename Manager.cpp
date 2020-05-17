@@ -80,7 +80,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //    std::cout << "total rt given to containers: " << total_rt << std::endl;
     total_rt += ec_get_cpu_unallocated_rt();
     auto tot_rt_and_overrun = total_rt + ec_get_overrun();
-    std::cout << "total rt in system: " << total_rt << std::endl;
+    std::cout << "total rt in system, ovrn: " << total_rt << ", " << ec_get_overrun() << std::endl;
     if(ec_get_total_cpu() - tot_rt_and_overrun > _MAX_CPU_LOSS_IN_NS_) {
         ec_incr_unallocated_rt(ec_get_total_cpu() - tot_rt_and_overrun);
     }

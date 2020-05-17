@@ -1,4 +1,4 @@
-# Install script for directory: /home/maaz/Desktop/EC-4.20.16/ec_gcm/protoBufSDK
+# Install script for directory: /users/gcusack/ec_gcm/protoBufSDK
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
