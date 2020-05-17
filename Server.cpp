@@ -67,7 +67,7 @@ void ec::Server::initialize() {
     int32_t max_sd, sd, cliaddr_len, clifd, select_rv;
 
     std::thread threads[__MAX_CLIENT__];
-    serv_thread_args *args;
+//    serv_thread_args *args;
     FD_ZERO(&readfds);
 
     max_sd = server_socket.sock_fd + 1;
@@ -84,12 +84,14 @@ void ec::Server::initialize() {
             if((clifd = accept(server_socket.sock_fd, (struct sockaddr *)&server_socket.addr, (socklen_t*)&cliaddr_len)) > 0) {
                 std::cout << "=================================================================================================" << std::endl;
                 std::cout << "[SERVER DBG]: Container tried to request a connection. EC Server id: " << server_id << std::endl;
-                args = new serv_thread_args();
-                args->clifd = clifd;
-                args->cliaddr = &server_socket.addr;
+                auto args = new serv_thread_args(clifd, &server_socket.addr);
+//                args->clifd = clifd;
+//                args->cliaddr = &server_socket.addr;
                 std::cout << "server sock addr: " << om::net::ip4_addr::from_net(reinterpret_cast<struct sockaddr_in*>(&server_socket.addr)->sin_addr.s_addr) << std::endl;
-                threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)args);
-                threads[num_of_cli].detach();
+                std::thread client_handler(&Server::handle_client_reqs, this, (void*)args);
+                client_handler.detach();
+//                threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)args);
+//                threads[num_of_cli].detach();
             }
             else {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Unable to accept connection. "
@@ -112,7 +114,7 @@ void ec::Server::handle_client_reqs(void *args) {
 //    std::cout << "*arguments - out: " << arguments << std::endl;
 //    std::cout << "arguments-clidaddr - out: " << arguments->cliaddr << std::endl;
 
-    num_of_cli++;
+//    num_of_cli++;
     while((num_bytes = read(client_fd, buff_in, __HANDLE_REQ_BUFF__)) > 0 ) {
 //        std::cout << "num bytes read: " << num_bytes << std::endl;
 //        std::cout << "handle client reqs (in while loop)" << std::endl;
