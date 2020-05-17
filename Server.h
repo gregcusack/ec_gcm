@@ -39,7 +39,7 @@ namespace ec {
         void initialize();
 
         struct server_t {
-            int32_t sock_fd;
+            int32_t master_sockfd;
             struct sockaddr_in addr;
         };
         struct serv_thread_args {

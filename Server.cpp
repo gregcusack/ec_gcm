@@ -13,13 +13,13 @@ ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, uint16_t _port
 void ec::Server::initialize() {
     int32_t addrlen, opt = 1;
     num_of_cli = 0;
-    if((server_socket.sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+    if((server_socket.master_sockfd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         std::cout << "[ERROR]: Server socket creation failed in server: " << server_id << std::endl;
         std::exit(EXIT_FAILURE);
     }
-    std::cout << "[dgb]: Server socket fd: " << server_socket.sock_fd << std::endl;
+    std::cout << "[dgb]: Server socket fd: " << server_socket.master_sockfd << std::endl;
 
-    if(setsockopt(server_socket.sock_fd, SOL_SOCKET, SO_REUSEPORT, (char*)&opt, sizeof(opt))) {
+    if(setsockopt(server_socket.master_sockfd, SOL_SOCKET, SO_REUSEPORT, (char*)&opt, sizeof(opt))) {
         std::cout << "[ERROR]: EC Server id: " << server_id << ". Setting socket options failed!" << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -28,19 +28,12 @@ void ec::Server::initialize() {
     server_socket.addr.sin_addr.s_addr = INADDR_ANY;
     server_socket.addr.sin_port = htons(port);
 
-    if(bind(server_socket.sock_fd, (struct sockaddr*)&server_socket.addr, sizeof(server_socket.addr)) < 0) {
+    if(bind(server_socket.master_sockfd, (struct sockaddr*)&server_socket.addr, sizeof(server_socket.addr)) < 0) {
         std::cout << "[ERROR] EC Server id: " << server_id << ". Binding socket failed" << std::endl;
         exit(EXIT_FAILURE);
     }
 
-    int flag = 1;
-//    int result = setsockopt(server_socket.sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
-//    if(result != 0) {
-//        std::cout << "[ERROR]: setsockopt failed!" << std::endl;
-//        exit(EXIT_FAILURE);
-//    }
-
-    if(listen(server_socket.sock_fd, 3) < 0) {
+    if(listen(server_socket.master_sockfd, 128) < 0) {
         std::cout << "[ERROR]: EC Server id: " << server_id << ". Listening on socket failed" << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -66,22 +59,23 @@ void ec::Server::initialize() {
     fd_set readfds;
     int32_t max_sd, sd, cliaddr_len, clifd, select_rv;
 
-    std::thread threads[__MAX_CLIENT__];
+//    std::thread threads[__MAX_CLIENT__];
 //    serv_thread_args *args;
-    FD_ZERO(&readfds);
+//    FD_ZERO(&readfds);
 
-    max_sd = server_socket.sock_fd + 1;
+    max_sd = server_socket.master_sockfd + 1;
     cliaddr_len = sizeof(server_socket.addr);
     std::cout << "[dbg]: Max socket descriptor is: " << max_sd << std::endl;
 
     //std::cout << "[dgb]: All PIDs for the _ec reference: " << std::endl;
     
     while(true) {
-        FD_SET(server_socket.sock_fd, &readfds);
-        select_rv = select(max_sd, &readfds, nullptr, nullptr, nullptr);
+        FD_ZERO(&readfds);
+        FD_SET(server_socket.master_sockfd, &readfds);
+//        select_rv = select(max_sd, &readfds, nullptr, nullptr, nullptr);
 
-        if(FD_ISSET(server_socket.sock_fd, &readfds)) {
-            if((clifd = accept(server_socket.sock_fd, (struct sockaddr *)&server_socket.addr, (socklen_t*)&cliaddr_len)) > 0) {
+        if(FD_ISSET(server_socket.master_sockfd, &readfds)) {
+            if((clifd = accept(server_socket.master_sockfd, (struct sockaddr *)&server_socket.addr, (socklen_t*)&cliaddr_len)) > 0) {
                 std::cout << "=================================================================================================" << std::endl;
                 std::cout << "[SERVER DBG]: Container tried to request a connection. EC Server id: " << server_id << std::endl;
                 auto args = new serv_thread_args(clifd, &server_socket.addr);
@@ -110,23 +104,24 @@ void ec::Server::handle_client_reqs(void *args) {
 //    char *buff_out;
     auto *arguments = reinterpret_cast<serv_thread_args*>(args);
     int client_fd = arguments->clifd;
+    auto client_ip = arguments->cliaddr->sin_addr.s_addr;
+    delete arguments;
 //    std::cout << "handle client reqs - out" << std::endl;
 //    std::cout << "*arguments - out: " << arguments << std::endl;
 //    std::cout << "arguments-clidaddr - out: " << arguments->cliaddr << std::endl;
 
 //    num_of_cli++;
-    while((num_bytes = read(client_fd, buff_in, __HANDLE_REQ_BUFF__)) > 0 ) {
+    while(read(client_fd, buff_in, __HANDLE_REQ_BUFF__) > 0 ) {
 //        std::cout << "num bytes read: " << num_bytes << std::endl;
 //        std::cout << "handle client reqs (in while loop)" << std::endl;
 //        std::cout << "*arguments - in: " << arguments << std::endl;
 //        std::cout << "arguments-clidaddr - in: " << arguments->cliaddr << std::endl;
         auto *req = reinterpret_cast<msg_t*>(buff_in);
-        req->set_ip_from_net(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
-//        req->set_ip_from_string("10.0.2.15"); //TODO: this needs to be changed. but here for testing merge
+        req->set_ip_from_net(client_ip);
         auto *res = new msg_t(*req);
 //        std::cout << "received: " << *req << std::endl;
 //        ret = handle_req(req, res, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
-        ret = handle_req(req, res, om::net::ip4_addr::from_net(arguments->cliaddr->sin_addr.s_addr).to_uint32(), arguments->clifd);
+        ret = handle_req(req, res, om::net::ip4_addr::from_net(client_ip).to_uint32(), client_fd);
 
         if(ret == __ALLOC_INIT__) { 
             if (write(client_fd, (const char *) &*res, sizeof(*res)) < 0) {
