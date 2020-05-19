@@ -57,7 +57,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     double thr_mean = 0;
     uint64_t rt_mean = 0;
     uint64_t total_rt_in_sys = 0;
-    uint64_t tot_rt_and_overrun = 0;
+//    uint64_t tot_rt_and_overrun = 0;
     uint32_t seq_num = seq_number;
 
     if(rx_quota / 1000 != sc->sc_get_quota() / 1000) {
@@ -67,13 +67,13 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     }
 
 //    sc_map_lock.lock();
-    for (const auto &i : get_subcontainers()) {
-        //todo: need total_rt_in_sys as val like unalloc_rt -> update at every update.
-        tot_rt_and_overrun += i.second->sc_get_quota();
-    }
-    if(tot_rt_and_overrun != ec_get_alloc_rt()) {
-        std::cout << "[MANAGER ERROR]: tot_rt != alloc_rt: (" << tot_rt_and_overrun << ", " << ec_get_alloc_rt() << ")" << std::endl;
-    }
+//    for (const auto &i : get_subcontainers()) {
+//        //todo: need total_rt_in_sys as val like unalloc_rt -> update at every update.
+//        tot_rt_and_overrun += i.second->sc_get_quota();
+//    }
+//    if(tot_rt_and_overrun != ec_get_alloc_rt()) {
+//        std::cout << "[MANAGER ERROR]: tot_rt != alloc_rt: (" << tot_rt_and_overrun << ", " << ec_get_alloc_rt() << ")" << std::endl;
+//    }
 //    std::cout << "tot_rt sum sc vs tot_alloc: (" << tot_rt_and_overrun << ", " << ec_get_alloc_rt() << ")" << std::endl;
 //    std::cout << "rt in subcontainers: " << total_rt_in_sys << std::endl;
     std::cout << "rt in unallocated pool: " << ec_get_cpu_unallocated_rt() << std::endl;
@@ -84,7 +84,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //    sc_map_lock.unlock();
 
 //    std::cout << "total rt given to containers: " << total_rt_in_sys << std::endl;
-    total_rt_in_sys = tot_rt_and_overrun + ec_get_cpu_unallocated_rt(); //alloc, overrun, unalloc
+    total_rt_in_sys = ec_get_alloc_rt() + ec_get_cpu_unallocated_rt(); //alloc, overrun, unalloc
 //    auto tot_rt_and_overrun = total_rt_in_sys + ec_get_overrun();
     std::cout << "total rt in system, ovrn: " << total_rt_in_sys << ", " << ec_get_overrun() << std::endl;
     if( (int64_t)ec_get_total_cpu() - (int64_t)total_rt_in_sys >= _MAX_CPU_LOSS_IN_NS_) {
