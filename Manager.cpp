@@ -67,6 +67,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 
 //    sc_map_lock.lock();
     for (const auto &i : get_subcontainers()) {
+        //todo: need total_rt as val like unalloc_rt -> update at every update.
         total_rt += i.second->sc_get_quota();
     }
 //    std::cout << "rt in subcontainers: " << total_rt << std::endl;
@@ -81,9 +82,11 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     total_rt += ec_get_cpu_unallocated_rt();
     auto tot_rt_and_overrun = total_rt + ec_get_overrun();
     std::cout << "total rt in system, ovrn: " << total_rt << ", " << ec_get_overrun() << std::endl;
-    if(ec_get_total_cpu() - tot_rt_and_overrun > _MAX_CPU_LOSS_IN_NS_) {
+    if( (int64_t)ec_get_total_cpu() - (int64_t)tot_rt_and_overrun > _MAX_CPU_LOSS_IN_NS_) {
+        std::cout << "fix rt leak: " << ec_get_total_cpu() << ", " << tot_rt_and_overrun << std::endl;
         ec_incr_unallocated_rt(ec_get_total_cpu() - tot_rt_and_overrun);
     }
+
 //    std::cout << "total rt + overrun in system: " << tot_rt_and_overrun << std::endl;
 
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
@@ -179,14 +182,14 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
             else {
                 sc->set_quota_flag(true);
-                std::cout << "successfully resized quota to (incr): " << rx_quota + extra_rt << "!" << std::endl;
+                std::cout << "successfully resized quota to (incr): " << updated_quota << "!" << std::endl;
                 ec_decr_unallocated_rt(extra_rt);
                 sc->sc_set_quota(updated_quota);
                 sc->get_cpu_stats()->flush();
             }
         }
     }
-    else if(rt_mean > rx_quota * 0.2) { //greater than 20% of quota unused
+    else if(rt_mean > rx_quota * 0.2 && rx_quota >= ec_get_cpu_slice()) { //greater than 20% of quota unused
         uint64_t new_quota = rx_quota * (1 - 0.2); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
         if(new_quota != rx_quota) {
@@ -204,7 +207,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
         }
     }
-    else if(rt_mean > _MAX_UNUSED_RT_IN_NS_) {
+    else if(rt_mean > _MAX_UNUSED_RT_IN_NS_ && rx_quota >= ec_get_cpu_slice()) {
         uint64_t new_quota = rx_quota - _MAX_UNUSED_RT_IN_NS_;
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
         if(new_quota != rx_quota) {
