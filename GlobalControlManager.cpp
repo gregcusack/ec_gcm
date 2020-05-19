@@ -13,9 +13,9 @@ ec::GlobalControlManager::GlobalControlManager(std::string ip_addr, uint16_t por
     for(const auto &i : _agent_ips) {
         agents.emplace_back(new Agent(i));
     }
-    for(auto &i : agents) {
-        std::cout << "agent_clients: " << *i << std::endl;
-    }
+    // for(auto &i : agents) {
+    //     std::cout << "agent_clients: " << *i << std::endl;
+    // }
 
     if(agents.size() != _agent_ips.size()) {
         std::cout << "ERROR: alloc agents failed!" << std::endl;
@@ -69,7 +69,7 @@ void ec::GlobalControlManager::run(const std::string &app_name, const std::strin
     for(const auto &s : managers) {
         if(fork() == 0) {
             // std::cout << "[child] pid: " << getpid() << ", [parent] pid: " <<  getppid() << std::endl;
-            std::cout << "New Server with ID: " << s.second->get_server_id() << std::endl;
+            // std::cout << "New Server with ID: " << s.second->get_server_id() << std::endl;
             s.second->start(app_name, _gcm_ip);
         }
         else {

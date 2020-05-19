@@ -165,8 +165,8 @@ void ec::Facade::JSONFacade::json::set_pod_limits(web::json::value &cont) {
 //    auto cpu = std::to_string(_specs.find("cpu")->second) + "m";
     auto mem = std::to_string(_specs.find("mem")->second) + "Mi";
 
-    std::cout << "cpu: " << cpu_req << std::endl;
-    std::cout << "mem: " << mem << std::endl;
+    //std::cout << "cpu: " << cpu_req << std::endl;
+    //std::cout << "mem: " << mem << std::endl;
 //    requests[U("cpu")] = web::json::value::string(U(cpu_req));
     requests[U("memory")] = web::json::value::string(U(mem));
 
@@ -222,10 +222,15 @@ void ec::Facade::JSONFacade::json::getJSONRequest(const std::string &urlRequest,
         }
         catch (const web::http::http_exception& e) {                    
             std::cout << "error " << e.what() << std::endl;
+            json_return = web::json::value::null();	
         }
     })
     .wait();
-    jsonResp = json_return.serialize();
+    if (json_return.is_null()) {
+        jsonResp = "";
+    } else {
+        jsonResp = json_return.serialize();
+    }
     // return json_return.serialize();
 }
 

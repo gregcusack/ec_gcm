@@ -18,8 +18,8 @@ ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient 
     _mem = global::stats::mem();
     _cpu = global::stats::cpu();
 
-    std::cout << "[Elastic Container Log] runtime_remaining on init: " << _cpu.get_runtime_remaining() << std::endl;
-    std::cout << "[Elastic Container Log] memory_available_in_pages on init: " << _mem.get_mem_available_in_pages() << std::endl;
+//    std::cout << "[Elastic Container Log] runtime_remaining on init: " << _cpu.get_runtime_remaining() << std::endl;
+//    std::cout << "[Elastic Container Log] memory_available_in_pages on init: " << _mem.get_mem_available_in_pages() << std::endl;
 
     subcontainers = subcontainer_map();
     sc_ac_map = subcontainer_agentclient_map();
@@ -61,7 +61,7 @@ int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
 //    sc_map_lock.lock();
     subcontainers.insert({*(_sc.get_c_id()), &_sc});
 //    sc_map_lock.unlock();
-    std::cout << "[EC LOG]: sc inserted: " << *_sc.get_c_id() << std::endl;
+//    std::cout << "[EC LOG]: sc inserted: " << *_sc.get_c_id() << std::endl;
     return __ALLOC_INIT__;
 }
 
@@ -91,7 +91,7 @@ ec::ElasticContainer::~ElasticContainer() {
     subcontainers.clear();
 }
 void ec::ElasticContainer::update_fair_cpu_share() {
-    std::cout << "update fair share. (tot_cpu, # subconts): (" << _cpu.get_total_cpu() << ", " << subcontainers.size() << ")" << std::endl;
+//    std::cout << "update fair share. (tot_cpu, # subconts): (" << _cpu.get_total_cpu() << ", " << subcontainers.size() << ")" << std::endl;
     if(subcontainers.empty()) {
         fair_cpu_share = _cpu.get_total_cpu();
         return;

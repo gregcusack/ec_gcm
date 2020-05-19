@@ -15,7 +15,7 @@ ec::global::stats::cpu::cpu(uint64_t _period, int64_t _quota, uint64_t _slice_si
     unallocated_rt(0), total_cpu(0), overrun(0) {}
 
 uint64_t ec::global::stats::cpu::refill_runtime() {
-    std::cout << "refilling runtime_remaining" << std::endl;
+    //std::cout << "refilling runtime_remaining" << std::endl;
     runtime_remaining = quota;
     return runtime_remaining;
 }

@@ -1,4 +1,4 @@
-# Install script for directory: /users/gcusack/ec_gcm
+# Install script for directory: /mnt/ECKernel/EC-4.20.16/ec_gcm
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -39,7 +39,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/users/gcusack/ec_gcm/protoBufSDK/cmake_install.cmake")
+  include("/mnt/ECKernel/EC-4.20.16/ec_gcm/protoBufSDK/cmake_install.cmake")
 
 endif()
 
@@ -51,5 +51,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/users/gcusack/ec_gcm/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/mnt/ECKernel/EC-4.20.16/ec_gcm/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

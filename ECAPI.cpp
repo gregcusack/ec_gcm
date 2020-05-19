@@ -52,7 +52,7 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
     //todo: Delete sc if ret == alloc_failed!
 //    _ec->incr_total_cpu(sc->sc_get_quota());
     _ec->update_fair_cpu_share();
-    std::cout << "fair share: " << ec_get_fair_cpu_share() << std::endl;
+//    std::cout << "fair share: " << ec_get_fair_cpu_share() << std::endl;
 
 //    auto mem = ecapi_get_memory_limit_in_bytes(*sc->get_c_id());
 //    ecapi_incr_total_memory(mem);
@@ -60,18 +60,18 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
     // And so once a subcontainer is created and added to the appropriate distributed container,
     // we can now create a map to link the container_id and agent_client
     
-    std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
+//    std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
     AgentClientDB* acdb = AgentClientDB::get_agent_client_db_instance();
     auto agent_ip = sc->get_c_id()->server_ip;
     auto target_agent = acdb->get_agent_client_by_ip(agent_ip);
-    std::cout << "[dbg] Agent client ip: " << target_agent-> get_agent_ip() << std::endl;
-    std::cout << "[dbg] Agent ip: " << agent_ip << std::endl;
+//    std::cout << "[dbg] Agent client ip: " << target_agent-> get_agent_ip() << std::endl;
+//    std::cout << "[dbg] Agent ip: " << agent_ip << std::endl;
     if ( target_agent ){
 //        mtx.lock();
-        std::cout << "add to sc_ac map" << std::endl;
+//        std::cout << "add to sc_ac map" << std::endl;
         std::lock_guard<std::mutex> lk(cv_mtx);
         _ec->add_to_sc_ac_map(*sc->get_c_id(), target_agent);
-        std::cout << "handle() sc_id, agent_ip: " << *sc->get_c_id() << ", " << target_agent->get_agent_ip() << std::endl;
+//        std::cout << "handle() sc_id, agent_ip: " << *sc->get_c_id() << ", " << target_agent->get_agent_ip() << std::endl;
         cv.notify_one();
 //        mtx.unlock();
     } else {
@@ -88,7 +88,7 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
     }
 
 
-    std::cout << "returning from handle_Add_cgroup_to_ec(): ret: " << ret << std::endl;
+//    std::cout << "returning from handle_Add_cgroup_to_ec(): ret: " << ret << std::endl;
     res->request = 0; //giveback (or send back)
     return ret;
 }
@@ -240,8 +240,8 @@ int ec::ECAPI::determine_quota_for_new_pod(uint64_t req_quota, uint64_t &quota) 
         ec_set_unallocated_rt(0);
         update_quota_flag = 1;
     }
-    std::cout << "quota: " << quota << std::endl;
-    std::cout << "rsrc_amnt: " << req_quota << std::endl;
+//    std::cout << "quota: " << quota << std::endl;
+//    std::cout << "rsrc_amnt: " << req_quota << std::endl;
     return update_quota_flag;
 }
 

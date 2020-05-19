@@ -8,7 +8,7 @@
 ec::SubContainer::SubContainer(uint32_t cgroup_id, uint32_t ip, int _fd)
     : fd(_fd), cpu(local::stats::cpu()), mem(local::stats::mem()), _docker_id("") {
 
-    std::cout << "creating sc without q/thr" << std::endl;
+    //std::cout << "creating sc without q/thr" << std::endl;
     c_id = ContainerId(cgroup_id, ip4_addr::from_net(ip));
     counter = 0;
 }

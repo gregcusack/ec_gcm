@@ -17,7 +17,7 @@ void ec::Server::initialize() {
         std::cout << "[ERROR]: Server socket creation failed in server: " << server_id << std::endl;
         std::exit(EXIT_FAILURE);
     }
-    std::cout << "[dgb]: Server socket fd: " << server_socket.master_sockfd << std::endl;
+    //std::cout << "[dgb]: Server socket fd: " << server_socket.master_sockfd << std::endl;
 
     if(setsockopt(server_socket.master_sockfd, SOL_SOCKET, SO_REUSEPORT, (char*)&opt, sizeof(opt))) {
         std::cout << "[ERROR]: EC Server id: " << server_id << ". Setting socket options failed!" << std::endl;
@@ -37,7 +37,7 @@ void ec::Server::initialize() {
         std::cout << "[ERROR]: EC Server id: " << server_id << ". Listening on socket failed" << std::endl;
         exit(EXIT_FAILURE);
     }
-    std::cout << "[dgb]: EC Server id: " << server_id << ". socket successfully created!" << std::endl;
+    //std::cout << "[dgb]: EC Server id: " << server_id << ". socket successfully created!" << std::endl;
 
 //    Create AgentClients
     if(!init_agent_connections()) {
@@ -65,7 +65,7 @@ void ec::Server::initialize() {
 
     max_sd = server_socket.master_sockfd + 1;
     cliaddr_len = sizeof(server_socket.addr);
-    std::cout << "[dbg]: Max socket descriptor is: " << max_sd << std::endl;
+    //std::cout << "[dbg]: Max socket descriptor is: " << max_sd << std::endl;
 
     //std::cout << "[dgb]: All PIDs for the _ec reference: " << std::endl;
     
@@ -76,12 +76,12 @@ void ec::Server::initialize() {
 
         if(FD_ISSET(server_socket.master_sockfd, &readfds)) {
             if((clifd = accept(server_socket.master_sockfd, (struct sockaddr *)&server_socket.addr, (socklen_t*)&cliaddr_len)) > 0) {
-                std::cout << "=================================================================================================" << std::endl;
-                std::cout << "[SERVER DBG]: Container tried to request a connection. EC Server id: " << server_id << std::endl;
+                //std::cout << "=================================================================================================" << std::endl;
+                //std::cout << "[SERVER DBG]: Container tried to request a connection. EC Server id: " << server_id << std::endl;
                 auto args = new serv_thread_args(clifd, &server_socket.addr);
 //                args->clifd = clifd;
 //                args->cliaddr = &server_socket.addr;
-                std::cout << "server sock addr: " << om::net::ip4_addr::from_net(reinterpret_cast<struct sockaddr_in*>(&server_socket.addr)->sin_addr.s_addr) << std::endl;
+                //std::cout << "server sock addr: " << om::net::ip4_addr::from_net(reinterpret_cast<struct sockaddr_in*>(&server_socket.addr)->sin_addr.s_addr) << std::endl;
                 std::thread client_handler(&Server::handle_client_reqs, this, (void*)args);
                 client_handler.detach();
 //                threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)args);
@@ -161,7 +161,7 @@ bool ec::Server::init_agent_connections() {
         servaddr.sin_family = AF_INET;
         servaddr.sin_port = htons(ag->get_port());
         servaddr.sin_addr.s_addr = inet_addr((ag->get_ip()).to_string().c_str());
-        std::cout << "ag->ip: " << ag->get_ip() << std::endl;
+        //std::cout << "ag->ip: " << ag->get_ip() << std::endl;
 
         if(connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
             std::cout << "[ERROR] GCM: Connection to agent_clients failed. \n Agent on ip: " << ag->get_ip() << "is not connected" << std::endl;
@@ -172,8 +172,8 @@ bool ec::Server::init_agent_connections() {
         }
         auto* ac = new AgentClient(ag, sockfd);
         agent_clients_db->add_agent_client(ac);
-        std::cout << "[dbg] Agent client added to db and agent_clients sockfd: " << sockfd << ", " << agent_clients_db->get_agent_client_by_ip(ag->get_ip())->get_socket()
-        <<" agent db size is: " << agent_clients_db->get_agent_clients_db_size()<< std::endl;
+        //std::cout << "[dbg] Agent client added to db and agent_clients sockfd: " << sockfd << ", " << agent_clients_db->get_agent_client_by_ip(ag->get_ip())->get_socket()
+        //<<" agent db size is: " << agent_clients_db->get_agent_clients_db_size()<< std::endl;
     }
     return num_connections == agent_clients_db->get_agent_clients_db_size();
 
