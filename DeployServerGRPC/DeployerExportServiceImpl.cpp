@@ -110,6 +110,7 @@ int ec::rpc::DeployerExportServiceImpl::insertPodSpec(const ec::rpc::ExportPodSp
     if(!pod) { std::cout << "[ERROR DeployService]: ExportPodSpec *pod is NULL"; return -1; }
 
     std::cout << "sc_id to insertPodSpec: " << SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()) << std::endl;
+
     dep_pod_lock.lock();
     auto inserted = deployedPods.try_emplace(
             SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()),
