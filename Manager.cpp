@@ -70,7 +70,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         total_rt += i.second->sc_get_quota();
     }
 //    std::cout << "rt in subcontainers: " << total_rt << std::endl;
-//    std::cout << "rt in unallocated pool: " << ec_get_cpu_unallocated_rt() << std::endl;
+    std::cout << "rt in unallocated pool: " << ec_get_cpu_unallocated_rt() << std::endl;
 //    std::cout << "fair_share: " << ec_get_fair_cpu_share() << std::endl;
 //    std::cout << "max cpu: " << ec_get_total_cpu() << std::endl;
 

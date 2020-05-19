@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <mutex>
 
 namespace ec {
     namespace global {
@@ -37,7 +38,7 @@ namespace ec {
                  void decr_runtime_remaining(uint64_t _to_decr) { runtime_remaining -= _to_decr; }
                  uint64_t refill_runtime();
                  void incr_unalloacted_rt(uint64_t _incr) { unallocated_rt += _incr; }
-                 void decr_unallocated_rt(uint64_t _decr) { unallocated_rt -= _decr; }
+                 void decr_unallocated_rt(uint64_t _decr);// { unallocated_rt -= _decr; }
                  void set_unallocated_rt(uint64_t _val) { unallocated_rt = _val; }
                  void set_total_cpu (uint64_t _tot_cpu) { total_cpu = _tot_cpu; }
                  void incr_total_cpu (uint64_t _incr) { total_cpu += _incr; }
@@ -55,6 +56,8 @@ namespace ec {
                 uint64_t unallocated_rt;
                 uint64_t total_cpu;
                 uint64_t overrun;
+
+		std::mutex unalloc_lock;
 //                uint32_t cpu_limit_in_cores;
 //                uint32_t cpu_current_usage_in_cores;
 //                uint32_t nr_need_cpu;
