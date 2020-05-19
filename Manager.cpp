@@ -197,6 +197,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             else {
                 sc->set_quota_flag(true);
                 std::cout << "successfully resized quota to (decr): " << new_quota << "!" << std::endl;
+                std::cout << "decr resize (rx_q, new_q): (" << rx_quota << ", " << new_quota << ")" << std::endl;
                 ec_incr_unallocated_rt(rx_quota - new_quota); //unalloc_rt <-- old quota - new quota
                 sc->sc_set_quota(new_quota);
                 sc->get_cpu_stats()->flush();
