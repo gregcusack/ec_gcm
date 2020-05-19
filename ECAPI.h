@@ -68,6 +68,7 @@ namespace ec {
         uint64_t ec_get_overrun() { return _ec->get_overrun(); }
         uint64_t ec_get_total_cpu() { return _ec->get_total_cpu(); }
         int64_t get_cpu_quota_in_us(const SubContainer::ContainerId &container_id);
+        uint64_t ec_get_alloc_rt() { return _ec->get_alloc_rt(); }
 
 
         //MEM
@@ -104,6 +105,8 @@ namespace ec {
         void ec_decr_overrun(uint64_t _decr) { _ec->decr_overrun(_decr); }
         void ec_set_overrun(uint64_t _val) {_ec->set_overrun(_val); }
         void ec_set_unallocated_rt(uint64_t _val) {_ec->set_unallocated_rt(_val); }
+        void ec_incr_alloc_rt(uint64_t _incr) { _ec->incr_alloc_rt(_incr); }
+        void ec_decr_alloc_rt(uint64_t _decr) { _ec->decr_alloc_rt(_decr); }
 
         int64_t set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, uint32_t seq_number);
 

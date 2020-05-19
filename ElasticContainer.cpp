@@ -6,8 +6,8 @@
 
 
 ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id), fair_cpu_share(0) {
-    _mem = global::stats::mem();
-    _cpu = global::stats::cpu();
+//    _mem = global::stats::mem();
+//    _cpu = global::stats::cpu();
 }
 
 ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients)
@@ -15,8 +15,8 @@ ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient 
 
     //TODO: change num_agents to however many managers we have. IDK how to set it rn.
 
-    _mem = global::stats::mem();
-    _cpu = global::stats::cpu();
+//    _mem = global::stats::mem();
+//    _cpu = global::stats::cpu();
 
 //    std::cout << "[Elastic Container Log] runtime_remaining on init: " << _cpu.get_runtime_remaining() << std::endl;
 //    std::cout << "[Elastic Container Log] memory_available_in_pages on init: " << _mem.get_mem_available_in_pages() << std::endl;

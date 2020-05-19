@@ -229,16 +229,19 @@ int ec::ECAPI::determine_quota_for_new_pod(uint64_t req_quota, uint64_t &quota) 
     quota = req_quota;
     if(quota <= ec_get_cpu_unallocated_rt()) {
         ec_decr_unallocated_rt(req_quota);
+        ec_incr_alloc_rt(quota);
     }
     else if(!ec_get_cpu_unallocated_rt()) {
         quota = ec_get_cpu_slice();
         ec_incr_overrun(quota);
         update_quota_flag = 1;
+        ec_incr_alloc_rt(quota);
     }
     else if(quota > ec_get_cpu_unallocated_rt()) {
         quota = ec_get_cpu_unallocated_rt();
         ec_set_unallocated_rt(0);
         update_quota_flag = 1;
+        ec_incr_alloc_rt(quota);
     }
 //    std::cout << "quota: " << quota << std::endl;
 //    std::cout << "rsrc_amnt: " << req_quota << std::endl;
