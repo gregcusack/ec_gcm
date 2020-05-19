@@ -49,13 +49,52 @@ uint64_t ec::global::stats::cpu::get_unallocated_rt() {
     return unallocated_rt;
 }
 
-//ec::global::stats::cpu::cpu(const ec::global::stats::cpu &_cpu) {
-//    quota = _cpu.quota;
-//    period = _cpu.period;
-//    slice_size = _cpu.slice_size;
-//    runtime_remaining = _cpu.runtime_remaining;
-//    unallocated_rt = _cpu.unallocated_rt;
-//    total_cpu = _cpu.total_cpu;
-//    overrun = _cpu.overrun;
-//    unalloc_lock = _cpu.unalloc_lock;
-//}
+uint64_t ec::global::stats::cpu::get_total_cpu() {
+    std::unique_lock<std::mutex> lk(totcpu_lock);
+    return total_cpu;
+}
+
+uint64_t ec::global::stats::cpu::get_overrun() {
+    std::unique_lock<std::mutex> lk(overrun_lock);
+    return overrun;
+}
+
+void ec::global::stats::cpu::set_total_cpu(uint64_t _tot_cpu) {
+    std::unique_lock<std::mutex> lk(totcpu_lock);
+    total_cpu = _tot_cpu;
+}
+
+void ec::global::stats::cpu::incr_total_cpu(uint64_t _incr) {
+    std::unique_lock<std::mutex> lk(totcpu_lock);
+    total_cpu += _incr;
+}
+
+void ec::global::stats::cpu::decr_total_cpu(uint64_t _decr) {
+    std::unique_lock<std::mutex> lk(totcpu_lock);
+    if( ((int64_t) total_cpu - (int64_t) _decr) < 0) {
+        total_cpu = 0;
+    }
+    else {
+        total_cpu -= _decr;
+    }
+}
+
+void ec::global::stats::cpu::incr_overrun(uint64_t _incr) {
+    std::unique_lock<std::mutex> lk(overrun_lock);
+    overrun += _incr;
+}
+
+void ec::global::stats::cpu::decr_overrun(uint64_t _decr) {
+    std::unique_lock<std::mutex> lk(overrun_lock);
+    if( ((int64_t) overrun - (int64_t) _decr) < 0) {
+        overrun = 0;
+    }
+    else {
+        overrun -= _decr;
+    }
+}
+
+void ec::global::stats::cpu::set_overrun(uint64_t _val) {
+    std::unique_lock<std::mutex> lk(overrun_lock);
+    overrun = _val;
+}
