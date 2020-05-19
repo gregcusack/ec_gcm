@@ -27,6 +27,7 @@ namespace ec {
                 uint64_t get_unallocated_rt();// { return unallocated_rt; }
                 uint64_t get_total_cpu();
                 uint64_t get_overrun();
+                uint64_t get_alloc_rt();
 
                 /**
                  * SETTERS
@@ -47,6 +48,9 @@ namespace ec {
                  void decr_overrun(uint64_t _decr);// { overrun -= _decr; }
                  void set_overrun(uint64_t _val);// { overrun = _val; }
 
+                 void incr_alloc_rt(uint64_t _incr);
+                 void decr_alloc_rt(uint64_t _decr);
+
 
 
 
@@ -58,10 +62,12 @@ namespace ec {
                 uint64_t unallocated_rt;
                 uint64_t total_cpu;
                 uint64_t overrun;
+                uint64_t alloc_rt;
 
 		        std::mutex unalloc_lock;
 		        std::mutex overrun_lock;
 		        std::mutex totcpu_lock;
+                std::mutex alloc_lock;
 //                uint32_t cpu_limit_in_cores;
 //                uint32_t cpu_current_usage_in_cores;
 //                uint32_t nr_need_cpu;

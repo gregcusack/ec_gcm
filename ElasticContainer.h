@@ -73,6 +73,8 @@ namespace ec {
         uint64_t get_fair_cpu_share() { return fair_cpu_share; }
         uint64_t get_overrun() { return _cpu.get_overrun(); }
         uint64_t get_total_cpu() { return _cpu.get_total_cpu(); }
+        uint64_t get_alloc_rt() { return _cpu.get_alloc_rt(); }
+
 
         //MEM
         uint64_t get_memory_available() { return _mem.get_mem_available_in_pages(); }
@@ -103,6 +105,9 @@ namespace ec {
         void decr_overrun(uint64_t _decr) { _cpu.decr_overrun(_decr); }
         void set_overrun(uint64_t _val) { _cpu.set_overrun(_val); }
         void set_total_cpu(uint64_t _val) { _cpu.set_total_cpu(_val); }
+        void incr_alloc_rt(uint64_t _incr) { _cpu.incr_alloc_rt(_incr); }
+        void decr_alloc_rt(uint64_t _decr) { _cpu.decr_alloc_rt(_decr); }
+
 
         //MEM
         void ec_resize_memory_max(int64_t _max_mem) { _mem.set_mem_limit_in_pages(_max_mem); }

@@ -56,7 +56,8 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     uint64_t rx_buff;
     double thr_mean = 0;
     uint64_t rt_mean = 0;
-    uint64_t total_rt = 0;
+    uint64_t total_rt_in_sys = 0;
+    uint64_t tot_rt_and_overrun = 0;
     uint32_t seq_num = seq_number;
 
     if(rx_quota / 1000 != sc->sc_get_quota() / 1000) {
@@ -67,10 +68,14 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 
 //    sc_map_lock.lock();
     for (const auto &i : get_subcontainers()) {
-        //todo: need total_rt as val like unalloc_rt -> update at every update.
-        total_rt += i.second->sc_get_quota();
+        //todo: need total_rt_in_sys as val like unalloc_rt -> update at every update.
+        tot_rt_and_overrun += i.second->sc_get_quota();
     }
-//    std::cout << "rt in subcontainers: " << total_rt << std::endl;
+    if(tot_rt_and_overrun != ec_get_alloc_rt()) {
+        std::cout << "[MANAGER ERROR]: tot_rt != alloc_rt: (" << tot_rt_and_overrun << ", " << ec_get_alloc_rt() << ")" << std::endl;
+    }
+//    std::cout << "tot_rt sum sc vs tot_alloc: (" << tot_rt_and_overrun << ", " << ec_get_alloc_rt() << ")" << std::endl;
+//    std::cout << "rt in subcontainers: " << total_rt_in_sys << std::endl;
     std::cout << "rt in unallocated pool: " << ec_get_cpu_unallocated_rt() << std::endl;
 //    std::cout << "fair_share: " << ec_get_fair_cpu_share() << std::endl;
 //    std::cout << "max cpu: " << ec_get_total_cpu() << std::endl;
@@ -78,13 +83,13 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 
 //    sc_map_lock.unlock();
 
-//    std::cout << "total rt given to containers: " << total_rt << std::endl;
-    total_rt += ec_get_cpu_unallocated_rt();
-    auto tot_rt_and_overrun = total_rt + ec_get_overrun();
-    std::cout << "total rt in system, ovrn: " << total_rt << ", " << ec_get_overrun() << std::endl;
-    if( (int64_t)ec_get_total_cpu() - (int64_t)tot_rt_and_overrun > _MAX_CPU_LOSS_IN_NS_) {
-        std::cout << "fix rt leak: " << ec_get_total_cpu() << ", " << tot_rt_and_overrun << std::endl;
-        ec_incr_unallocated_rt(ec_get_total_cpu() - tot_rt_and_overrun);
+//    std::cout << "total rt given to containers: " << total_rt_in_sys << std::endl;
+    total_rt_in_sys = tot_rt_and_overrun + ec_get_cpu_unallocated_rt(); //alloc, overrun, unalloc
+//    auto tot_rt_and_overrun = total_rt_in_sys + ec_get_overrun();
+    std::cout << "total rt in system, ovrn: " << total_rt_in_sys << ", " << ec_get_overrun() << std::endl;
+    if( (int64_t)ec_get_total_cpu() - (int64_t)total_rt_in_sys >= _MAX_CPU_LOSS_IN_NS_) {
+        std::cout << "fix rt leak: " << ec_get_total_cpu() << ", " << total_rt_in_sys << std::endl;
+        ec_incr_unallocated_rt(ec_get_total_cpu() - total_rt_in_sys);
     }
 
 //    std::cout << "total rt + overrun in system: " << tot_rt_and_overrun << std::endl;
@@ -121,6 +126,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             sc->get_cpu_stats()->flush();
             ec_decr_overrun(to_sub);
             sc->sc_set_quota(updated_quota);
+            ec_decr_alloc_rt(to_sub);
         }
     }
     else if(rx_quota < ec_get_fair_cpu_share() && thr_mean > 0.5) {   //throttled but don't have fair share
@@ -145,6 +151,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
                 ec_decr_unallocated_rt(to_add);
                 sc->sc_set_quota(updated_quota);
                 sc->get_cpu_stats()->flush();
+                ec_incr_alloc_rt(to_add);
             }
         }
         else { //not enough in unalloc_rt to get back to fair share, even out
@@ -169,6 +176,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
                 ec_incr_overrun(overrun);
                 sc->sc_set_quota(updated_quota);
                 sc->get_cpu_stats()->flush();
+                ec_incr_alloc_rt(overrun);
             }
         }
     }
@@ -186,6 +194,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
                 ec_decr_unallocated_rt(extra_rt);
                 sc->sc_set_quota(updated_quota);
                 sc->get_cpu_stats()->flush();
+                ec_incr_alloc_rt(extra_rt);
             }
         }
     }
@@ -204,6 +213,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
                 ec_incr_unallocated_rt(rx_quota - new_quota); //unalloc_rt <-- old quota - new quota
                 sc->sc_set_quota(new_quota);
                 sc->get_cpu_stats()->flush();
+                ec_decr_alloc_rt(rx_quota - new_quota);
             }
         }
     }
@@ -221,6 +231,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
                 ec_incr_unallocated_rt(rx_quota - new_quota); //unalloc_rt <-- old quota - new quota
                 sc->sc_set_quota(new_quota);
                 sc->get_cpu_stats()->flush();
+                ec_decr_alloc_rt(rx_quota - new_quota);
             }
         }
     }

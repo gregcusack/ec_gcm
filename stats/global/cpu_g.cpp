@@ -7,12 +7,12 @@
 ec::global::stats::cpu::cpu()
     : quota(0), period(100000000),
     slice_size(30000000), runtime_remaining(100000000),
-    unallocated_rt(0), total_cpu(0), overrun(0) {}
+    unallocated_rt(0), total_cpu(0), overrun(0), alloc_rt(0) {}
 
 ec::global::stats::cpu::cpu(uint64_t _period, int64_t _quota, uint64_t _slice_size)
     : period(_period), quota(_quota),
     slice_size(_slice_size), runtime_remaining(_quota),
-    unallocated_rt(0), total_cpu(0), overrun(0) {}
+    unallocated_rt(0), total_cpu(0), overrun(0), alloc_rt(0) {}
 
 uint64_t ec::global::stats::cpu::refill_runtime() {
     std::cout << "refilling runtime_remaining" << std::endl;
@@ -97,4 +97,24 @@ void ec::global::stats::cpu::decr_overrun(uint64_t _decr) {
 void ec::global::stats::cpu::set_overrun(uint64_t _val) {
     std::unique_lock<std::mutex> lk(overrun_lock);
     overrun = _val;
+}
+
+uint64_t ec::global::stats::cpu::get_alloc_rt() {
+    std::unique_lock<std::mutex> lk(alloc_lock);
+    return alloc_rt;
+}
+
+void ec::global::stats::cpu::incr_alloc_rt(uint64_t _incr) {
+    std::unique_lock<std::mutex> lk(alloc_lock);
+    alloc_rt += _incr;
+}
+
+void ec::global::stats::cpu::decr_alloc_rt(uint64_t _decr) {
+    std::unique_lock<std::mutex> lk(alloc_lock);
+    if( ((int64_t) alloc_rt - (int64_t) _decr) < 0) {
+        alloc_rt = 0;
+    }
+    else {
+        alloc_rt -= _decr;
+    }
 }
