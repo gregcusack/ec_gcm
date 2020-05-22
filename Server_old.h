@@ -39,7 +39,7 @@ namespace ec {
         void initialize();
 
         struct server_t {
-            int32_t sock_fd;
+            int32_t master_sockfd;
             struct sockaddr_in addr;
         };
         struct serv_thread_args {
@@ -50,7 +50,7 @@ namespace ec {
             struct sockaddr_in *cliaddr     = nullptr;
         };
 
-        void serve();
+        [[noreturn]] void serve();
 
 //        virtual void serveGrpcDeployExport() = 0;
 
@@ -94,4 +94,3 @@ namespace ec {
 
 
 #endif //EC_GCM_SERVER_H
-

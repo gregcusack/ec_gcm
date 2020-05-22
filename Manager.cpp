@@ -250,9 +250,9 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
         std::cout << "req or res == null in handle_mem_req()" << std::endl;
         exit(EXIT_FAILURE);
     }
-    //std::cout << "handle_mem_req()" << std::endl;
+    std::cout << "handle_mem_req()" << std::endl;
     uint64_t ret = 0;
-    if(req->req_type != _MEM_) { return __ALLOC_FAILED__; }
+    if(req->req_type != _MEM_) { res->rsrc_amnt = 0; return __ALLOC_MEM_FAILED__; }
     memlock.lock();
     int64_t memory_available = ec_get_memory_available();
     if(memory_available > 0) {
@@ -264,20 +264,20 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
     }
     else {
         memlock.unlock();
-        //std::cout << "no memory available!" << std::endl;
+        std::cout << "no memory available!" << std::endl;
         res->rsrc_amnt = 0;
-        return __ALLOC_FAILED__;
+        return __ALLOC_MEM_FAILED__;
     }
 
-    //std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
+    std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
     ret = memory_available > ec_get_memory_slice() ? ec_get_memory_slice() : memory_available;
 
-    //std::cout << "mem amnt to ret: " << ret << std::endl;
+    std::cout << "mem amnt to ret: " << ret << std::endl;
 
     ecapi_decrement_memory_available(ret);
 //        memory_available_in_pages -= ret;
 
-    //std::cout << "successfully decrease remaining mem to: " << ec_get_memory_available() << std::endl;
+    std::cout << "successfully decrease remaining mem to: " << ec_get_memory_available() << std::endl;
 
     res->rsrc_amnt = req->rsrc_amnt + ret;   //give back "ret" pages
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
@@ -296,7 +296,7 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
 uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     uint64_t total_reclaimed = 0;
 
-//    std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
+    std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
 //    std::unique_lock<std::mutex> lk(sc_map_lock);
     for (const auto &container : get_subcontainers()) {
         if (container.second->get_fd() == client_fd) {
@@ -306,12 +306,16 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
         auto mem_usage = get_memory_usage_in_bytes(*container.second->get_c_id());
         if(mem_limit - mem_usage > _SAFE_MARGIN_) {
             auto is_max_mem_resized = resize_memory_limit_in_pages(*container.second->get_c_id(), byte_to_page(mem_usage + _SAFE_MARGIN_));
-            //std::cout << "[dbg] byte to page macro output: " << byte_to_page(mem_limit - (mem_usage+_SAFE_MARGIN_)) << std :: endl;
-            //std::cout << "[dbg] is_max_mem_resized: " << is_max_mem_resized << std::endl;
+            std::cout << "[dbg] byte to page macro output: " << byte_to_page(mem_limit - (mem_usage+_SAFE_MARGIN_)) << std :: endl;
+            std::cout << "[dbg] is_max_mem_resized: " << is_max_mem_resized << std::endl;
             total_reclaimed += !is_max_mem_resized ? byte_to_page(mem_limit - (mem_usage+_SAFE_MARGIN_)) : 0;
         }
+        else {
+            std::cout << "mem usage to close to mem_limit to resize! --> limit - usage: " << mem_limit - mem_usage << std::endl;
+            std::cout << "safe margin: " << _SAFE_MARGIN_ << std::endl;
+        }
     }
-    //std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << total_reclaimed << std::endl;
+    std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << total_reclaimed << std::endl;
     return total_reclaimed;
 }
 
