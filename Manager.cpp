@@ -63,6 +63,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     if(rx_quota / 1000 != sc->sc_get_quota() / 1000) {
         std::cout << "quotas do not match (rx, sc->get): (" << rx_quota << ", " << sc->sc_get_quota() << ")" << std::endl;
         cpulock.unlock();
+        res->request = 1;
         return __ALLOC_SUCCESS__;
     }
 
@@ -240,6 +241,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     }
 
     seq_number++;
+    res->request = 1;
     cpulock.unlock();
     return __ALLOC_SUCCESS__;
 

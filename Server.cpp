@@ -125,13 +125,17 @@ void ec::Server::handle_client_reqs(void *args) {
             }
         }
 	    else if(ret == __ALLOC_SUCCESS__ && !res->request) {
-            if(write(client_fd, (const char*) res, sizeof(*res)) < 0) {
+            std::cout << "sending back alloc success!" << std::endl;
+            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
                 break;
             }
+            else {
+                std::cout << "sucess writing back to socket on mem resize!" << std::endl;
+            }
         }
 		else if(ret == __ALLOC_MEM_FAILED__) {
-            if(write(client_fd, (const char*) res, sizeof(*res)) < 0) {
+            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket on mem failed" << std::endl;
                 break;
             }
