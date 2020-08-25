@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <utility>
 #include "types/types.h"
 #include "stats/local/cpu_l.h"
 #include "stats/local/mem_l.h"
@@ -26,6 +27,8 @@ namespace ec {
         struct ContainerId {
             ContainerId(uint32_t _cgroup_id, ip4_addr _ip)
                 : cgroup_id(_cgroup_id), server_ip(_ip) {};
+            ContainerId(uint32_t _cgroup_id, std::string _ip)
+                    : cgroup_id(_cgroup_id), server_ip(om::net::ip4_addr::from_string(std::move(_ip))) {};
 
             ContainerId() = default;
             uint32_t cgroup_id          = 0;
@@ -39,7 +42,11 @@ namespace ec {
         };
 
         ContainerId* get_c_id() {return &c_id;}
-        int get_fd() { return fd; }
+        [[nodiscard]] int get_fd() const { return fd; }
+        
+        void set_docker_id(std::string &docker_id) { _docker_id = docker_id; }
+        std::string get_docker_id() { return _docker_id; }
+
         uint64_t sc_get_quota() { return cpu.get_quota(); }
         uint32_t sc_get_throttled() { return cpu.get_throttled(); }
 
@@ -49,7 +56,7 @@ namespace ec {
         uint32_t sc_get_throttle_increase(uint32_t _throttled) { return cpu.get_throttle_increase(_throttled); }
         uint32_t sc_get_thr_incr_and_set_thr(uint32_t _throttled);
 
-        int get_counter() { return counter; }
+        [[nodiscard]] int get_counter() const { return counter; }
         void incr_counter() { counter++; }
 
         local::stats::cpu *get_cpu_stats() { return &cpu; }
@@ -58,10 +65,16 @@ namespace ec {
         bool get_set_quota_flag() { return cpu.get_set_quota_flag(); }
         void set_quota_flag(bool val) { cpu.set_set_quota_flag(val); }
 
+        //Mem
+        uint64_t sc_get_mem_limit_in_pages() { return mem.get_mem_limit_in_pages(); }
+        void sc_set_mem_limit_in_pages(uint64_t _new_limit) { mem.set_mem_limit_in_pages(_new_limit); }
+        void sc_incr_mem_limit(uint64_t _incr) { mem.incr_mem_limit(_incr); }
+        void sc_decr_mem_limit(uint64_t _decr) { mem.decr_mem_limit(_decr); }
 
     private:
         ContainerId c_id;
         int fd;
+        std::string _docker_id;
 
         local::stats::cpu cpu;
         local::stats::mem mem;

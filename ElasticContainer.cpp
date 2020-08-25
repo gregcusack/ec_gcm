@@ -5,21 +5,24 @@
 #include "ElasticContainer.h"
 
 
-ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id), fair_cpu_share(0) {}
+ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id), fair_cpu_share(0) {
+//    _mem = global::stats::mem();
+//    _cpu = global::stats::cpu();
+}
 
 ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients)
-    : ec_id(_ec_id), agent_clients(_agent_clients), fair_cpu_share(0) {
+    : ec_id(_ec_id), fair_cpu_share(0) {
 
-    //TODO: change num_agents to however many servers we have. IDK how to set it rn.
+    //TODO: change num_agents to however many managers we have. IDK how to set it rn.
 
-    _mem = global::stats::mem();
-    _cpu = global::stats::cpu();
+//    _mem = global::stats::mem();
+//    _cpu = global::stats::cpu();
 
-    std::cout << "[Elastic Container Log] runtime_remaining on init: " << _cpu.get_runtime_remaining() << std::endl;
-    std::cout << "[Elastic Container Log] memory_available on init: " << _mem.get_mem_available() << std::endl;
+//    std::cout << "[Elastic Container Log] runtime_remaining on init: " << _cpu.get_runtime_remaining() << std::endl;
+//    std::cout << "[Elastic Container Log] memory_available_in_pages on init: " << _mem.get_mem_available_in_pages() << std::endl;
 
     subcontainers = subcontainer_map();
-    sc_agent_map = subcontainer_agent_map();
+    sc_ac_map = subcontainer_agentclient_map();
 
 }
 
@@ -31,7 +34,7 @@ ec::SubContainer *ec::ElasticContainer::create_new_sc(uint32_t cgroup_id, uint32
     return new SubContainer(cgroup_id, host_ip, sockfd, quota, nr_throttled);
 }
 
-const ec::SubContainer &ec::ElasticContainer::get_subcontainer(ec::SubContainer::ContainerId &container_id) {
+ec::SubContainer &ec::ElasticContainer::get_subcontainer(const ec::SubContainer::ContainerId &container_id) {
     auto itr = subcontainers.find(container_id);
     if(itr == subcontainers.end()) {
         std::cout << "ERROR: No EC with manager_id: " << ec_id << ". Exiting...." << std::endl;
@@ -55,8 +58,26 @@ int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
         //TODO: should delete sc
         return __ALLOC_FAILED__;
     }
+//    sc_map_lock.lock();
     subcontainers.insert({*(_sc.get_c_id()), &_sc});
+//    sc_map_lock.unlock();
+//    std::cout << "[EC LOG]: sc inserted: " << *_sc.get_c_id() << std::endl;
     return __ALLOC_INIT__;
+}
+
+void ec::ElasticContainer::get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res) {
+//    while(sc_ac_map.empty()) {}
+    if (sc_ac_map.empty()) {
+        std::cout << "ERROR: SC-AGENT Map is empty" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    for (const auto &i: sc_ac_map) {
+        if (i.second == client) {
+            //res = i.first;
+            res.push_back(i.first);
+        }
+    }
 }
 
 uint64_t ec::ElasticContainer::refill_runtime() {
@@ -70,7 +91,44 @@ ec::ElasticContainer::~ElasticContainer() {
     subcontainers.clear();
 }
 void ec::ElasticContainer::update_fair_cpu_share() {
-    std::cout << "update fair share. (tot_cpu, # subconts): (" << _cpu.get_total_cpu() << ", " << subcontainers.size() << ")" << std::endl;
+//    std::cout << "update fair share. (tot_cpu, # subconts): (" << _cpu.get_total_cpu() << ", " << subcontainers.size() << ")" << std::endl;
+    if(subcontainers.empty()) {
+        fair_cpu_share = _cpu.get_total_cpu();
+        return;
+    }
     fair_cpu_share = (uint64_t)(_cpu.get_total_cpu() / subcontainers.size());
+}
+
+int ec::ElasticContainer::ec_delete_from_subcontainers_map(const SubContainer::ContainerId &sc_id) {
+    //todo: delete reduce pod fair share!
+    auto itr = subcontainers.find(sc_id);
+    if(itr != subcontainers.end()) {
+        auto tmp = itr->second;
+        subcontainers.erase(sc_id);
+        delete tmp;
+    }
+    else {
+        std::cerr << "[EC ERROR]: Can't find sc_id in subcontainers map! sc_id: " << sc_id << std::endl;
+        return -1;
+    }
+    return 0;
+}
+
+uint64_t ec::ElasticContainer::ec_get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
+    uint64_t ret = 0;
+    auto *ac = get_corres_agent(sc_id);
+    if(!ac) {
+        std::cerr << "[ERROR] NO AgentClient found for container id: " << sc_id << " get_mem_limit_in_bytes()" <<  std::endl;
+        return 0;
+    }
+    auto sc = get_subcontainer(sc_id);
+
+//    std::cout << "docker id used:" <<  sc.get_docker_id() << std::endl;
+    if(sc.get_docker_id().empty()) {
+        std::cout << "docker_id is 0!" << std::endl;
+        return 0;
+    }
+    ret = ec::Facade::MonitorFacade::CAdvisor::getContMemLimit(ac->get_agent_ip().to_string(), sc.get_docker_id());
+    return ret;
 }
 

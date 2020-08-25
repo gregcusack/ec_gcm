@@ -75,13 +75,18 @@ The CloudLab cluster is setup in the following manner: One GCM master node and t
     sudo apt-add-repository --yes --update ppa:ansible/ansible
     sudo apt install ansible
     ```
-    ##### 5. Install [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
-    ##### 6. Install Kubernetes: A more detailed instructional guide can be found [here](https://blog.sourcerer.io/a-kubernetes-quick-start-for-people-who-know-just-enough-about-docker-to-get-by-71c5933b4633)
+    ##### 5. Install YAML-CPP via:
+      * `sudo apt-get update`
+      * `sudo apt-get install libyaml-cpp-dev`
+      
+    ##### 6. Install [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+    ##### 7. Install Kubernetes: A more detailed instructional guide can be found [here](https://blog.sourcerer.io/a-kubernetes-quick-start-for-people-who-know-just-enough-about-docker-to-get-by-71c5933b4633)
       * `sudo apt-get update && sudo apt-get install -y apt-transport-https`
       * `sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -`
       * Create/edit the file: /etc/apt/sources.list.d/kubernetes.list to add `deb http://apt.kubernetes.io/ kubernetes-xenial main`
       * `sudo apt-get update`
       * `sudo apt-get install -y kubelet kubeadm kubectl`
+    
 
 
   * #### Build project using cmake
@@ -129,17 +134,27 @@ The CloudLab cluster is setup in the following manner: One GCM master node and t
       * Edit the file: /etc/apt/sources.list.d/kubernetes.list to add `deb http://apt.kubernetes.io/ kubernetes-xenial main`
       * `sudo apt-get update`
       * `sudo apt-get install -y kubelet kubeadm kubectl`
-      
+  4. Install latest version of Go (version 1.14.1 has been tested):
+      * `sudo apt-get update `
+      * `cd /tmp`
+      * `wget https://dl.google.com/go/go1.14.1.linux-amd64.tar.gz`
+      * `sudo tar -xvf go1.14.1.linux-amd64.tar.gz`
+      * `sudo mv go /usr/local`
+      * Add the Following lines in ~/.profile
+        * `export GOROOT=/usr/local/go`
+        * `export GOPATH=$HOME/go`    
+        * `export PATH=$GOPATH/bin:$GOROOT/bin:$PATH`
+      * `source ~/.profile`
+
 
 ## K8s Cluster Initialization
 Finally, we are at the point where we can create a kubernetes cluster. We can accomplish this via the following commands:
 
   ### Master Node
   1. Initialize Kubeadm
-    ```
+
     export MASTER_IP=<master_ip>
     sudo kubeadm init --apiserver-advertise-address $MASTER_IP
-
     mkdir -p $HOME/.kube
     sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
     sudo chown $(id -u):$(id -g) $HOME/.kube/config
@@ -152,10 +167,10 @@ Finally, we are at the point where we can create a kubernetes cluster. We can ac
     export kubever=$(kubectl version | base64 | tr -d '\n')
     kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$kubever"
 
-    ```
-   
-    Note that if you see an error related to swap after the initial kubeadm init, the following command might help:
-    `sudo swapoff -a && sudo sed -i '/swap/d' /etc/fstab` and rerun the kubeadm init command
+    
+  Note that if you see an error related to swap after the initial kubeadm init, the following command might help:
+    `sudo swapoff -a && sudo sed -i '/swap/d' /etc/fstab` 
+  and rerun the kubeadm init command in the earlier codeblock. 
 
   2. Upon a successful control plane initialization, the output for the command to join the cluster should be something like:
   ```
@@ -171,7 +186,7 @@ Finally, we are at the point where we can create a kubernetes cluster. We can ac
   1. To join the cluster that the master node is advertising, use the `kubeadm join ...` command that the master node spits out as part of the last step
 
 
-So now, when you check the cluster status from the master node, you should see the worked nodes as well. i.e.
+Now when you check the cluster status from the master node, you should see the worked nodes as well. i.e.
 ```
 PreritO@gcm:/mnt/ECKernel/ec_gcm$ kubectl get nodes
 NAME                                                  STATUS   ROLES    AGE     VERSION
@@ -181,12 +196,23 @@ node-1.ectest.cudevopsfall2018-pg0.wisc.cloudlab.us   Ready    <none>   61s     
 
 And this marks a successful k8s cluster deployment!
 
-## Deploying a Distributed Container (finally)
+## Deploying a Distributed Container
 
 Finally, we're at the step where we can deploy a distributed container application. To do so, we have to take the following steps on the master and worker nodes:
 
+### Worker Nodes
+1. Start the Agent processes on each of the worker nodes to run in the background
+2. Start the cAdvisor process on each of the worker nodes by navigating to directory: EC-4.20.16/ec_gcm/cAdvisorSDK/cadvisor and entering the following commands:
+    * `make build`
+    * `sudo ./cadvisor`
+
 ### Master Node
+1. Run a kube proxy via the command: `kubectl proxy -p 8000` 
+2. Build and run the ec_gcm application with the specified application definition file (in JSON format) using the following commands: `./ec_gcm tests/app_def.json`
+
+
+<!-- ### Master Nodes
 1. Start the Agent processes on the worker nodes. We accomplish this via Ansible. However, before ansible can successfully start the Agent process, we need to add the ssh-key for the worker nodes onto the GCM master node, as outlined [here](http://www.linuxproblem.org/art_9.html)
 2. Once the ssh-keys for the worker nodes have been added to the Master GCM node, we can then run the ansible playbook to deploy the agent process on all the hosts: 
 `ansible-playbook -b -v -u <user> execute-agent.yaml -kkkk --extra-vars "host-group" -i host-group` where host-group is a file containing the hostnames for the worker nodes. 
-3. Finally, create an application definition file JSON file. An example file is in the ec_gcm git repos under the `tests/` directory and titled: "app_def.json". Run the ec_gcm program with this json file as an argument: i.e. `./ec_gcm tests/app_def.json`
+3. Finally, create an application definition file JSON file. An example file is in the ec_gcm git repos under the `tests/` directory and titled: "app_def.json". Run the ec_gcm program with this json file as an argument: i.e. `./ec_gcm tests/app_def.json` -->

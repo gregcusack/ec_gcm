@@ -24,10 +24,12 @@
 #include "om.h"
 #include "stats/global/mem_g.h"
 #include "stats/global/cpu_g.h"
+#include "cAdvisorSDK/include/cAdvisorFacade.h"
 
 #define __ALLOC_FAILED__ 0
 #define __ALLOC_SUCCESS__ 1
 #define __ALLOC_INIT__ 2
+#define __ALLOC_MEM_FAILED__ 3
 #define __BUFF_SIZE__ 1024
 #define _CPU_ 0
 #define _MEM_ 1
@@ -42,7 +44,7 @@ namespace ec {
 //    struct Server;
     class ElasticContainer {
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
-    using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
+    using subcontainer_agentclient_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
     public:
         explicit ElasticContainer(uint32_t _ec_id);
         ElasticContainer(uint32_t _ec_id, std::vector<AgentClient*> &_agent_clients);
@@ -55,10 +57,15 @@ namespace ec {
          **/
         //MISC
         uint32_t get_ec_id() { return ec_id; }
-        const subcontainer_map &get_subcontainers() {return subcontainers;}
-        const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id);
-        AgentClient *get_corres_agent(const SubContainer::ContainerId &container_id){return sc_agent_map[container_id];}
+        const subcontainer_map &ec_get_subcontainers() {return subcontainers;}
+        const int ec_get_num_subcontainers() { return subcontainers.size(); }
+        subcontainer_map *get_subcontainers_map_for_update() { return &subcontainers; }
+        SubContainer &get_subcontainer(const SubContainer::ContainerId &container_id);
+        AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_ac_map[container_id];}
         SubContainer *get_sc_for_update(SubContainer::ContainerId &container_id);
+        const subcontainer_agentclient_map &get_sc_ac_map() {return sc_ac_map;}
+        subcontainer_agentclient_map *get_sc_ac_map_for_update() {return &sc_ac_map; }
+        void get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res);
 
         //CPU
         uint64_t get_cpu_rt_remaining() { return _cpu.get_runtime_remaining(); }
@@ -67,14 +74,13 @@ namespace ec {
         uint64_t get_fair_cpu_share() { return fair_cpu_share; }
         uint64_t get_overrun() { return _cpu.get_overrun(); }
         uint64_t get_total_cpu() { return _cpu.get_total_cpu(); }
+        uint64_t get_alloc_rt() { return _cpu.get_alloc_rt(); }
+
 
         //MEM
-        uint64_t get_memory_available() { return _mem.get_mem_available(); }
+        uint64_t get_memory_available() { return _mem.get_mem_available_in_pages(); }
         uint64_t get_memory_slice() { return _mem.get_slice_size(); }
-
-        //AGENTS
-        uint32_t get_num_agent_clients() { return agent_clients.size(); }
-        const std::vector<AgentClient *> &get_agent_clients() const { return agent_clients; };
+        uint64_t get_mem_limit() { return _mem.get_mem_limit_in_pages(); }
 
         /**
          *******************************************************
@@ -83,7 +89,7 @@ namespace ec {
          **/
 
         //MISC
-        void add_to_agent_map(SubContainer::ContainerId &id, AgentClient* client) { sc_agent_map.insert({id, client}); }
+        void add_to_sc_ac_map(SubContainer::ContainerId &id, AgentClient* client) { sc_ac_map.insert({id, client}); }
 
         //CPU
         void set_ec_period(int64_t _period)  { _cpu.set_period(_period); }   //will need to update maanger too
@@ -99,11 +105,20 @@ namespace ec {
         void incr_overrun(uint64_t _incr) { _cpu.incr_overrun(_incr); }
         void decr_overrun(uint64_t _decr) { _cpu.decr_overrun(_decr); }
         void set_overrun(uint64_t _val) { _cpu.set_overrun(_val); }
+        void set_total_cpu(uint64_t _val) { _cpu.set_total_cpu(_val); }
+        void incr_alloc_rt(uint64_t _incr) { _cpu.incr_alloc_rt(_incr); }
+        void decr_alloc_rt(uint64_t _decr) { _cpu.decr_alloc_rt(_decr); }
+
 
         //MEM
-        void ec_resize_memory_max(int64_t _max_mem) { _mem.set_mem_limit(_max_mem); }
-        void ec_decrement_memory_available(uint64_t _mem_to_reduce) { _mem.decr_memory_available(_mem_to_reduce); }
-        int64_t ec_set_memory_available(uint64_t mem) { return _mem.set_memory_available(mem); }
+        void ec_resize_memory_max(int64_t _max_mem) { _mem.set_mem_limit_in_pages(_max_mem); }
+        void ec_decrement_memory_available_in_pages(uint64_t _mem_to_reduce) { _mem.decr_memory_available_in_pages(_mem_to_reduce); }
+        void ec_increment_memory_available_in_pages(uint64_t _mem_to_incr) { _mem.incr_memory_available_in_pages(_mem_to_incr); }
+        int64_t ec_set_memory_available(uint64_t mem) { return _mem.set_memory_available_in_pages(mem); }
+        void ec_incr_total_memory(uint64_t _incr) { _mem.incr_total_memory(_incr); }
+        void ec_decr_total_memory(uint64_t _decr) { _mem.decr_total_memory(_decr); }
+        uint64_t ec_get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id);
+
 
         /**
          *******************************************************
@@ -115,6 +130,8 @@ namespace ec {
         SubContainer* create_new_sc(uint32_t cgroup_id, uint32_t host_ip, int sockfd, uint64_t quota, uint32_t nr_throttled);
         int insert_sc(SubContainer &_sc);
 
+        int ec_delete_from_subcontainers_map(const SubContainer::ContainerId &sc_id);
+
         // int insert_pid(int pid);
         // std::vector<int> get_pids();
 
@@ -125,12 +142,18 @@ namespace ec {
     private:
         uint32_t ec_id;
         subcontainer_map subcontainers;
-        subcontainer_agent_map sc_agent_map;
+        subcontainer_agentclient_map sc_ac_map;
         uint64_t fair_cpu_share;
+        std::mutex sc_lock;
 
-        //Passed by reference from ECAPI but owned by GCM
-        std::vector<AgentClient *> agent_clients;
+        //cpu
+//        uint64_t runtime_remaining;
+        //TODO: need file/struct of macros - like slice, failed, etc
+        //mem
+        std::ofstream test_file;
 
+        //test
+        int flag{};
 
         global::stats::mem _mem;
         global::stats::cpu _cpu;

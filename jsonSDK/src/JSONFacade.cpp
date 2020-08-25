@@ -62,11 +62,11 @@ int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
         }
         _val = web::json::value::parse(stream);
         parseAppName();
-        parseAppImages();
+//        parseAppImages();
         parseIPAddresses();
-        parsePodNames();
+//        parsePodNames();
         parseGCMIPAddress();
-        parseSpecs();
+//        parseSpecs();
     }
     catch (const web::json::json_exception& excep) {
         std::cout << "ERROR Parsing JSON file: " << excep.what() << std::endl;
@@ -89,24 +89,22 @@ int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
         return __ERROR__;
     }
 
-    if(_pod_names.size() != _app_images.size()) {
-        std::cerr << "[ERROR]: # pod names != # app images" << std::endl;
-        return __ERROR__;
-    }
-
-    if(_specs.find("mem") ==  _specs.end()) {
-        std::cerr << "[ERROR]: no application mem limit set" << std::endl;
-        return __ERROR__;
-    }
-    if(_specs.find("cpu") == _specs.end()) {
-        std::cerr << "[ERROR]: no application cpu limit set" << std::endl;
-        return __ERROR__;
-    }
+//    if(_pod_names.size() != _app_images.size()) {
+//        std::cerr << "[ERROR]: # pod names != # app images" << std::endl;
+//        return __ERROR__;
+//    }
+//
+//    if(_specs.find("mem") ==  _specs.end()) {
+//        std::cerr << "[ERROR]: no application mem limit set" << std::endl;
+//        return __ERROR__;
+//    }
+//    if(_specs.find("cpu") == _specs.end()) {
+//        std::cerr << "[ERROR]: no application cpu limit set" << std::endl;
+//        return __ERROR__;
+//    }
 
     return 0;
 }
-
-
 
 void ec::Facade::JSONFacade::json::createJSONPodDef(const std::string &app_name, const std::string &app_image, const std::string &pod_name, std::string &response) {
     // Create a JSON object (the pod)
@@ -114,7 +112,7 @@ void ec::Facade::JSONFacade::json::createJSONPodDef(const std::string &app_name,
     pod[U("kind")] = web::json::value::string(U("Pod"));
     pod[U("apiVersion")] = web::json::value::string(U("v1"));
 
-//    std::string pod_name_ = web::json::value::string(U())
+//    std::string pod_name_ = web::json::value::string(U())]]
 
     // Create a JSON object (the metadata)
     web::json::value metadata;
@@ -167,8 +165,8 @@ void ec::Facade::JSONFacade::json::set_pod_limits(web::json::value &cont) {
 //    auto cpu = std::to_string(_specs.find("cpu")->second) + "m";
     auto mem = std::to_string(_specs.find("mem")->second) + "Mi";
 
-    std::cout << "cpu: " << cpu_req << std::endl;
-    std::cout << "mem: " << mem << std::endl;
+    //std::cout << "cpu: " << cpu_req << std::endl;
+    //std::cout << "mem: " << mem << std::endl;
 //    requests[U("cpu")] = web::json::value::string(U(cpu_req));
     requests[U("memory")] = web::json::value::string(U(mem));
 
@@ -211,7 +209,12 @@ void ec::Facade::JSONFacade::json::getJSONRequest(const std::string &urlRequest,
     web::http::client::http_client client(urlRequest);
     client.request(web::http::methods::GET, U("/"))
     .then([](const web::http::http_response& response) {
-        return response.extract_json(); 
+        if (response.status_code() == web::http::status_codes::OK) {
+            return response.extract_json();
+        } else {
+            std::cout << "status code not OK! it is: " << response.status_code() << std::endl;
+            return pplx::task_from_result(web::json::value());
+        }
     })
     .then([&json_return](const pplx::task<web::json::value>& task) {
         try {
@@ -219,11 +222,34 @@ void ec::Facade::JSONFacade::json::getJSONRequest(const std::string &urlRequest,
         }
         catch (const web::http::http_exception& e) {                    
             std::cout << "error " << e.what() << std::endl;
+            json_return = web::json::value::null();	
         }
     })
     .wait();
-    jsonResp = json_return.serialize();
+    if (json_return.is_null()) {
+        jsonResp = "";
+    } else {
+        jsonResp = json_return.serialize();
+    }
     // return json_return.serialize();
+}
+
+void ec::Facade::JSONFacade::json::getStringResponseFromURL(const std::string &urlRequest, std::string &jsonResp) {
+
+    web::http::client::http_client client(urlRequest);
+    client.request(web::http::methods::GET)
+    .then([](const web::http::http_response& response) {
+        return response.extract_string(); 
+    })
+    .then([&jsonResp](const pplx::task<std::string>& task) {
+        try {
+            jsonResp = task.get();
+        }
+        catch (const web::http::http_exception& e) {                    
+            std::cout << "error " << e.what() << std::endl;
+        }
+    })
+    .wait();
 }
 
 void ec::Facade::JSONFacade::json::getNodesFromResponse(const std::string &jsonResp, std::vector<std::string> &resultNodes) {
@@ -242,6 +268,51 @@ void ec::Facade::JSONFacade::json::getNodeIPFromResponse(const std::string &json
         }
     }
 }
+
+void ec::Facade::JSONFacade::json::getPodStatusFromResponse(const std::string &jsonResp, std::string &tmp_ip) {
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    tmp_ip = jsonResponse.at(U("status")).at(U("phase")).as_string();
+}
+
+uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseSpecs(const std::string &jsonResp, const std::string &resource, const std::string &type){
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
+    const web::json::value &kubePodSpecs = jsonResponse.as_object().cbegin()->second;
+    const web::json::object &k = kubePodSpecs.as_object();//["spec"]]["memory"]["limit"]
+//    std::cout << "resource: " << resource << ", type: " << type << std::endl;
+    return k.at("spec").at(resource).at(type).as_number().to_uint64();
+}
+
+uint64_t ec::Facade::JSONFacade::json::parseCAdvisorCPUResponseStats(const std::string &jsonResp, const std::string &resource, const std::string &type){
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
+    const web::json::value &kubePodStats = jsonResponse.as_object().cbegin()->second;
+    const web::json::object &k = kubePodStats.as_object();//["stats"]{["memory"]["limit"]}{}{}{}..
+//    std::cout << "resource: " << resource << ", type: " << type << std::endl;
+    const auto len = k.at("stats").as_array().size();
+//    std::cout << "length of array response " << len << std::endl;
+    const auto &last = k.at("stats").as_array().at(len-1).as_object();
+    return last.at(resource).at("cfs").at(type).as_number().to_uint64();
+}
+
+uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseStats(const std::string &jsonResp, const std::string &resource, const std::string &type){
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
+    const web::json::value &kubePodStats = jsonResponse.as_object().cbegin()->second;
+    const web::json::object &k = kubePodStats.as_object();//["stats"]{["memory"]["limit"]}{}{}{}..
+//    std::cout << "resource: " << resource << ", type: " << type << std::endl;
+    const auto len = k.at("stats").as_array().size();
+//    std::cout << "length of array response " << len << std::endl;
+    const auto &last = k.at("stats").as_array().at(len-1).as_object();
+    return last.at(resource).at(type).as_number().to_uint64();
+}
+
+uint64_t ec::Facade::JSONFacade::json::parseCAdvisorMachineStats(const std::string &jsonResp, const std::string &type) {
+    web::json::value jsonResponse = web::json::value::parse(jsonResp);
+    const web::json::object &machineSpecs = jsonResponse.as_object();
+    return machineSpecs.at(type).as_number().to_uint64();
+}
+
 
 uint64_t ec::Facade::JSONFacade::json::get_mem() {
     auto itr = _specs.find("mem");
@@ -274,8 +345,4 @@ uint64_t ec::Facade::JSONFacade::json::get_net() {
     }
     return 0;
 }
-
-
-
-
 

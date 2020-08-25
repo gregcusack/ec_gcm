@@ -17,9 +17,10 @@
 //#include "ElasticContainer.h"
 #include "om.h"
 #include "types/types.h"
+#include "DeployServerGRPC/DeployerExportServiceImpl.h"
 
 
-#define __MAX_CLIENT__ 30
+#define __MAX_CLIENT__ 128
 #define __HANDLE_REQ_BUFF__ 40 //TODO: may need to add back in
 #define __FAILED__ -1
 
@@ -43,11 +44,15 @@ namespace ec {
         };
         struct serv_thread_args {
             serv_thread_args()              = default;
+            serv_thread_args(int _clifd, struct sockaddr_in *_cliaddr)
+                    : clifd(_clifd), cliaddr(_cliaddr) {}
             int clifd                       = 0;
             struct sockaddr_in *cliaddr     = nullptr;
         };
 
         void serve();
+
+//        virtual void serveGrpcDeployExport() = 0;
 
         void handle_client_reqs(void *clifd);
         virtual int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) = 0;
@@ -66,7 +71,7 @@ namespace ec {
         uint32_t get_server_id() { return server_id; }
         std::mutex mtx;
 
-        int init_agent_connections();
+        bool init_agent_connections();
     
     private:
 
@@ -81,10 +86,12 @@ namespace ec {
         uint32_t num_of_cli;
 
     protected:
-        std::vector<AgentClient *> agent_clients_;
         uint32_t server_id;
+
+//        ec::rpc::DeployerExportServiceImpl grpcServer;
     };
 }
 
 
 #endif //EC_GCM_SERVER_H
+

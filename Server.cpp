@@ -3,10 +3,11 @@
 //
 
 #include "Server.h"
+#include "Agents/AgentClientDB.h"
 
 ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents)
     : server_id(_server_id), ip_address(_ip_address), port(_port), agents(_agents), server_initialized(false),
-    agent_clients_({}), num_of_cli(0) {}
+    num_of_cli(0) {}//, grpcServer(rpc::DeployerExportServiceImpl()) {}
 
 
 void ec::Server::initialize() {
@@ -66,7 +67,6 @@ void ec::Server::serve() {
     int32_t max_sd, sd, cliaddr_len, clifd, select_rv;
 
     std::thread threads[__MAX_CLIENT__];
-    serv_thread_args *args;
     FD_ZERO(&readfds);
 
     max_sd = server_socket.sock_fd + 1;
@@ -81,11 +81,11 @@ void ec::Server::serve() {
 
         if(FD_ISSET(server_socket.sock_fd, &readfds)) {
             if((clifd = accept(server_socket.sock_fd, (struct sockaddr *)&server_socket.addr, (socklen_t*)&cliaddr_len)) > 0) {
-                std::cout << "[dgb]: Container tried to request a connection. EC Server id: " << server_id << std::endl;
-                args = new serv_thread_args();
-                args->clifd = clifd;
-                args->cliaddr = &server_socket.addr;
-                threads[num_of_cli] = std::thread(&Server::handle_client_reqs, this, (void*)args);
+                std::cout << "=================================================================================================" << std::endl;
+                std::cout << "[SERVER DBG]: Container tried to request a connection. EC Server id: " << server_id << std::endl;
+                auto args = new serv_thread_args(clifd, &server_socket.addr);
+                std::thread client_handler(&Server::handle_client_reqs, this, (void*)args);
+                client_handler.detach();
             }
             else {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Unable to accept connection. "
@@ -104,40 +104,39 @@ void ec::Server::handle_client_reqs(void *args) {
 //    char *buff_out;
     auto *arguments = reinterpret_cast<serv_thread_args*>(args);
     int client_fd = arguments->clifd;
+    auto client_ip = arguments->cliaddr->sin_addr.s_addr;
+    delete arguments;
 
     num_of_cli++;
     while((num_bytes = read(client_fd, buff_in, __HANDLE_REQ_BUFF__)) > 0 ) {
 //        std::cout << "num bytes read: " << num_bytes << std::endl;
         auto *req = reinterpret_cast<msg_t*>(buff_in);
-        req->set_ip_from_net(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
+        req->set_ip_from_net(client_ip); //this needs to be removed eventually
 //        req->set_ip_from_string("10.0.2.15"); //TODO: this needs to be changed. but here for testing merge
         auto *res = new msg_t(*req);
 //        std::cout << "received: " << *req << std::endl;
 //        ret = handle_req(req, res, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
-        ret = handle_req(req, res, om::net::ip4_addr::from_net(arguments->cliaddr->sin_addr.s_addr).to_uint32(), arguments->clifd);
+        ret = handle_req(req, res, om::net::ip4_addr::from_net(client_ip).to_uint32(), client_fd);
 
-        if(ret == __ALLOC_INIT__) {  //TODO: fix this.
-            std::cout << "sending back init req: " << *res << std::endl;
-            std::cout << "size of *res: " << sizeof(*res) << std::endl;
-            std::cout << "size of msg_t: " << sizeof(msg_t) << std::endl;
+        if(ret == __ALLOC_INIT__) { 
             if (write(client_fd, (const char *) &*res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
                 break;
-//        // req->set_ip(arguments->cliaddr->sin_addr.s_addr); //this needs to be removed eventually
-//        auto *res = new msg_t(*req);
-//        ret = handle_req(req, res, om::net::ip4_addr::reverse_byte_order(req->client_ip).to_uint32(), arguments->clifd);
-//        if(ret == __ALLOC_SUCCESS__) {  //TODO: fix this.
-//            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
-//                    std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
-//                    break;
             }
         }
-        else if(ret == __ALLOC_SUCCESS__ && !res->request) {
-            std::cout << "sending back non-cpu req: " << *res << std::endl;
-            std::cout << "size of *res: " << sizeof(*res) << std::endl;
-            std::cout << "size of msg_t: " << sizeof(msg_t) << std::endl;
-            if(write(client_fd, (const char*) res, sizeof(*res)) < 0) {
+	    else if(ret == __ALLOC_SUCCESS__ && !res->request) {
+            std::cout << "sending back alloc success!" << std::endl;
+            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                 std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
+                break;
+            }
+            else {
+                std::cout << "sucess writing back to socket on mem resize!" << std::endl;
+            }
+        }
+		else if(ret == __ALLOC_MEM_FAILED__) {
+            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
+                std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket on mem failed" << std::endl;
                 break;
             }
         }
@@ -149,11 +148,11 @@ void ec::Server::handle_client_reqs(void *args) {
     }
 }
 
-int ec::Server::init_agent_connections() {
+bool ec::Server::init_agent_connections() {
     int sockfd, i;
     struct sockaddr_in servaddr;
-    int num_connections = 0;
-
+    uint32_t num_connections = 0;
+    AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
 //    for(i = 0; i < num_agents; i++) {
     for(const auto &ag : agents) {
         if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -175,12 +174,28 @@ int ec::Server::init_agent_connections() {
         else {
             num_connections++;
         }
-
-        agent_clients_.push_back(new AgentClient(ag, sockfd));
-        std::cout << "[dbg] agent_clients sockfd: " << sockfd << ", " << agent_clients_[agent_clients_.size() - 1]->get_socket() << std::endl;
+        auto* ac = new AgentClient(ag, sockfd);
+        agent_clients_db->add_agent_client(ac);
+        std::cout << "[dbg] Agent client added to db and agent_clients sockfd: " << sockfd << ", " << agent_clients_db->get_agent_client_by_ip(ag->get_ip())->get_socket()
+        <<" agent db size is: " << agent_clients_db->get_agent_clients_db_size()<< std::endl;
     }
-    return num_connections == agent_clients_.size();
+    return num_connections == agent_clients_db->get_agent_clients_db_size();
 
 }
+
+//void ec::Server::serveGrpcDeployExport() {
+//    std::string server_addr("10.0.2.15:4447");
+//    rpc::DeployerExportServiceImpl service;
+//    grpc::ServerBuilder builder;
+//
+//    builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
+//    builder.RegisterService(&service);
+//    std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
+//
+//    std::cout << "Grpc Server listening on: " << server_addr << std::endl;
+//    server->Wait();
+//
+//}
+
 
 
