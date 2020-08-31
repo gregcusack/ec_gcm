@@ -85,7 +85,7 @@ ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, 
         return grpc::Status::CANCELLED;
     }
     // Passed in value is in mi but set_total_cpu takes ns
-    ec->set_total_cpu(appSpec->cpu_limit()*100000);
+    ec->set_total_cpu(appSpec->cpu_limit()*1000000);
     ec->set_unallocated_rt(ec->get_total_cpu());
     // Passed in value is in MiB but ec_resize_memory_max takes in number of pages
     ec->ec_resize_memory_max((appSpec->mem_limit()*1048576)/4000);
