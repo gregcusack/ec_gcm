@@ -6,7 +6,7 @@
 
 ec::Manager::Manager( int _manager_id, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
             : Server(_manager_id, gcm_ip, server_port, agents), ECAPI(_manager_id), manager_id(_manager_id),
-            seq_number(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
+            seq_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
 
     //init server
     initialize();
@@ -88,9 +88,13 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     total_rt_in_sys = ec_get_alloc_rt() + ec_get_cpu_unallocated_rt(); //alloc, overrun, unalloc
 //    auto tot_rt_and_overrun = total_rt_in_sys + ec_get_overrun();
 //    std::cout << "total rt in system, ovrn: " << total_rt_in_sys << ", " << ec_get_overrun() << std::endl;
-    if( (int64_t)ec_get_total_cpu() - (int64_t)total_rt_in_sys >= _MAX_CPU_LOSS_IN_NS_) {
-        std::cout << "fix rt leak: " << ec_get_total_cpu() << ", " << total_rt_in_sys << std::endl;
-        ec_incr_unallocated_rt(ec_get_total_cpu() - total_rt_in_sys);
+
+    cpuleak += (int64_t)ec_get_total_cpu() - (int64_t)total_rt_in_sys;
+
+    if( cpuleak >= _MAX_CPU_LOSS_IN_NS_) {
+        std::cout << "fix rt leak: tot cpuleak: " << cpuleak << std::endl;
+        ec_incr_unallocated_rt(cpuleak);
+        cpuleak = 0;
     }
 
 //    std::cout << "total rt + overrun in system: " << tot_rt_and_overrun << std::endl;
