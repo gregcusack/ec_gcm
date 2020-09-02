@@ -57,6 +57,8 @@ namespace ec {
         std::mutex memlock;
         int64_t seq_number;
 
+        int64_t cpuleak;
+
         ec::rpc::DeployerExportServiceImpl *grpcServer;
         std::string deploy_service_ip;
 
