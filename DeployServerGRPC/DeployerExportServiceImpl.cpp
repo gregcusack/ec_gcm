@@ -42,6 +42,7 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
 
     uint64_t mem_limit = ec->get_subcontainer(sc_id).sc_get_mem_limit_in_pages();
     uint64_t quota = ec->get_subcontainer(sc_id).get_cpu_stats()->get_quota(); //todo: race condition
+    std::cout << "deleted container quota: " << quota << std::endl;
     s1 = deleteFromScAcMap(sc_id) ? fail : success;
     s2 = deleteFromSubcontainersMap(sc_id) ? fail : success;
     s3 = deleteFromDeployedPodsMap(sc_id) ? fail : success;
