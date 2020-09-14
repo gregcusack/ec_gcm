@@ -52,6 +52,7 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     std::cout << "pre delete unalloc rt + allcoc_rt: " << ec->get_cpu_unallocated_rt() + ec->get_alloc_rt() << std::endl;
     //CPU
     ec->update_fair_cpu_share();
+    ec->decr_alloc_rt(quota);
     ec->incr_unallocated_rt(quota);
     std::cout << "fair cpu share post delete: " << ec->get_fair_cpu_share() << std::endl;
     std::cout << "post delete unalloc rt + allcoc_rt: " << ec->get_cpu_unallocated_rt() + ec->get_alloc_rt() << std::endl;
