@@ -44,7 +44,7 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     uint64_t quota = ec->get_subcontainer(sc_id).get_cpu_stats()->get_quota(); //todo: race condition
     std::cout << "deleted container quota: " << quota << std::endl;
     uint64_t mem_alloced_in_pages = 0;
-    for (const auto &i : ec->get_subcontainers()) {
+    for (const auto &i : ec->ec_get_subcontainers()) {
         mem_alloced_in_pages += i.second->sc_get_mem_limit_in_pages();
     }
     std::cout << "tot mem in sys pre delete pod" << mem_alloced_in_pages + ec->get_memory_available() << std::endl;
