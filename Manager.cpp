@@ -88,7 +88,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //    std::cout << "total rt given to containers: " << total_rt_in_sys << std::endl;
     total_rt_in_sys = ec_get_alloc_rt() + ec_get_cpu_unallocated_rt(); //alloc, overrun, unalloc
 //    auto tot_rt_and_overrun = total_rt_in_sys + ec_get_overrun();
-    std::cout << "total rt in system, ovrn: " << total_rt_in_sys << ", " << ec_get_overrun() << std::endl;
+    //std::cout << "total rt in system, ovrn: " << total_rt_in_sys << ", " << ec_get_overrun() << std::endl;
 
     cpuleak += (int64_t)ec_get_total_cpu() - (int64_t)total_rt_in_sys;
 
