@@ -22,7 +22,7 @@ ec::SubContainer::SubContainer(uint32_t cgroup_id, uint32_t ip, int _fd, uint64_
     counter = 0;
 }
 
-uint32_t ec::SubContainer::sc_get_thr_incr_and_set_thr(uint32_t _throttled) {
+uint32_t ec::SubContainer::get_thr_incr_and_set_thr(uint32_t _throttled) {
     auto incr = cpu.get_throttle_increase(_throttled);
     if(incr != 0) {
         cpu.set_throttled(_throttled);

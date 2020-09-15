@@ -40,14 +40,14 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     std::cout << "Sc_id to delete: " << sc_id << std::endl;
     std::string s1, s2, s3, s4, status;
 
-    uint64_t sc_mem_limit = ec->get_subcontainer(sc_id).sc_get_mem_limit_in_pages();
+    uint64_t sc_mem_limit = ec->get_subcontainer(sc_id).get_mem_limit_in_pages();
     uint64_t quota = ec->get_subcontainer(sc_id).get_cpu_stats()->get_quota(); //todo: race condition
     std::cout << "deleted container quota: " << quota << std::endl;
     uint64_t mem_alloced_in_pages = 0;
-    for (const auto &i : ec->ec_get_subcontainers()) {
-        mem_alloced_in_pages += i.second->sc_get_mem_limit_in_pages();
+    for (const auto &i : ec->get_subcontainers()) {
+        mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
     }
-    std::cout << "tot mem in sys pre delete pod: " << mem_alloced_in_pages + ec->get_memory_available() << std::endl;
+    std::cout << "tot mem in sys pre delete pod: " << mem_alloced_in_pages + ec->get_unallocated_memory_in_pages() << std::endl;
 
     s1 = deleteFromScAcMap(sc_id) ? fail : success;
     s2 = deleteFromSubcontainersMap(sc_id) ? fail : success;
@@ -65,15 +65,15 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
 
     //MEM
     std::cout << "delete pod mem_limit to ret to global pool: " << sc_mem_limit << std::endl;
-    std::cout << "ec_mem_avail pre delete: " << ec->get_memory_available() << std::endl;
-    ec->ec_increment_memory_available_in_pages(sc_mem_limit);
-    std::cout << "ec_mem_avail post delete: " << ec->get_memory_available() << std::endl;
+    std::cout << "ec_mem_avail pre delete: " << ec->get_unallocated_memory_in_pages() << std::endl;
+    ec->incr_unalloc_memory_in_pages(sc_mem_limit);
+    std::cout << "ec_mem_avail post delete: " << ec->get_unallocated_memory_in_pages() << std::endl;
 
     mem_alloced_in_pages = 0;
-    for (const auto &i : ec->ec_get_subcontainers()) {
-        mem_alloced_in_pages += i.second->sc_get_mem_limit_in_pages();
+    for (const auto &i : ec->get_subcontainers()) {
+        mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
     }
-    std::cout << "tot mem in sys post delete pod: " << mem_alloced_in_pages + ec->get_memory_available() << std::endl;
+    std::cout << "tot mem in sys post delete pod: " << mem_alloced_in_pages + ec->get_unallocated_memory_in_pages() << std::endl;
 
 
     status = (s1 != success || s2 != success || s3 != success || s4 != success) ? fail : success;
@@ -105,12 +105,13 @@ ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, 
     // Passed in value is in mi but set_total_cpu takes ns
     ec->set_total_cpu(appSpec->cpu_limit()*100000);
     ec->set_unallocated_rt(ec->get_total_cpu());
-    // Passed in value is in MiB but ec_resize_memory_max takes in number of pages
-    ec->ec_resize_memory_max((appSpec->mem_limit()*1048576)/4000);
-    ec->ec_set_memory_available((appSpec->mem_limit()*1048576)/4000);
+    // Passed in value is in MiB but set_memory_limit_in_pages takes in number of pages
+    ec->set_memory_limit_in_pages((appSpec->mem_limit() * 1048576) / 4000);
+    ec->set_unalloc_memory_in_pages((appSpec->mem_limit() * 1048576) / 4000);
+    ec->set_alloc_memory_in_pages(0);
 
     std::cout << "Set CPU Limit: " << ec->get_total_cpu()  << std::endl;
-    std::cout << "Set Mem Limit " << ec->get_mem_limit()  << std::endl;
+    std::cout << "Set Mem Limit " << ec->get_mem_limit_in_pages() << std::endl;
 
     // Set response here
     reply->set_app_name(appSpec->app_name());

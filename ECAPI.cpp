@@ -50,12 +50,12 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
     int ret = _ec->insert_sc(*sc);
 
     //todo: Delete sc if ret == alloc_failed!
-//    _ec->incr_total_cpu(sc->sc_get_quota());
+//    _ec->incr_total_cpu(sc->get_quota());
     _ec->update_fair_cpu_share();
 //    std::cout << "fair share: " << ec_get_fair_cpu_share() << std::endl;
 
-//    auto mem = ecapi_get_memory_limit_in_bytes(*sc->get_c_id());
-//    ecapi_incr_total_memory(mem);
+//    auto mem = sc_get_memory_limit_in_bytes(*sc->get_c_id());
+//    ec_incr_memory_limit_in_pages(mem);
 
     // And so once a subcontainer is created and added to the appropriate distributed container,
     // we can now create a map to link the container_id and agent_client
@@ -93,20 +93,20 @@ int ec::ECAPI::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, con
     return ret;
 }
 
-void ec::ECAPI::ecapi_decrement_memory_available(uint64_t mem_to_reduce) {
-    _ec->ec_decrement_memory_available_in_pages(mem_to_reduce);
+void ec::ECAPI::ec_decr_unalloc_memory_in_pages(uint64_t mem_to_reduce) {
+    _ec->decr_unalloc_memory_in_pages(mem_to_reduce);
 }
 
-void ec::ECAPI::ecapi_increase_memory_available(uint64_t mem_to_incr) {
-    _ec->ec_increment_memory_available_in_pages(mem_to_incr);
+void ec::ECAPI::ec_incr_unalloc_memory_in_pages(uint64_t mem_to_incr) {
+    _ec->incr_unalloc_memory_in_pages(mem_to_incr);
 }
 
 
-uint64_t ec::ECAPI::ecapi_get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
-    return _ec->ec_get_memory_limit_in_bytes(sc_id);
+uint64_t ec::ECAPI::sc_get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
+    return _ec->get_sc_memory_limit_in_bytes(sc_id);
 }
 
-uint64_t ec::ECAPI::get_memory_usage_in_bytes(const ec::SubContainer::ContainerId &container_id) {
+uint64_t ec::ECAPI::sc_get_memory_usage_in_bytes(const ec::SubContainer::ContainerId &container_id) {
     uint64_t ret = 0;
     AgentClient* ac = _ec->get_corres_agent(container_id);
     if(!ac) {
@@ -205,7 +205,7 @@ int64_t ec::ECAPI::get_sc_quota(ec::SubContainer *sc) {
 }
 
 
-int64_t ec::ECAPI::resize_memory_limit_in_pages(ec::SubContainer::ContainerId container_id, uint64_t new_mem_limit) {
+int64_t ec::ECAPI::sc_resize_memory_limit_in_pages(ec::SubContainer::ContainerId container_id, uint64_t new_mem_limit) {
     uint64_t ret = 0;
     msg_struct::ECMessage msg_req;
     msg_req.set_req_type(5); //RESIZE_MEM_LIMIT
@@ -249,4 +249,16 @@ int ec::ECAPI::determine_quota_for_new_pod(uint64_t req_quota, uint64_t &quota) 
     std::cout << "pod add input quota post determine quota: " << quota << std::endl;
     return update_quota_flag;
 }
+
+void ec::ECAPI::ec_update_alloc_memory_in_pages(uint64_t mem) {
+    ec_decr_unalloc_memory_in_pages(mem);
+    ec_incr_alloc_memory_in_pages(mem);
+}
+
+void ec::ECAPI::ec_update_reclaim_memory_in_pages(uint64_t mem) {
+    ec_incr_unalloc_memory_in_pages(mem);
+    ec_decr_alloc_memory_in_pages(mem);
+}
+
+
 

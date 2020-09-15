@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <ostream>
+#include <mutex>
 
 namespace ec {
     namespace global {
@@ -14,42 +15,49 @@ namespace ec {
             class mem {
             public:
                 mem();
-                mem(uint64_t _mem_lim, uint64_t _curr_usage, uint64_t _slice_size);
+                mem(uint64_t _mem_lim, int64_t _alloc_pages, uint64_t _slice_size);
 
                 /**
                  * GETTERS
                  */
-                 uint64_t get_mem_limit_in_pages() { return memory_limit_in_pages; }
-                 uint64_t get_current_usage() { return current_usage; }
                  uint64_t get_slice_size() { return slice_size; }
-                 [[nodiscard]] int64_t get_mem_available_in_pages() const { return memory_available_in_pages; }
+
+                 uint64_t get_mem_limit_in_pages();
+                 int64_t get_unallocated_memory_in_pages();
+                 int64_t get_allocated_memory_in_pages();
 
                 /**
                  * SETTERS
                  */
-
-                void set_mem_limit_in_pages(uint64_t _ml) { memory_limit_in_pages = _ml; }
-                void set_current_usage(uint64_t _cu) { current_usage = _cu; }
                 void set_slice_size(uint64_t _ss) { slice_size = _ss; }
-                int64_t set_memory_available_in_pages(int64_t _ma) { memory_available_in_pages = _ma; return memory_available_in_pages; }
-                void decr_memory_available_in_pages(uint64_t _to_decr);
-                void incr_memory_available_in_pages(uint64_t _to_incr);
+                int64_t set_unallocated_memory_in_pages(int64_t _ma);
+                void decr_unallocated_memory_in_pages(uint64_t _to_decr);
+                void incr_unallocated_memory_in_pages(uint64_t _to_incr);
 
-                void incr_total_memory(uint64_t _incr) { memory_limit_in_pages += _incr; }
-                void decr_total_memory(uint64_t _decr);
+                void set_allocated_memory_in_pages(int64_t _ma);
+                void incr_allocated_memory_in_pages(int64_t _incr);
+                void decr_allocated_memory_in_pages(int64_t _decr);
+
+                void set_memory_limit_in_pages(uint64_t _ml);
+                void incr_memory_limit_in_pages(uint64_t _incr);
+                void decr_memory_limit_in_pages(uint64_t _decr);
 
 
             private:
                 uint64_t memory_limit_in_pages;
-                uint64_t current_usage;
                 uint64_t slice_size;
-                int64_t memory_available_in_pages;
+                int64_t unallocated_memory_in_pages;
+                int64_t allocated_memory_in_pages;
+
+                std::mutex totmem_limit_lock;
+                std::mutex unalloc_mem_lock;
+                std::mutex alloc_mem_lock;
 
             friend std::ostream& operator<<(std::ostream& os, const mem& rhs) {
                 os << "memory_limit_in_pages: " << rhs.memory_limit_in_pages << ", "
-                    << "current_usage: " << rhs.current_usage << ", "
+                    << "allocated_memory_in_pages: " << rhs.allocated_memory_in_pages << ", "
                     << "slice_size: " << rhs.slice_size << ", "
-                    << "memory_available_in_pages: " << rhs.memory_available_in_pages;
+                    << "unallocated_memory_in_pages: " << rhs.unallocated_memory_in_pages;
                 return os;
             }
 
