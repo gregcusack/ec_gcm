@@ -435,14 +435,15 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
         return;
     }
 //    uint64_t sc_mem_limit_in_pages = 0;
+    std::cout << "determining mem limit for new pod: " << sc << std::endl;
     std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
     cv_dock.wait(lk_dock, [this, sc] {
         //std::cout << "in wait for docker id to be set" << std::endl;
         return !sc->get_docker_id().empty();
     });
     auto sc_mem_limit_in_pages = byte_to_page(sc_get_memory_limit_in_bytes(*sc->get_c_id()));
-    //std::cout << "ec_get_mem_Avail init: " << ec_get_unalloc_memory_in_pages() << std::endl;
-    //std::cout << "sc_mem_limit_in_pages init: " << sc_mem_limit_in_pages << std::endl;
+    std::cout << "ec_get_unalloc_mem rn: " << ec_get_unalloc_memory_in_pages() << std::endl;
+    std::cout << "sc_mem_limit_in_pages on deploy: " << sc_mem_limit_in_pages << std::endl;
     if(sc_mem_limit_in_pages <= ec_get_unalloc_memory_in_pages()) {
         ec_update_alloc_memory_in_pages(sc_mem_limit_in_pages);
     }
@@ -451,15 +452,17 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
         std::cerr << "tbh not sure how to handle this" << std::endl;
     }
     else if(sc_mem_limit_in_pages > ec_get_unalloc_memory_in_pages()) {
+        std::cout << "new sc mem limit > unalloc mem in pages. reclaim" << std::endl;
         //need to get back memory from other pods
         auto reclaimed_mem = handle_reclaim_memory(clifd);
         ec_update_reclaim_memory_in_pages(reclaimed_mem);
-        //std::cout << "ec_get_mem_Avail after reclaim: " << ec_get_unalloc_memory_in_pages() << std::endl;
+        std::cout << "ec_get_unalloc_mem after reclaim: " << ec_get_unalloc_memory_in_pages() << std::endl;
         if(sc_mem_limit_in_pages <= ec_get_unalloc_memory_in_pages()) {
             ec_update_alloc_memory_in_pages(sc_mem_limit_in_pages);
         }
         else {
-            //mem_limit_in_pages still to high for mem_avail. try to reduce mem_limit_in_pages on pod
+            //mem_limit_in_pages still too high for mem_avail. try to reduce mem_limit_in_pages on pod
+            std::cout << "not enough pages reclaimed. trying to reduce mem limit on new pod" << std::endl;
             auto is_max_mem_resized = sc_resize_memory_limit_in_pages(*sc->get_c_id(), ec_get_unalloc_memory_in_pages());
             if(is_max_mem_resized) {
                 std::cerr << "[ERROR]: Can't reclaim enough memory to deploy this new pod" << std::endl;
@@ -470,7 +473,7 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
             }
         }
     }
-    //std::cout << "ec_get_mem_Avail end: " << ec_get_unalloc_memory_in_pages() << std::endl;
+    std::cout << "ec_get_unalloc_mem after mem alloc: " << ec_get_unalloc_memory_in_pages() << std::endl;
     sc->set_mem_limit_in_pages(sc_mem_limit_in_pages);
 }
 
