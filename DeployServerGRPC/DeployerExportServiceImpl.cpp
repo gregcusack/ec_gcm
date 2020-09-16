@@ -48,6 +48,8 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
         mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
     }
     std::cout << "tot mem in sys pre delete pod: " << mem_alloced_in_pages + ec->get_unallocated_memory_in_pages() << std::endl;
+    std::cout << "tot alloc, alloc mem pre delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
+    std::cout << "tot mem in sys (alloc+unalloc) pre delete: " << ec->get_allocated_memory_in_pages() + ec->get_unallocated_memory_in_pages() << std::endl;
 
     s1 = deleteFromScAcMap(sc_id) ? fail : success;
     s2 = deleteFromSubcontainersMap(sc_id) ? fail : success;
@@ -67,6 +69,7 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     std::cout << "delete pod mem_limit to ret to global pool: " << sc_mem_limit << std::endl;
     std::cout << "ec_mem_avail pre delete: " << ec->get_unallocated_memory_in_pages() << std::endl;
     ec->incr_unalloc_memory_in_pages(sc_mem_limit);
+    ec->decr_alloc_memory_in_pages(sc_mem_limit);
     std::cout << "ec_mem_avail post delete: " << ec->get_unallocated_memory_in_pages() << std::endl;
 
     mem_alloced_in_pages = 0;
@@ -74,6 +77,8 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
         mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
     }
     std::cout << "tot mem in sys post delete pod: " << mem_alloced_in_pages + ec->get_unallocated_memory_in_pages() << std::endl;
+    std::cout << "tot alloc, alloc mem post delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
+    std::cout << "tot mem in sys (alloc+unalloc) post delete: " << ec->get_allocated_memory_in_pages() + ec->get_unallocated_memory_in_pages() << std::endl;
 
 
     status = (s1 != success || s2 != success || s3 != success || s4 != success) ? fail : success;
