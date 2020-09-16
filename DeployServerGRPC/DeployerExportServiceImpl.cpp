@@ -42,13 +42,13 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
 
     uint64_t sc_mem_limit = ec->get_subcontainer(sc_id).get_mem_limit_in_pages();
     uint64_t quota = ec->get_subcontainer(sc_id).get_cpu_stats()->get_quota(); //todo: race condition
-    std::cout << "deleted container quota: " << quota << std::endl;
+    std::cout << "deleted container quota, mem_in_pages: " << quota << ", " << sc_mem_limit << std::endl;
     uint64_t mem_alloced_in_pages = 0;
     for (const auto &i : ec->get_subcontainers()) {
         mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
     }
     std::cout << "tot mem in sys pre delete pod: " << mem_alloced_in_pages + ec->get_unallocated_memory_in_pages() << std::endl;
-    std::cout << "tot alloc, alloc mem pre delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
+    std::cout << "tot alloc, unalloc mem pre delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
     std::cout << "tot mem in sys (alloc+unalloc) pre delete: " << ec->get_allocated_memory_in_pages() + ec->get_unallocated_memory_in_pages() << std::endl;
 
     s1 = deleteFromScAcMap(sc_id) ? fail : success;
@@ -77,7 +77,7 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
         mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
     }
     std::cout << "tot mem in sys post delete pod: " << mem_alloced_in_pages + ec->get_unallocated_memory_in_pages() << std::endl;
-    std::cout << "tot alloc, alloc mem post delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
+    std::cout << "tot alloc, unalloc mem post delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
     std::cout << "tot mem in sys (alloc+unalloc) post delete: " << ec->get_allocated_memory_in_pages() + ec->get_unallocated_memory_in_pages() << std::endl;
 
 
