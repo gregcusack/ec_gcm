@@ -261,6 +261,7 @@ void ec::ECAPI::ec_update_reclaim_memory_in_pages(uint64_t mem) {
 }
 
 void ec::ECAPI::sc_set_memory_limit_in_pages(ec::SubContainer::ContainerId sc_id, uint64_t new_mem_limit) {
+//    auto sc = _ec->get_sc_for_update(sc_id);
     auto sc = ec_get_sc_for_update(sc_id);
     sc->set_mem_limit_in_pages(new_mem_limit);
 }
