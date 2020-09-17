@@ -126,6 +126,7 @@ namespace ec {
 
 
         int64_t sc_resize_memory_limit_in_pages(ec::SubContainer::ContainerId container_id, uint64_t new_mem_limit);
+        void sc_set_memory_limit_in_pages(ec::SubContainer::ContainerId sc_id, uint64_t new_mem_limit);
 
         /**
          *******************************************************
