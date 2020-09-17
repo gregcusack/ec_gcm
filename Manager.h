@@ -16,7 +16,8 @@
 #define unlikely(x)     __builtin_expect((x),0)
 #define byte_to_page(x) ceil((x)/4096)
 #define page_to_byte(x) (x*4096)
-#define _SAFE_MARGIN_ 81920*250 //1MB/250 pages
+//#define _SAFE_MARGIN_ 81920*250 //20 * 250 pages = 20MB
+#define _SAFE_MARGIN_ 81920*1250 //20 * 1250 pages = 100MB
 #define _MAX_CPU_LOSS_IN_NS_ 1000
 #define _MAX_UNUSED_RT_IN_NS_ 5000000
 
