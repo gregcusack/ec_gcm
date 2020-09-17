@@ -324,23 +324,24 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
         if (container.second->get_fd() == client_fd) {
             continue;
         }
-        auto mem_limit = sc_get_memory_limit_in_bytes(*container.second->get_c_id());
+//        auto mem_limit_bytes = sc_get_memory_limit_in_bytes(*container.second->get_c_id());
         auto mem_limit_pages = container.second->get_mem_limit_in_pages();
-        auto mem_limit_pages_from_bytes = byte_to_page(mem_limit);
-        auto mem_limit_convert = page_to_byte(mem_limit_pages);
-        std::cout << "mem_limit_pages, mem_limit_pages_from_bytes: " << mem_limit_pages << ", " << mem_limit_pages_from_bytes << std::endl;
-        std::cout << "mem_limit_bytes, mem_limit_bytes_from_pages: " << mem_limit << ", " << mem_limit_convert << std::endl;
+//        auto mem_limit_pages_from_bytes = byte_to_page(mem_limit_bytes);
+        auto mem_limit_bytes = page_to_byte(mem_limit_pages);
+//        std::cout << "mem_limit_pages, mem_limit_pages_from_bytes: " << mem_limit_pages << ", " << mem_limit_pages_from_bytes << std::endl;
+//        std::cout << "mem_limit_bytes, mem_limit_bytes_from_pages: " << mem_limit_bytes << ", " << mem_limit_convert << std::endl;
 
         auto mem_usage = sc_get_memory_usage_in_bytes(*container.second->get_c_id());
-        if(mem_limit - mem_usage > _SAFE_MARGIN_) {
+        if(mem_limit_bytes - mem_usage > _SAFE_MARGIN_) {
             auto is_max_mem_resized = sc_resize_memory_limit_in_pages(*container.second->get_c_id(),
                                                                       byte_to_page(mem_usage + _SAFE_MARGIN_));
-            std::cout << "[dbg] byte to page macro output: " << byte_to_page(mem_limit - (mem_usage + _SAFE_MARGIN_)) << std :: endl;
+            std::cout << "[dbg] byte to page macro output: " << byte_to_page(mem_limit_bytes - (mem_usage + _SAFE_MARGIN_)) << std :: endl;
             std::cout << "[dbg] is_max_mem_resized: " << is_max_mem_resized << std::endl;
-            total_reclaimed += !is_max_mem_resized ? byte_to_page(mem_limit - (mem_usage + _SAFE_MARGIN_)) : 0;
+            total_reclaimed += !is_max_mem_resized ? byte_to_page(mem_limit_bytes - (mem_usage + _SAFE_MARGIN_)) : 0;
+            container.second->set_mem_limit_in_pages(mem_limit_pages - total_reclaimed);
         }
         else {
-            std::cout << "mem usage to close to mem_limit to resize! --> limit - usage: " << mem_limit - mem_usage << std::endl;
+            std::cout << "mem usage to close to mem_limit_bytes to resize! --> limit - usage: " << mem_limit_bytes - mem_usage << std::endl;
             std::cout << "safe margin: " << _SAFE_MARGIN_ << std::endl;
         }
     }
