@@ -14,7 +14,7 @@ ec::local::stats::cpu::cpu()
 ec::local::stats::cpu::cpu(uint64_t _quota, uint32_t _nr_throttled)     //TODO: may need to fix here
     : quota(_quota), period(100000000), alloc_extra_slices(false),
     num_local_slices_requested(0), num_local_slices_acquired(0),
-    extra_runtime_to_give(0), nr_throttled(0),
+    extra_runtime_to_give(0), nr_throttled(_nr_throttled),
       rt_winstats(__WINDOW_STAT_SIZE_), th_winstats(__WINDOW_STAT_SIZE_),
       set_quota_flag(false) {}
 

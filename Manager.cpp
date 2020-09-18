@@ -357,9 +357,6 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
     //Check quota
     uint64_t quota;
     int update_quota = determine_quota_for_new_pod(req->rsrc_amnt, quota);
-    std::cout << "init pod rsrc amnt: " << req->rsrc_amnt << std::endl;
-    std::cout << "init pod updated quota: " << quota << std::endl;
-    std::cout << "init pod thr: " << req->request << std::endl;
 
     auto *sc = _ec->create_new_sc(req->cgroup_id, ip, fd, quota, req->request); //update with throttle and quota
     if (!sc) {
