@@ -305,9 +305,6 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
     auto sc = ec_get_sc_for_update(sc_id);
     sc->set_mem_limit_in_pages(res->rsrc_amnt);
-//    auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
-//    res->rsrc_amnt = resize_memory_limit_in_bytes(sc_id, res->rsrc_amnt);
-
 
     memlock.unlock();
     res->request = 0;       //give back
@@ -319,34 +316,27 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     uint64_t total_reclaimed = 0;
 
     std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
-//    std::unique_lock<std::mutex> lk(sc_map_lock);
     for (const auto &container : ec_get_subcontainers()) {
         if (container.second->get_fd() == client_fd) {
             continue;
         }
-//        auto mem_limit_bytes = sc_get_memory_limit_in_bytes(*container.second->get_c_id());
         auto mem_limit_pages = container.second->get_mem_limit_in_pages();
-//        auto mem_limit_pages_from_bytes = byte_to_page(mem_limit_bytes);
         auto mem_limit_bytes = page_to_byte(mem_limit_pages);
-//        std::cout << "mem_limit_pages, mem_limit_pages_from_bytes: " << mem_limit_pages << ", " << mem_limit_pages_from_bytes << std::endl;
-//        std::cout << "mem_limit_bytes, mem_limit_bytes_from_pages: " << mem_limit_bytes << ", " << mem_limit_convert << std::endl;
 
-        auto mem_usage = sc_get_memory_usage_in_bytes(*container.second->get_c_id());
-        if(mem_limit_bytes - mem_usage > _SAFE_MARGIN_) {
+        auto mem_usage_bytes = sc_get_memory_usage_in_bytes(*container.second->get_c_id());
+        if(mem_limit_bytes - mem_usage_bytes > _SAFE_MARGIN_BYTES_) {
             auto is_max_mem_resized = sc_resize_memory_limit_in_pages(*container.second->get_c_id(),
-                                                                      byte_to_page(mem_usage + _SAFE_MARGIN_));
-            std::cout << "[dbg] byte to page macro output: " << byte_to_page(mem_limit_bytes - (mem_usage + _SAFE_MARGIN_)) << std :: endl;
+                                                                      byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
+            std::cout << "[dbg] byte to page macro output: " << byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_)) << std :: endl;
             std::cout << "[dbg] is_max_mem_resized: " << is_max_mem_resized << std::endl;
             if(!is_max_mem_resized) {
-                total_reclaimed += byte_to_page(mem_limit_bytes - (mem_usage + _SAFE_MARGIN_));
-                sc_set_memory_limit_in_pages(*container.second->get_c_id(), byte_to_page(mem_usage + _SAFE_MARGIN_));
+                total_reclaimed += byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_));
+                sc_set_memory_limit_in_pages(*container.second->get_c_id(), byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
             }
-//            total_reclaimed += !is_max_mem_resized ? byte_to_page(mem_limit_bytes - (mem_usage + _SAFE_MARGIN_)) : 0;
-//            container.second->set_mem_limit_in_pages(mem_limit_pages - total_reclaimed);
         }
         else {
-            std::cout << "mem usage to close to mem_limit_bytes to resize! --> limit - usage: " << mem_limit_bytes - mem_usage << std::endl;
-            std::cout << "safe margin: " << _SAFE_MARGIN_ << std::endl;
+            std::cout << "mem usage to close to mem_limit_bytes to resize! --> limit - usage: " << mem_limit_bytes - mem_usage_bytes << std::endl;
+            std::cout << "safe margin: " << _SAFE_MARGIN_BYTES_ << std::endl;
         }
     }
     std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << total_reclaimed << std::endl;
