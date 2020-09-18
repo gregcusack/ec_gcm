@@ -112,7 +112,6 @@ void ec::Server::handle_client_reqs(void *args) {
 //        std::cout << "num bytes read: " << num_bytes << std::endl;
         auto *req = reinterpret_cast<msg_t*>(buff_in);
         req->set_ip_from_net(client_ip); //this needs to be removed eventually
-//        req->set_ip_from_string("10.0.2.15"); //TODO: this needs to be changed. but here for testing merge
         auto *res = new msg_t(*req);
 //        std::cout << "received: " << *req << std::endl;
 //        ret = handle_req(req, res, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
