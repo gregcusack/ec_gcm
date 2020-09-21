@@ -130,9 +130,12 @@ uint64_t ec::ElasticContainer::get_sc_memory_limit_in_bytes(const ec::SubContain
 
 uint64_t ec::ElasticContainer::get_tot_mem_alloc_in_pages() {
     uint64_t tot_mem_alloc = 0;
+    uint64_t tmp;
     for(const auto &sc : get_subcontainers()) {
-        tot_mem_alloc += get_sc_memory_limit_in_bytes(sc.first);
+        tmp = get_sc_memory_limit_in_bytes(sc.first);
+        std::cout << "sc rx mem limit in bytes: " << tmp << std::endl;
+        tot_mem_alloc += tmp;
     }
-    return tot_mem_alloc * 4096;
+    return ceil(tot_mem_alloc/4096);
 }
 
