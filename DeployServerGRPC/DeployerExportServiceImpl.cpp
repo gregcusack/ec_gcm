@@ -42,6 +42,7 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
 
     uint64_t sc_mem_limit = ec->get_subcontainer(sc_id).get_mem_limit_in_pages();
     uint64_t quota = ec->get_subcontainer(sc_id).get_cpu_stats()->get_quota(); //todo: race condition
+    /* todo: add to debug preproc
     std::cout << "deleted container quota, mem_in_pages: " << quota << ", " << sc_mem_limit << std::endl;
     uint64_t mem_alloced_in_pages = 0;
     for (const auto &i : ec->get_subcontainers()) {
@@ -51,36 +52,37 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     std::cout << "tot alloc, unalloc mem pre delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
     std::cout << "tot mem in sys (alloc+unalloc) pre delete: " << ec->get_allocated_memory_in_pages() + ec->get_unallocated_memory_in_pages() << std::endl;
     std::cout << "tot_alloc virtual, tot_alloc physical pre delete: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_tot_mem_alloc_in_pages() << std::endl;
+    */
 
     s1 = deleteFromScAcMap(sc_id) ? fail : success;
     s2 = deleteFromSubcontainersMap(sc_id) ? fail : success;
     s3 = deleteFromDeployedPodsMap(sc_id) ? fail : success;
     s4 = deleteFromDockerIdScMap(pod->docker_id()) ? fail : success;
 
-    std::cout << "fair cpu share pre delete: " << ec->get_fair_cpu_share() << std::endl;
-    std::cout << "pre delete unalloc rt + allcoc_rt: " << ec->get_cpu_unallocated_rt() + ec->get_alloc_rt() << std::endl;
+//    std::cout << "fair cpu share pre delete: " << ec->get_fair_cpu_share() << std::endl;
+//    std::cout << "pre delete unalloc rt + allcoc_rt: " << ec->get_cpu_unallocated_rt() + ec->get_alloc_rt() << std::endl;
     //CPU
     ec->update_fair_cpu_share();
     ec->decr_alloc_rt(quota);
     ec->incr_unallocated_rt(quota);
-    std::cout << "fair cpu share post delete: " << ec->get_fair_cpu_share() << std::endl;
-    std::cout << "post delete unalloc rt + allcoc_rt: " << ec->get_cpu_unallocated_rt() + ec->get_alloc_rt() << std::endl;
+//    std::cout << "fair cpu share post delete: " << ec->get_fair_cpu_share() << std::endl;
+//    std::cout << "post delete unalloc rt + allcoc_rt: " << ec->get_cpu_unallocated_rt() + ec->get_alloc_rt() << std::endl;
 
     //MEM
-    std::cout << "delete pod mem_limit to ret to global pool: " << sc_mem_limit << std::endl;
-    std::cout << "ec_mem_avail pre delete: " << ec->get_unallocated_memory_in_pages() << std::endl;
+//    std::cout << "delete pod mem_limit to ret to global pool: " << sc_mem_limit << std::endl;
+//    std::cout << "ec_mem_avail pre delete: " << ec->get_unallocated_memory_in_pages() << std::endl;
     ec->incr_unalloc_memory_in_pages(sc_mem_limit);
     ec->decr_alloc_memory_in_pages(sc_mem_limit);
-    std::cout << "ec_mem_avail post delete: " << ec->get_unallocated_memory_in_pages() << std::endl;
+//    std::cout << "ec_mem_avail post delete: " << ec->get_unallocated_memory_in_pages() << std::endl;
 
-    mem_alloced_in_pages = 0;
-    for (const auto &i : ec->get_subcontainers()) {
-        mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
-    }
-    std::cout << "tot mem in sys post delete pod: " << mem_alloced_in_pages + ec->get_unallocated_memory_in_pages() << std::endl;
-    std::cout << "tot alloc, unalloc mem post delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
-    std::cout << "tot mem in sys (alloc+unalloc) post delete: " << ec->get_allocated_memory_in_pages() + ec->get_unallocated_memory_in_pages() << std::endl;
-    std::cout << "tot_alloc virtual, tot_alloc physical post delete: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_tot_mem_alloc_in_pages() << std::endl;
+//    mem_alloced_in_pages = 0;
+//    for (const auto &i : ec->get_subcontainers()) {
+//        mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
+//    }
+//    std::cout << "tot mem in sys post delete pod: " << mem_alloced_in_pages + ec->get_unallocated_memory_in_pages() << std::endl;
+//    std::cout << "tot alloc, unalloc mem post delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
+//    std::cout << "tot mem in sys (alloc+unalloc) post delete: " << ec->get_allocated_memory_in_pages() + ec->get_unallocated_memory_in_pages() << std::endl;
+//    std::cout << "tot_alloc virtual, tot_alloc physical post delete: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_tot_mem_alloc_in_pages() << std::endl;
 
 
     status = (s1 != success || s2 != success || s3 != success || s4 != success) ? fail : success;
