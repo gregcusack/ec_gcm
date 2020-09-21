@@ -301,7 +301,7 @@ uint64_t ec::Manager::reclaim(SubContainer::ContainerId containerId, SubContaine
 	uint64_t ret = 0;
 	auto mem_limit_pages = subContainer->get_mem_limit_in_pages();
     auto mem_limit_bytes = page_to_byte(mem_limit_pages);
-    auto mem_usage_bytes = sc_get_memory_usage_in_bytes(containerId);
+    auto mem_usage_bytes = get_memory_usage_in_bytes(containerId);
 
 	if(mem_limit_bytes - mem_usage_bytes > _SAFE_MARGIN_BYTES_) {
         auto is_max_mem_resized = sc_resize_memory_limit_in_pages(containerId,
@@ -431,7 +431,7 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
     cv_dock.wait(lk_dock, [this, sc] {
         return !sc->get_docker_id().empty();
     });
-    auto sc_mem_limit_in_pages = byte_to_page(sc_get_memory_limit_in_bytes(*sc->get_c_id()));
+    auto sc_mem_limit_in_pages = byte_to_page(get_memory_limit_in_bytes(*sc->get_c_id()));
 
     SPDLOG_TRACE("ec_get_unalloc_mem rn: {}", ec_get_unalloc_memory_in_pages());
     SPDLOG_TRACE("sc_mem_limit_in_pages on deploy: {}", sc_mem_limit_in_pages);
