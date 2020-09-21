@@ -227,7 +227,7 @@ int64_t ec::ECAPI::sc_resize_memory_limit_in_pages(ec::SubContainer::ContainerId
 int ec::ECAPI::determine_quota_for_new_pod(uint64_t req_quota, uint64_t &quota) {
     int update_quota_flag = 0;
     quota = req_quota;
-    std::cout << "pod add input quota pre determine quota: " << quota << std::endl;
+//    std::cout << "pod add input quota pre determine quota: " << quota << std::endl;
     if(quota <= ec_get_cpu_unallocated_rt()) {
         ec_decr_unallocated_rt(req_quota);
         ec_incr_alloc_rt(quota);
@@ -246,7 +246,7 @@ int ec::ECAPI::determine_quota_for_new_pod(uint64_t req_quota, uint64_t &quota) 
     }
 //    std::cout << "quota: " << quota << std::endl;
 //    std::cout << "rsrc_amnt: " << req_quota << std::endl;
-    std::cout << "pod add input quota post determine quota: " << quota << std::endl;
+//    std::cout << "pod add input quota post determine quota: " << quota << std::endl;
     return update_quota_flag;
 }
 

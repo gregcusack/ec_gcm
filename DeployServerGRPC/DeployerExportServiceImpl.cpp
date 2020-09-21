@@ -89,6 +89,8 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
 
     setDeletePodReply(pod, reply, status);
 
+    std::cout << "delete pod completed with status: " << status << std::endl;
+
     return grpc::Status::OK;
 }
 
