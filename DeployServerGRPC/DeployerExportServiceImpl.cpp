@@ -50,6 +50,7 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     std::cout << "tot mem in sys pre delete pod: " << mem_alloced_in_pages + ec->get_unallocated_memory_in_pages() << std::endl;
     std::cout << "tot alloc, unalloc mem pre delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
     std::cout << "tot mem in sys (alloc+unalloc) pre delete: " << ec->get_allocated_memory_in_pages() + ec->get_unallocated_memory_in_pages() << std::endl;
+    std::cout << "tot_alloc virtual, tot_alloc physical pre delete: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_tot_mem_alloc_in_pages() << std::endl;
 
     s1 = deleteFromScAcMap(sc_id) ? fail : success;
     s2 = deleteFromSubcontainersMap(sc_id) ? fail : success;
@@ -79,6 +80,7 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     std::cout << "tot mem in sys post delete pod: " << mem_alloced_in_pages + ec->get_unallocated_memory_in_pages() << std::endl;
     std::cout << "tot alloc, unalloc mem post delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
     std::cout << "tot mem in sys (alloc+unalloc) post delete: " << ec->get_allocated_memory_in_pages() + ec->get_unallocated_memory_in_pages() << std::endl;
+    std::cout << "tot_alloc virtual, tot_alloc physical post delete: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_tot_mem_alloc_in_pages() << std::endl;
 
 
     status = (s1 != success || s2 != success || s3 != success || s4 != success) ? fail : success;

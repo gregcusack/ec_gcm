@@ -82,6 +82,9 @@ namespace ec {
         uint64_t get_memory_slice() { return _mem.get_slice_size(); }
         uint64_t get_mem_limit_in_pages() { return _mem.get_mem_limit_in_pages(); }
 
+        uint64_t get_sc_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id);
+        uint64_t get_tot_mem_alloc_in_pages();
+
         /**
          *******************************************************
          * SETTERS
@@ -122,11 +125,6 @@ namespace ec {
         void incr_alloc_memory_in_pages(int64_t _incr) { _mem.incr_allocated_memory_in_pages(_incr); }
         void decr_alloc_memory_in_pages(int64_t _decr) { _mem.decr_allocated_memory_in_pages(_decr); }
 
-
-
-
-
-        uint64_t get_sc_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id);
 
 
         /**

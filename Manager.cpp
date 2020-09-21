@@ -323,9 +323,9 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
         auto mem_limit_pages = container.second->get_mem_limit_in_pages();
         auto mem_limit_bytes = page_to_byte(mem_limit_pages);
 
-        auto mem_usage_bytes = sc_get_memory_usage_in_bytes(*container.second->get_c_id());
+        auto mem_usage_bytes = sc_get_memory_usage_in_bytes(container.first);
         if(mem_limit_bytes - mem_usage_bytes > _SAFE_MARGIN_BYTES_) {
-            auto is_max_mem_resized = sc_resize_memory_limit_in_pages(*container.second->get_c_id(),
+            auto is_max_mem_resized = sc_resize_memory_limit_in_pages(container.first,
                                                                       byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
             std::cout << "[dbg] byte to page macro output: " << byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_)) << std :: endl;
             std::cout << "[dbg] is_max_mem_resized: " << is_max_mem_resized << std::endl;
