@@ -57,8 +57,8 @@ namespace ec {
          **/
         //MISC
         uint32_t get_ec_id() { return ec_id; }
-        const subcontainer_map &ec_get_subcontainers() {return subcontainers;}
-        const int ec_get_num_subcontainers() { return subcontainers.size(); }
+        const subcontainer_map &get_subcontainers() {return subcontainers;}
+        const int get_num_subcontainers() { return subcontainers.size(); }
         subcontainer_map *get_subcontainers_map_for_update() { return &subcontainers; }
         SubContainer &get_subcontainer(const SubContainer::ContainerId &container_id);
         AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_ac_map[container_id];}
@@ -68,7 +68,6 @@ namespace ec {
         void get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res);
 
         //CPU
-        uint64_t get_cpu_rt_remaining() { return _cpu.get_runtime_remaining(); }
         uint64_t get_cpu_unallocated_rt() { return _cpu.get_unallocated_rt(); }
         uint64_t get_cpu_slice() { return _cpu.get_slice(); }
         uint64_t get_fair_cpu_share() { return fair_cpu_share; }
@@ -78,9 +77,13 @@ namespace ec {
 
 
         //MEM
-        uint64_t get_memory_available() { return _mem.get_mem_available_in_pages(); }
+        uint64_t get_unallocated_memory_in_pages() { return _mem.get_unallocated_memory_in_pages(); }
+        uint64_t get_allocated_memory_in_pages() { return _mem.get_allocated_memory_in_pages(); }
         uint64_t get_memory_slice() { return _mem.get_slice_size(); }
-        uint64_t get_mem_limit() { return _mem.get_mem_limit_in_pages(); }
+        uint64_t get_mem_limit_in_pages() { return _mem.get_mem_limit_in_pages(); }
+
+        uint64_t get_sc_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id);
+        uint64_t get_tot_mem_alloc_in_pages();
 
         /**
          *******************************************************
@@ -92,10 +95,7 @@ namespace ec {
         void add_to_sc_ac_map(SubContainer::ContainerId &id, AgentClient* client) { sc_ac_map.insert({id, client}); }
 
         //CPU
-        void set_ec_period(int64_t _period)  { _cpu.set_period(_period); }   //will need to update maanger too
-        void set_quota(int64_t _quota) { _cpu.set_quota(_quota); }
         void set_slice_size(uint64_t _slice_size) { _cpu.set_slice_size(_slice_size); }
-        uint64_t refill_runtime();
         void incr_unallocated_rt(uint64_t _incr) { _cpu.incr_unalloacted_rt(_incr); }
         void decr_unallocated_rt(uint64_t _decr) { _cpu.decr_unallocated_rt(_decr); }
         void set_unallocated_rt(uint64_t _val) { _cpu.set_unallocated_rt(_val); }
@@ -111,13 +111,20 @@ namespace ec {
 
 
         //MEM
-        void ec_resize_memory_max(int64_t _max_mem) { _mem.set_mem_limit_in_pages(_max_mem); }
-        void ec_decrement_memory_available_in_pages(uint64_t _mem_to_reduce) { _mem.decr_memory_available_in_pages(_mem_to_reduce); }
-        void ec_increment_memory_available_in_pages(uint64_t _mem_to_incr) { _mem.incr_memory_available_in_pages(_mem_to_incr); }
-        int64_t ec_set_memory_available(uint64_t mem) { return _mem.set_memory_available_in_pages(mem); }
-        void ec_incr_total_memory(uint64_t _incr) { _mem.incr_total_memory(_incr); }
-        void ec_decr_total_memory(uint64_t _decr) { _mem.decr_total_memory(_decr); }
-        uint64_t ec_get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id);
+        void set_memory_limit_in_pages(int64_t _max_mem) { _mem.set_memory_limit_in_pages(_max_mem); }
+        void incr_memory_limit_in_pages(uint64_t _incr) { _mem.incr_memory_limit_in_pages(_incr); }
+        void decr_memory_limit_in_pages(uint64_t _decr) { _mem.decr_memory_limit_in_pages(_decr); }
+
+        int64_t set_unalloc_memory_in_pages(uint64_t mem) { return _mem.set_unallocated_memory_in_pages(mem); }
+        void decr_unalloc_memory_in_pages(uint64_t _mem_to_reduce) {
+            _mem.decr_unallocated_memory_in_pages(_mem_to_reduce); }
+        void incr_unalloc_memory_in_pages(uint64_t _mem_to_incr) {
+            _mem.incr_unallocated_memory_in_pages(_mem_to_incr); }
+
+        void set_alloc_memory_in_pages(int64_t _ma) { _mem.set_allocated_memory_in_pages(_ma); }
+        void incr_alloc_memory_in_pages(int64_t _incr) { _mem.incr_allocated_memory_in_pages(_incr); }
+        void decr_alloc_memory_in_pages(int64_t _decr) { _mem.decr_allocated_memory_in_pages(_decr); }
+
 
 
         /**

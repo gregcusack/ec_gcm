@@ -49,8 +49,8 @@ namespace ec {
         //MISC
         uint32_t get_ec_id() { return _ec->get_ec_id(); }
         //TODO: this should be wrapped in ElasticContainer - shouldn't be able to access from Manager
-        [[nodiscard]] const subcontainer_map  &get_subcontainers() const {return _ec->ec_get_subcontainers(); }
-        const int ecapi_get_num_subcontainers() { return _ec->ec_get_num_subcontainers(); }
+        [[nodiscard]] const subcontainer_map  &ec_get_subcontainers() const {return _ec->get_subcontainers(); }
+        int ec_get_num_subcontainers() { return _ec->get_num_subcontainers(); }
         [[nodiscard]] const subcontainer_agent_map  &get_subcontainer_agents() const {return _ec->get_sc_ac_map(); }
 
         const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id) {return _ec->get_subcontainer(
@@ -60,8 +60,6 @@ namespace ec {
 
         //CPU
         //TODO: this has to be passed a specific sc id
-        uint64_t sc_get_cpu_runtime_remaining() { return _ec->get_cpu_rt_remaining(); }
-        uint64_t ec_get_cpu_runtime_remaining() { return _ec->get_cpu_rt_remaining(); }
         uint64_t ec_get_cpu_unallocated_rt() { return _ec->get_cpu_unallocated_rt(); }
         uint64_t ec_get_cpu_slice() { return _ec->get_cpu_slice(); }
         uint64_t ec_get_fair_cpu_share() { return _ec->get_fair_cpu_share(); }
@@ -72,10 +70,14 @@ namespace ec {
 
 
         //MEM
-        uint64_t ec_get_memory_available() { return _ec->get_memory_available(); }
+        uint64_t ec_get_unalloc_memory_in_pages() { return _ec->get_unallocated_memory_in_pages(); }
+        uint64_t ec_get_alloc_memory_in_pages() { return _ec->get_allocated_memory_in_pages(); }
         uint64_t ec_get_memory_slice() { return _ec->get_memory_slice(); }
-        uint64_t ecapi_get_memory_limit_in_bytes(const SubContainer::ContainerId &sc_id);
-        uint64_t get_memory_usage_in_bytes(const SubContainer::ContainerId &container_id);
+        uint64_t ec_get_mem_limit_in_pages() { return _ec->get_mem_limit_in_pages(); }
+
+        uint64_t sc_get_memory_limit_in_bytes(const SubContainer::ContainerId &sc_id);
+        uint64_t sc_get_memory_usage_in_bytes(const SubContainer::ContainerId &container_id);
+
 
         // Machine Stats
         uint64_t get_machine_free_memory(const SubContainer::ContainerId &container_id);
@@ -93,10 +95,7 @@ namespace ec {
          **/
 
         //CPU
-        void ec_resize_period(int64_t _period)  { _ec->set_ec_period(_period); }
-        void ec_resize_quota(int64_t _quota) { _ec->set_quota(_quota); }
         void ec_resize_slice(uint64_t _slice_size) { _ec->set_slice_size(_slice_size); }
-        uint64_t ec_refill_runtime() {return _ec->refill_runtime(); }
         void ec_incr_unallocated_rt(uint64_t _incr) { _ec->incr_unallocated_rt(_incr); }
         void ec_decr_unallocated_rt(uint64_t _decr) { _ec->decr_unallocated_rt(_decr); }
         void ec_incr_total_cpu(uint64_t _incr) { _ec->incr_total_cpu(_incr); }
@@ -111,14 +110,23 @@ namespace ec {
         int64_t set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, uint32_t seq_number);
 
         //MEM
-        void ec_resize_memory_max(int64_t _max_mem) { _ec->ec_resize_memory_max(_max_mem); }
-        void ecapi_decrement_memory_available(uint64_t mem_to_reduce);
-        void ecapi_increase_memory_available(uint64_t mem_to_incr);
-        uint64_t ec_set_memory_available(uint64_t mem) { return _ec->ec_set_memory_available(mem); }
+        void ec_set_memory_limit_in_pages(int64_t _max_mem) { _ec->set_memory_limit_in_pages(_max_mem); }
+        void ec_incr_memory_limit_in_pages(uint64_t _incr) { _ec->incr_memory_limit_in_pages(_incr); }
+        void ec_decr_memory_limit_in_pages(uint64_t _decr) { _ec->decr_memory_limit_in_pages(_decr); }
 
-        int64_t resize_memory_limit_in_pages(ec::SubContainer::ContainerId container_idm, uint64_t new_mem_limit);
-        void ecapi_incr_total_memory(uint64_t _incr) { _ec->ec_incr_total_memory(_incr); }
-        void ecapi_decr_total_memory(uint64_t _decr) { _ec->ec_decr_total_memory(_decr); }
+        uint64_t ec_set_unalloc_memory_in_pages(uint64_t mem) { return _ec->set_unalloc_memory_in_pages(mem); }
+        void ec_decr_unalloc_memory_in_pages(uint64_t mem_to_reduce);
+        void ec_incr_unalloc_memory_in_pages(uint64_t mem_to_incr);
+        void ec_update_alloc_memory_in_pages(uint64_t mem);
+        void ec_update_reclaim_memory_in_pages(uint64_t mem);
+
+        void ec_set_alloc_memory_in_pages(uint64_t mem) { _ec->set_alloc_memory_in_pages(mem); }
+        void ec_incr_alloc_memory_in_pages(uint64_t _incr) { _ec->incr_alloc_memory_in_pages(_incr); }
+        void ec_decr_alloc_memory_in_pages(uint64_t _decr) { _ec->decr_alloc_memory_in_pages(_decr); }
+
+
+        int64_t sc_resize_memory_limit_in_pages(ec::SubContainer::ContainerId container_id, uint64_t new_mem_limit);
+        void sc_set_memory_limit_in_pages(ec::SubContainer::ContainerId sc_id, uint64_t new_mem_limit);
 
         /**
          *******************************************************

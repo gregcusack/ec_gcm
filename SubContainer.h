@@ -47,14 +47,14 @@ namespace ec {
         void set_docker_id(std::string &docker_id) { _docker_id = docker_id; }
         std::string get_docker_id() { return _docker_id; }
 
-        uint64_t sc_get_quota() { return cpu.get_quota(); }
-        uint32_t sc_get_throttled() { return cpu.get_throttled(); }
+        uint64_t get_quota() { return cpu.get_quota(); }
+        uint32_t get_throttled() { return cpu.get_throttled(); }
 
-        void sc_set_quota(uint64_t _quota) { cpu.set_quota(_quota); }
-        void sc_set_throttled(uint32_t _throttled) { cpu.set_throttled(_throttled); }
+        void set_quota(uint64_t _quota) { cpu.set_quota(_quota); }
+        void set_throttled(uint32_t _throttled) { cpu.set_throttled(_throttled); }
 
-        uint32_t sc_get_throttle_increase(uint32_t _throttled) { return cpu.get_throttle_increase(_throttled); }
-        uint32_t sc_get_thr_incr_and_set_thr(uint32_t _throttled);
+        uint32_t get_throttle_increase(uint32_t _throttled) { return cpu.get_throttle_increase(_throttled); }
+        uint32_t get_thr_incr_and_set_thr(uint32_t _throttled);
 
         [[nodiscard]] int get_counter() const { return counter; }
         void incr_counter() { counter++; }
@@ -66,8 +66,8 @@ namespace ec {
         void set_quota_flag(bool val) { cpu.set_set_quota_flag(val); }
 
         //Mem
-        uint64_t sc_get_mem_limit_in_pages() { return mem.get_mem_limit_in_pages(); }
-        void sc_set_mem_limit_in_pages(uint64_t _new_limit) { mem.set_mem_limit_in_pages(_new_limit); }
+        uint64_t get_mem_limit_in_pages() { return mem.get_mem_limit_in_pages(); }
+        void set_mem_limit_in_pages(uint64_t _new_limit) { mem.set_mem_limit_in_pages(_new_limit); }
         void sc_incr_mem_limit(uint64_t _incr) { mem.incr_mem_limit(_incr); }
         void sc_decr_mem_limit(uint64_t _decr) { mem.decr_mem_limit(_decr); }
 
