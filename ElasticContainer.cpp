@@ -5,21 +5,12 @@
 #include "ElasticContainer.h"
 
 
-ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id), fair_cpu_share(0) {
-//    _mem = global::stats::mem();
-//    _cpu = global::stats::cpu();
-}
+ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id), fair_cpu_share(0) { }
 
 ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients)
     : ec_id(_ec_id), fair_cpu_share(0) {
 
     //TODO: change num_agents to however many managers we have. IDK how to set it rn.
-
-//    _mem = global::stats::mem();
-//    _cpu = global::stats::cpu();
-
-//    std::cout << "[Elastic Container Log] runtime_remaining on init: " << _cpu.get_runtime_remaining() << std::endl;
-//    std::cout << "[Elastic Container Log] unallocated_memory_in_pages on init: " << _mem.get_unallocated_memory_in_pages() << std::endl;
 
     subcontainers = subcontainer_map();
     sc_ac_map = subcontainer_agentclient_map();
@@ -37,7 +28,7 @@ ec::SubContainer *ec::ElasticContainer::create_new_sc(uint32_t cgroup_id, uint32
 ec::SubContainer &ec::ElasticContainer::get_subcontainer(const ec::SubContainer::ContainerId &container_id) {
     auto itr = subcontainers.find(container_id);
     if(itr == subcontainers.end()) {
-        std::cout << "ERROR: No EC with manager_id: " << ec_id << ". Exiting...." << std::endl;
+        std::cerr << "ERROR: No EC with manager_id: " << ec_id << ". Exiting...." << std::endl;
         std::exit(EXIT_FAILURE);
     }
     return *itr->second;
@@ -46,7 +37,7 @@ ec::SubContainer &ec::ElasticContainer::get_subcontainer(const ec::SubContainer:
 ec::SubContainer *ec::ElasticContainer::get_sc_for_update(ec::SubContainer::ContainerId &container_id) {
     auto itr = subcontainers.find(container_id);
     if(itr == subcontainers.end()) {
-        std::cout << "ERROR: For EC: " << ec_id << ", no subcontainer with container_id: " << container_id << ". Exiting...(sc for update)." << std::endl;
+        std::cerr << "ERROR: For EC: " << ec_id << ", no subcontainer with container_id: " << container_id << ". Exiting...(sc for update)." << std::endl;
         std::exit(EXIT_FAILURE);
     }
     return itr->second;
@@ -54,14 +45,11 @@ ec::SubContainer *ec::ElasticContainer::get_sc_for_update(ec::SubContainer::Cont
 
 int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
     if (subcontainers.find(*_sc.get_c_id()) != subcontainers.end()) {
-        std::cout << "This SubContainer already exists! Can't allocate identical one!" << std::endl;
+        std::cerr << "This SubContainer already exists! Can't allocate identical one!" << std::endl;
         //TODO: should delete sc
         return __ALLOC_FAILED__;
     }
-//    sc_map_lock.lock();
     subcontainers.insert({*(_sc.get_c_id()), &_sc});
-//    sc_map_lock.unlock();
-//    std::cout << "[EC LOG]: sc inserted: " << *_sc.get_c_id() << std::endl;
     return __ALLOC_INIT__;
 }
 
@@ -87,7 +75,9 @@ ec::ElasticContainer::~ElasticContainer() {
     subcontainers.clear();
 }
 void ec::ElasticContainer::update_fair_cpu_share() {
-//    std::cout << "update fair share. (tot_cpu, # subconts): (" << _cpu.get_total_cpu() << ", " << subcontainers.size() << ")" << std::endl;
+#ifndef DEBUG_MAX
+    std::cout << "update fair share. (tot_cpu, # subconts): (" << _cpu.get_total_cpu() << ", " << subcontainers.size() << ")" << std::endl;
+#endif
     if(subcontainers.empty()) {
         fair_cpu_share = _cpu.get_total_cpu();
         return;
@@ -119,9 +109,8 @@ uint64_t ec::ElasticContainer::get_sc_memory_limit_in_bytes(const ec::SubContain
     }
     auto sc = get_subcontainer(sc_id);
 
-//    std::cout << "docker id used:" <<  sc.get_docker_id() << std::endl;
     if(sc.get_docker_id().empty()) {
-        std::cout << "docker_id is 0!" << std::endl;
+        std::cerr << "docker_id is 0!" << std::endl;
         return 0;
     }
     ret = ec::Facade::MonitorFacade::CAdvisor::getContMemLimit(ac->get_agent_ip().to_string(), sc.get_docker_id());
@@ -133,7 +122,6 @@ uint64_t ec::ElasticContainer::get_tot_mem_alloc_in_pages() {
     uint64_t tmp;
     for(const auto &sc : get_subcontainers()) {
         tmp = get_sc_memory_limit_in_bytes(sc.first);
-//        std::cout << "sc rx mem limit in bytes: " << tmp << std::endl;
         tot_mem_alloc += tmp;
     }
     return ceil(tot_mem_alloc/4096);

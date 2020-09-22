@@ -17,8 +17,9 @@ void ec::Server::initialize() {
         std::cout << "[ERROR]: Server socket creation failed in server: " << server_id << std::endl;
         std::exit(EXIT_FAILURE);
     }
+#ifndef DEBUG
     std::cout << "[dgb]: Server socket fd: " << server_socket.sock_fd << std::endl;
-
+#endif
     if(setsockopt(server_socket.sock_fd, SOL_SOCKET, SO_REUSEPORT, (char*)&opt, sizeof(opt))) {
         std::cout << "[ERROR]: EC Server id: " << server_id << ". Setting socket options failed!" << std::endl;
         exit(EXIT_FAILURE);
@@ -32,13 +33,6 @@ void ec::Server::initialize() {
         std::cout << "[ERROR] EC Server id: " << server_id << ". Binding socket failed" << std::endl;
         exit(EXIT_FAILURE);
     }
-
-    int flag = 1;
-//    int result = setsockopt(server_socket.sock_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
-//    if(result != 0) {
-//        std::cout << "[ERROR]: setsockopt failed!" << std::endl;
-//        exit(EXIT_FAILURE);
-//    }
 
     if(listen(server_socket.sock_fd, 3) < 0) {
         std::cout << "[ERROR]: EC Server id: " << server_id << ". Listening on socket failed" << std::endl;
@@ -112,10 +106,10 @@ void ec::Server::handle_client_reqs(void *args) {
 //        std::cout << "num bytes read: " << num_bytes << std::endl;
         auto *req = reinterpret_cast<msg_t*>(buff_in);
         req->set_ip_from_net(client_ip); //this needs to be removed eventually
-//        req->set_ip_from_string("10.0.2.15"); //TODO: this needs to be changed. but here for testing merge
         auto *res = new msg_t(*req);
-//        std::cout << "received: " << *req << std::endl;
-//        ret = handle_req(req, res, arguments->cliaddr->sin_addr.s_addr, arguments->clifd);
+#ifndef DEBUG_MAX
+        std::cout << "received: " << *req << std::endl;
+#endif
         ret = handle_req(req, res, om::net::ip4_addr::from_net(client_ip).to_uint32(), client_fd);
 
         if(ret == __ALLOC_INIT__) { 
@@ -127,21 +121,23 @@ void ec::Server::handle_client_reqs(void *args) {
 	    else if(ret == __ALLOC_SUCCESS__ && !res->request) {
             std::cout << "sending back alloc success!" << std::endl;
             if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
-                std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
+                std::cerr << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
                 break;
             }
+#ifndef DEBUG
             else {
                 std::cout << "sucess writing back to socket on mem resize!" << std::endl;
             }
+#endif
         }
 		else if(ret == __ALLOC_MEM_FAILED__) {
             if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
-                std::cout << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket on mem failed" << std::endl;
+                std::cerr << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket on mem failed" << std::endl;
                 break;
             }
         }
         else if(ret == __ALLOC_FAILED__) {
-            std::cout << "[ERROR]: handle_req() failed!" << std::endl;
+            std::cerr << "[ERROR]: handle_req() failed!" << std::endl;
             break;
         }
         delete res;
@@ -156,7 +152,7 @@ bool ec::Server::init_agent_connections() {
 //    for(i = 0; i < num_agents; i++) {
     for(const auto &ag : agents) {
         if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-            std::cout << "[ERROR]: GCM Socket creation failed. Agent is not up!" << std::endl;
+            std::cerr << "[ERROR]: GCM Socket creation failed. Agent is not up!" << std::endl;
             exit(EXIT_FAILURE);
         }
 
@@ -168,16 +164,18 @@ bool ec::Server::init_agent_connections() {
         std::cout << "ag->ip: " << ag->get_ip() << std::endl;
 
         if(connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
-            std::cout << "[ERROR] GCM: Connection to agent_clients failed. \n Agent on ip: " << ag->get_ip() << "is not connected" << std::endl;
-            std::cout << "Are the agents up?" << std::endl;
+            std::cerr << "[ERROR] GCM: Connection to agent_clients failed. \n Agent on ip: " << ag->get_ip() << "is not connected" << std::endl;
+            std::cerr << "Are the agents up?" << std::endl;
         }
         else {
             num_connections++;
         }
         auto* ac = new AgentClient(ag, sockfd);
         agent_clients_db->add_agent_client(ac);
+#ifndef DEBUG_MAX
         std::cout << "[dbg] Agent client added to db and agent_clients sockfd: " << sockfd << ", " << agent_clients_db->get_agent_client_by_ip(ag->get_ip())->get_socket()
         <<" agent db size is: " << agent_clients_db->get_agent_clients_db_size()<< std::endl;
+#endif
     }
     return num_connections == agent_clients_db->get_agent_clients_db_size();
 

@@ -424,8 +424,9 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
     std::thread update_mem_limit_thread(&ec::Manager::determine_mem_limit_for_new_pod, this, sc, fd);
     update_mem_limit_thread.detach();
 
-    //std::cout << "returning from handle_Add_cgroup_to_ec(): ret: " << ret << std::endl;
+#ifdef DEBUG
     std::cout << "total pods added to map: " << ec_get_num_subcontainers() << std::endl;
+#endif
     res->request += 1; //giveback (or send back)
     return ret;
 }
@@ -435,16 +436,17 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
         std::cerr << "sc in determine_mem_limit_for_new_pod() is NULL" << std::endl;
         return;
     }
-//    uint64_t sc_mem_limit_in_pages = 0;
-//    std::cout << "determining mem limit for new pod: " << sc << std::endl;
+
     std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
     cv_dock.wait(lk_dock, [this, sc] {
         //std::cout << "in wait for docker id to be set" << std::endl;
         return !sc->get_docker_id().empty();
     });
     auto sc_mem_limit_in_pages = byte_to_page(sc_get_memory_limit_in_bytes(*sc->get_c_id()));
-//    std::cout << "ec_get_unalloc_mem rn: " << ec_get_unalloc_memory_in_pages() << std::endl;
-//    std::cout << "sc_mem_limit_in_pages on deploy: " << sc_mem_limit_in_pages << std::endl;
+#ifndef DEBUG_MAX
+    std::cout << "ec_get_unalloc_mem rn: " << ec_get_unalloc_memory_in_pages() << std::endl;
+    std::cout << "sc_mem_limit_in_pages on deploy: " << sc_mem_limit_in_pages << std::endl;
+#endif
     if(sc_mem_limit_in_pages <= ec_get_unalloc_memory_in_pages()) {
         ec_update_alloc_memory_in_pages(sc_mem_limit_in_pages);
     }
@@ -474,7 +476,9 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
             }
         }
     }
-//    std::cout << "ec_get_unalloc_mem after mem alloc: " << ec_get_unalloc_memory_in_pages() << std::endl;
+#ifndef DEBUG_MAX
+    std::cout << "ec_get_unalloc_mem after mem alloc: " << ec_get_unalloc_memory_in_pages() << std::endl;
+#endif
     sc->set_mem_limit_in_pages(sc_mem_limit_in_pages);
 }
 

@@ -1,4 +1,4 @@
-//
+//target_compile_definitions(ec_gcm PUBLIC DEBUG_MAX=1)
 // Created by greg on 4/29/20.
 //
 
@@ -9,7 +9,9 @@ ec::rpc::DeployerExportServiceImpl::ReportPodSpec(grpc::ServerContext *context, 
                                                   ec::rpc::PodSpecReply *reply) {
     std::string status;
     int ret = insertPodSpec(pod);
-    //std::cout << "Insert Pod Spec ret: " << ret << std::endl;
+#ifndef DEBUG
+    std::cout << "Insert Pod Spec ret: " << ret << std::endl;
+#endif
     status = ret ? fail : success;
     if(status =="thx") {
         //std::cout << "spinning up matching thread" << std::endl;
@@ -42,7 +44,8 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
 
     uint64_t sc_mem_limit = ec->get_subcontainer(sc_id).get_mem_limit_in_pages();
     uint64_t quota = ec->get_subcontainer(sc_id).get_cpu_stats()->get_quota(); //todo: race condition
-    /* todo: add to debug preproc
+
+#ifndef DEBUG_MAX
     std::cout << "deleted container quota, mem_in_pages: " << quota << ", " << sc_mem_limit << std::endl;
     uint64_t mem_alloced_in_pages = 0;
     for (const auto &i : ec->get_subcontainers()) {
@@ -52,44 +55,50 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     std::cout << "tot alloc, unalloc mem pre delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
     std::cout << "tot mem in sys (alloc+unalloc) pre delete: " << ec->get_allocated_memory_in_pages() + ec->get_unallocated_memory_in_pages() << std::endl;
     std::cout << "tot_alloc virtual, tot_alloc physical pre delete: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_tot_mem_alloc_in_pages() << std::endl;
-    */
+    std::cout << "fair cpu share pre delete: " << ec->get_fair_cpu_share() << std::endl;
+    std::cout << "pre delete unalloc rt + allcoc_rt: " << ec->get_cpu_unallocated_rt() + ec->get_alloc_rt() << std::endl;
+#endif
 
     s1 = deleteFromScAcMap(sc_id) ? fail : success;
     s2 = deleteFromSubcontainersMap(sc_id) ? fail : success;
     s3 = deleteFromDeployedPodsMap(sc_id) ? fail : success;
     s4 = deleteFromDockerIdScMap(pod->docker_id()) ? fail : success;
 
-//    std::cout << "fair cpu share pre delete: " << ec->get_fair_cpu_share() << std::endl;
-//    std::cout << "pre delete unalloc rt + allcoc_rt: " << ec->get_cpu_unallocated_rt() + ec->get_alloc_rt() << std::endl;
     //CPU
     ec->update_fair_cpu_share();
     ec->decr_alloc_rt(quota);
     ec->incr_unallocated_rt(quota);
-//    std::cout << "fair cpu share post delete: " << ec->get_fair_cpu_share() << std::endl;
-//    std::cout << "post delete unalloc rt + allcoc_rt: " << ec->get_cpu_unallocated_rt() + ec->get_alloc_rt() << std::endl;
 
+#ifndef DEBUG_MAX
+    std::cout << "fair cpu share post delete: " << ec->get_fair_cpu_share() << std::endl;
+    std::cout << "post delete unalloc rt + allcoc_rt: " << ec->get_cpu_unallocated_rt() + ec->get_alloc_rt() << std::endl;
+    std::cout << "delete pod mem_limit to ret to global pool: " << sc_mem_limit << std::endl;
+    std::cout << "ec_mem_avail pre delete: " << ec->get_unallocated_memory_in_pages() << std::endl;
+#endif
     //MEM
-//    std::cout << "delete pod mem_limit to ret to global pool: " << sc_mem_limit << std::endl;
-//    std::cout << "ec_mem_avail pre delete: " << ec->get_unallocated_memory_in_pages() << std::endl;
     ec->incr_unalloc_memory_in_pages(sc_mem_limit);
     ec->decr_alloc_memory_in_pages(sc_mem_limit);
-//    std::cout << "ec_mem_avail post delete: " << ec->get_unallocated_memory_in_pages() << std::endl;
 
-//    mem_alloced_in_pages = 0;
-//    for (const auto &i : ec->get_subcontainers()) {
-//        mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
-//    }
-//    std::cout << "tot mem in sys post delete pod: " << mem_alloced_in_pages + ec->get_unallocated_memory_in_pages() << std::endl;
-//    std::cout << "tot alloc, unalloc mem post delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
-//    std::cout << "tot mem in sys (alloc+unalloc) post delete: " << ec->get_allocated_memory_in_pages() + ec->get_unallocated_memory_in_pages() << std::endl;
-//    std::cout << "tot_alloc virtual, tot_alloc physical post delete: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_tot_mem_alloc_in_pages() << std::endl;
+#ifndef DEBUG_MAX
+    std::cout << "ec_mem_avail post delete: " << ec->get_unallocated_memory_in_pages() << std::endl;
 
+    mem_alloced_in_pages = 0;
+    for (const auto &i : ec->get_subcontainers()) {
+        mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
+    }
+    std::cout << "tot mem in sys post delete pod: " << mem_alloced_in_pages + ec->get_unallocated_memory_in_pages() << std::endl;
+    std::cout << "tot alloc, unalloc mem post delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
+    std::cout << "tot mem in sys (alloc+unalloc) post delete: " << ec->get_allocated_memory_in_pages() + ec->get_unallocated_memory_in_pages() << std::endl;
+    std::cout << "tot_alloc virtual, tot_alloc physical post delete: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_tot_mem_alloc_in_pages() << std::endl;
+#endif
 
     status = (s1 != success || s2 != success || s3 != success || s4 != success) ? fail : success;
 
     setDeletePodReply(pod, reply, status);
 
+#ifndef DEBUG
     std::cout << "delete pod completed with status: " << status << std::endl;
+#endif
 
     return grpc::Status::OK;
 }
@@ -139,9 +148,9 @@ ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, 
 int ec::rpc::DeployerExportServiceImpl::insertPodSpec(const ec::rpc::ExportPodSpec *pod) {
     if(!pod) { std::cout << "[ERROR DeployService]: ExportPodSpec *pod is NULL"; return -1; }
 
-    //std::cout << "sc_id to insertPodSpec: " << SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()) << std::endl;
+#ifndef DEBUG
     std::cout << "sc_id to insertPodSpec: " << SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()) << std::endl;
-
+#endif
     dep_pod_lock.lock();
     auto inserted = deployedPods.emplace(
             SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()),
