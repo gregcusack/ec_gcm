@@ -81,10 +81,6 @@ set(GCM_CORE
         ${GCM_PROTO_SRC}    ${GCM_GRPC_SRC} ${AGENTS} ${STATS}
         )
 
-file(GLOB spdlog
-        "spdlog.h"
-        )
-
 add_executable(ec_gcm main.cpp
         ${GCM_CORE} ${spdlog})
 
