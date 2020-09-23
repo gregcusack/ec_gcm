@@ -9,7 +9,7 @@ ec::rpc::DeployerExportServiceImpl::ReportPodSpec(grpc::ServerContext *context, 
                                                   ec::rpc::PodSpecReply *reply) {
     std::string status;
     int ret = insertPodSpec(pod);
-    SPDLOG_DEBUG("Insert Pod Spec ret: {}", ret);
+    SPDLOG_TRACE("Insert Pod Spec ret: {}", ret);
 
     status = ret ? fail : success;
     if(status =="thx") {

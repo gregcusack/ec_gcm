@@ -73,7 +73,7 @@ void ec::Server::initialize() {
 
         if(FD_ISSET(server_socket.sock_fd, &readfds)) {
             if((clifd = accept(server_socket.sock_fd, (struct sockaddr *)&server_socket.addr, (socklen_t*)&cliaddr_len)) > 0) {
-                SPDLOG_DEBUG("=================================================================================================");
+                SPDLOG_DEBUG("===========================================");
                 SPDLOG_DEBUG("Container tried to request a connection. EC Server id: {}", server_id);
                 auto args = new serv_thread_args(clifd, &server_socket.addr);
                 std::thread client_handler(&Server::handle_client_reqs, this, (void*)args);

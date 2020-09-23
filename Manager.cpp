@@ -312,8 +312,8 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
         if(mem_limit_bytes - mem_usage_bytes > _SAFE_MARGIN_BYTES_) {
             auto is_max_mem_resized = sc_resize_memory_limit_in_pages(container.first,
                                                                       byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
-            SPDLOG_DEBUG("byte to page macro output: {}", byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_)));
-            SPDLOG_DEBUG("is_max_mem_resized: {}", is_max_mem_resized);
+            SPDLOG_TRACE("byte to page macro output: {}", byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_)));
+            SPDLOG_TRACE("is_max_mem_resized: {}", is_max_mem_resized);
             if(!is_max_mem_resized) {
                 total_reclaimed += byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_));
                 sc_set_memory_limit_in_pages(*container.second->get_c_id(), byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
