@@ -14,6 +14,11 @@ find_package(Boost REQUIRED system)
 add_subdirectory(protoBufSDK)
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
+if(NOT TARGET spdlog)
+    # Stand-alone build
+    find_package(spdlog REQUIRED)
+endif()
+
 add_custom_command(
         OUTPUT
         ${CMAKE_CURRENT_LIST_DIR}/protoBufSDK/msg.pb.h
@@ -91,12 +96,14 @@ add_executable(loop_test tests/run_continuous.cpp
         types/msg.cpp                   types/msg.h
         om.h)
 
-target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB})
-target_link_libraries(deploy_test PRIVATE ${PTHREAD_LIB} -lssl -lcrypto  cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB})
+target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB} spdlog::spdlog)
+target_link_libraries(deploy_test PRIVATE ${PTHREAD_LIB} -lssl -lcrypto  cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB} spdlog::spdlog)
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(ec_gcm PUBLIC DEBUG=1)
+    target_compile_definitions(ec_gcm PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
 elseif(CMAKE_BUILD_TYPE MATCHES Release)
     target_compile_definitions(ec_gcm PUBLIC DEBUG=0)
+    target_compile_definitions(ec_gcm PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_CRITICAL)
     target_compile_definitions(ec_gcm PUBLIC DEBUG_MAX=0)
 endif()

@@ -18,7 +18,7 @@ ec::GlobalControlManager::GlobalControlManager(std::string ip_addr, uint16_t por
     // }
 
     if(agents.size() != _agent_ips.size()) {
-        std::cout << "ERROR: alloc agents failed!" << std::endl;
+        SPDLOG_ERROR("ERROR: alloc agents failed!");
         exit(EXIT_FAILURE);
     }
 }
