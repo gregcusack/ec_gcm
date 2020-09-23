@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <iostream>
 #include <mutex>
+#include "spdlog/spdlog.h"
 
 namespace ec {
     namespace global {

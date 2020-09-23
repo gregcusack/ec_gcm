@@ -14,6 +14,7 @@
 #include "../protoBufSDK/include/ProtoBufFacade.h"
 #include <mutex>
 #include <chrono>
+#include "spdlog/spdlog.h"
 
 
 using namespace google::protobuf::io;

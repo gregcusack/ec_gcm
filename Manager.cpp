@@ -32,7 +32,7 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
 
 int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     if (req == nullptr || res == nullptr) {
-        std::cout << "req or res == null in handle_cpu_usage_report()" << std::endl;
+        SPDLOG_CRITICAL("req or res == null in handle_cpu_usage_report()");
         exit(EXIT_FAILURE);
     }
 //    std::mutex cpulock;
@@ -42,7 +42,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
     auto sc = ec_get_sc_for_update(sc_id);
     if (!sc) {
-        std::cout << "ERROR! sc is NULL!" << std::endl;
+        SPDLOG_ERROR("sc is NULL!");
         return __ALLOC_SUCCESS__;
     }
     sc->incr_counter();
@@ -61,7 +61,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     uint32_t seq_num = seq_number;
 
     if(rx_quota / 1000 != sc->get_quota() / 1000) {
-        std::cout << "quotas do not match (rx, sc->get): (" << rx_quota << ", " << sc->get_quota() << ")" << std::endl;
+        SPDLOG_ERROR("quotas do not match (rx, sc->get): ({}, {})", rx_quota, sc->get_quota());
         cpulock.unlock();
         res->request = 1;
         return __ALLOC_SUCCESS__;
@@ -93,7 +93,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     cpuleak += (int64_t)ec_get_total_cpu() - (int64_t)total_rt_in_sys;
 
     if( cpuleak >= _MAX_CPU_LOSS_IN_NS_) {
-        std::cout << "fix rt leak: tot cpuleak: " << cpuleak << std::endl;
+        SPDLOG_DEBUG("fix rt leak: tot cpuleak: {}", cpuleak);
         ec_incr_unallocated_rt(cpuleak);
         cpuleak = 0;
     }
@@ -102,11 +102,6 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
-
-//    std::cout << "sc with id: " << *sc->get_c_id() << " ----  rt_mean: " << rt_mean << std::endl;
-//    std::cout << "sc with id: " << *sc->get_c_id() << " ----  thr_mean: " << thr_mean << std::endl;
-
-//    std::cout << "cpu_unalloc: " << ec_get_cpu_unallocated_rt() << std::endl;
 
     if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
         uint64_t to_sub;
@@ -127,11 +122,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         updated_quota = rx_quota - to_sub;
         ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
         if(ret) {
-            std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (overrun sub quota). ret: " << ret << std::endl;
+            SPDLOG_ERROR("Can't read from socket to resize quota (overrun sub quota). ret: {}", ret);
         }
         else {
             sc->set_quota_flag(true);
-            //std::cout << "successfully resized quota to (overrun): " << updated_quota << "!" << std::endl;
             sc->get_cpu_stats()->flush();
             ec_decr_overrun(to_sub);
             sc->set_quota(updated_quota);
@@ -152,11 +146,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             updated_quota = rx_quota + to_add;
             ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
             if(ret) {
-                std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (incr fair share). ret: " << ret << std::endl;
+                SPDLOG_ERROR("Can't read from socket to resize quota (incr fair share). ret: {}", ret);
             }
             else {
                 sc->set_quota_flag(true);
-                //std::cout << "successfully resized quota to (fair share 1): " << updated_quota << "!" << std::endl;
                 ec_decr_unallocated_rt(to_add);
                 sc->set_quota(updated_quota);
                 sc->get_cpu_stats()->flush();
@@ -166,8 +159,6 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         else { //not enough in unalloc_rt to get back to fair share, even out
             uint64_t overrun;
             double percent_under = ((double)ec_get_fair_cpu_share() - (double)rx_quota) / (double)ec_get_fair_cpu_share();
-//            std::cout << "percent under2: " << percent_under << std::endl;
-//            overrun = (uint64_t)thr_mean * amnt_share_lacking;
             if(amnt_share_lacking > ec_get_cpu_slice() / 2) { //ensure we eventualyl converge
                 overrun = (uint64_t)((double) percent_under * amnt_share_lacking);
             }
@@ -177,11 +168,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             updated_quota = rx_quota + overrun;
             ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
             if(ret) {
-                std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (incr fair share overrun). ret: " << ret << std::endl;
+                SPDLOG_ERROR("Can't read from socket to resize quota (incr fair share overrun). ret: {}", ret);
             }
             else {
                 sc->set_quota_flag(true);
-                //std::cout << "successfully resized quota to (fair share 2): " << updated_quota << "!" << std::endl;
                 ec_incr_overrun(overrun);
                 sc->set_quota(updated_quota);
                 sc->get_cpu_stats()->flush();
@@ -195,11 +185,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             updated_quota = rx_quota + extra_rt;
             ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
             if(ret) {
-                std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (incr). ret: " << ret << std::endl;
+                SPDLOG_ERROR("Can't read from socket to resize quota (incr). ret: {}", ret);
             }
             else {
                 sc->set_quota_flag(true);
-                //std::cout << "successfully resized quota to (incr): " << rx_quota + extra_rt << "!" << std::endl;
                 ec_decr_unallocated_rt(extra_rt);
                 sc->set_quota(updated_quota);
                 sc->get_cpu_stats()->flush();
@@ -213,12 +202,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         if(new_quota != rx_quota) {
             ret = set_sc_quota_syscall(sc, new_quota, seq_num); //give back what was used + 5ms
             if(ret) {
-                std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (decr). ret: " << ret << std::endl;
+                SPDLOG_ERROR("Can't read from socket to resize quota (decr). ret: {}", ret);
             }
             else {
                 sc->set_quota_flag(true);
-                //std::cout << "successfully resized quota to (decr): " << new_quota << "!" << std::endl;
-                //std::cout << "decr resize (rx_q, new_q): (" << rx_quota << ", " << new_quota << ")" << std::endl;
                 ec_incr_unallocated_rt(rx_quota - new_quota); //unalloc_rt <-- old quota - new quota
                 sc->set_quota(new_quota);
                 sc->get_cpu_stats()->flush();
@@ -232,11 +219,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         if(new_quota != rx_quota) {
             ret = set_sc_quota_syscall(sc, new_quota, seq_num); //give back what was used + 5ms
             if(ret) {
-                std::cout << "[ERROR]: GCM. Can't read from socket to resize quota (decr 5ms diff). ret: " << ret << std::endl;
+                SPDLOG_ERROR("Can't read from socket to resize quota (decr 5ms diff). ret: {}", ret);
             }
             else {
                 sc->set_quota_flag(true);
-                //std::cout << "successfully resized quota to (decr 5ms diff): " << new_quota << "!" << std::endl;
                 ec_incr_unallocated_rt(rx_quota - new_quota); //unalloc_rt <-- old quota - new quota
                 sc->set_quota(new_quota);
                 sc->get_cpu_stats()->flush();
@@ -254,51 +240,50 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 
 int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd) {
     if(req == nullptr || res == nullptr) {
-        std::cout << "req or res == null in handle_mem_req()" << std::endl;
+        SPDLOG_CRITICAL("req or res == null in handle_mem_req()");
         exit(EXIT_FAILURE);
     }
-    std::cout << "handle_mem_req()" << std::endl;
+    SPDLOG_DEBUG("handle_mem_req()");
     uint64_t ret = 0;
     if(req->req_type != _MEM_) { res->rsrc_amnt = 0; return __ALLOC_MEM_FAILED__; }
     memlock.lock();
     int64_t memory_available = ec_get_unalloc_memory_in_pages();
     if(memory_available > 0) {
-        std::cout << "gcm memory avail > 0. Returning global slice. mem avail: " << memory_available << std::endl;
+        SPDLOG_DEBUG("gcm memory avail > 0. Returning global slice. mem avail: {}", memory_available);
     }
     else {
         auto reclaimed_mem = handle_reclaim_memory(clifd);
         if(reclaimed_mem > 0) {
             if(memory_available < 0) {
-                std::cout << "ERROR: reclaiming memory and mem_available < 0. THis should not happen!!" << std::endl;
-                std::cout << "----> mem_avail: " << memory_available << ", reclaimed_mem: " << reclaimed_mem << "\n";
-                std::cout << "----> alloc_mem: " << ec_get_alloc_memory_in_pages() << ", appl_mem_limit: " <<
-                          ec_get_mem_limit_in_pages() << std::endl;
+                SPDLOG_CRITICAL("reclaiming memory and mem_available < 0. THis should not happen!!");
+                SPDLOG_CRITICAL("----> mem_avail: {}, reclaimed_mem: {}", memory_available, reclaimed_mem);
+                SPDLOG_CRITICAL("----> alloc_mem: {}, appl_mem_limit: {}", ec_get_alloc_memory_in_pages(), ec_get_mem_limit_in_pages());
                 //SETTING MEM_AVAIL TO 0 AND GOING FROM THERE
                 ec_incr_unalloc_memory_in_pages(memory_available * -1);
                 ec_decr_alloc_memory_in_pages(memory_available * -1);
             }
             ec_update_reclaim_memory_in_pages(reclaimed_mem);
             memory_available = ec_get_unalloc_memory_in_pages();
-            std::cout << "reclaimed mem from other pods. mem rx: " << memory_available << std::endl;
+            SPDLOG_DEBUG("reclaimed mem from other pods. mem rx: {}", memory_available);
         }
         else {
             memlock.unlock();
-            std::cout << "no memory available!" << std::endl;
+            SPDLOG_DEBUG("no memory available!");
             res->rsrc_amnt = 0;
             return __ALLOC_MEM_FAILED__;
         }
 
     }
 
-    std::cout << "Handle mem req: success. memory available: " << memory_available << std::endl;
+    SPDLOG_DEBUG("Handle mem req: success. memory available: {}", memory_available);
     ret = memory_available > ec_get_memory_slice() ? ec_get_memory_slice() : memory_available;
 
-    std::cout << "mem amnt to ret: " << ret << std::endl;
+    SPDLOG_DEBUG("mem amnt to ret: {}", ret);
 
     ec_update_alloc_memory_in_pages(ret);
 
-    std::cout << "successfully decrease unallocated mem to: " << ec_get_unalloc_memory_in_pages() << std::endl;
-    std::cout << "successfully increased allocated mem to: " << ec_get_alloc_memory_in_pages() << std::endl;
+    SPDLOG_TRACE("successfully decrease unallocated mem to: {}", ec_get_unalloc_memory_in_pages());
+    SPDLOG_TRACE("successfully increased allocated mem to: {}", ec_get_alloc_memory_in_pages());
 
 
     res->rsrc_amnt = req->rsrc_amnt + ret;   //give back "ret" pages
@@ -315,7 +300,7 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
 uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     uint64_t total_reclaimed = 0;
 
-    std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
+    SPDLOG_DEBUG("GCM: Trying to reclaim memory from other cgroups!");
     for (const auto &container : ec_get_subcontainers()) {
         if (container.second->get_fd() == client_fd) {
             continue;
@@ -327,25 +312,25 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
         if(mem_limit_bytes - mem_usage_bytes > _SAFE_MARGIN_BYTES_) {
             auto is_max_mem_resized = sc_resize_memory_limit_in_pages(container.first,
                                                                       byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
-            std::cout << "[dbg] byte to page macro output: " << byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_)) << std :: endl;
-            std::cout << "[dbg] is_max_mem_resized: " << is_max_mem_resized << std::endl;
+            SPDLOG_DEBUG("byte to page macro output: {}", byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_)));
+            SPDLOG_DEBUG("is_max_mem_resized: {}", is_max_mem_resized);
             if(!is_max_mem_resized) {
                 total_reclaimed += byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_));
                 sc_set_memory_limit_in_pages(*container.second->get_c_id(), byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
             }
         }
         else {
-            std::cout << "mem usage to close to mem_limit_bytes to resize! --> limit - usage: " << mem_limit_bytes - mem_usage_bytes << std::endl;
-            std::cout << "safe margin: " << _SAFE_MARGIN_BYTES_ << std::endl;
+            SPDLOG_DEBUG("mem usage to close to mem_limit_bytes to resize! --> limit - usage: {}", mem_limit_bytes - mem_usage_bytes);
+            SPDLOG_DEBUG("safe margin: {}", _SAFE_MARGIN_BYTES_);
         }
     }
-    std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " << total_reclaimed << std::endl;
+    SPDLOG_DEBUG("Recalimed memory at the end of the reclaim function: {}", total_reclaimed);
     return total_reclaimed;
 }
 
 int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd){
     if(!req || !res) {
-        std::cout << "req or res == null in handle_req()" << std::endl;
+        SPDLOG_CRITICAL("req or res == null in handle_req()"); //todo: we shouldn't exit_failure on one null req
         exit(EXIT_FAILURE);
     }
     uint64_t ret = __FAILED__;
@@ -361,14 +346,14 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
             ret = Manager::handle_add_cgroup_to_ec(req, res, host_ip, clifd);
             break;
         default:
-            std::cout << "[Error]: ECAPI: " << manager_id << ". Handling memory/cpu request failed!" << std::endl;
+            SPDLOG_ERROR("Handling memory/cpu request failed! manager_id: {}", manager_id);
     }
     return ret;
 }
 
 int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, uint32_t ip, int fd) {
     if(!req || !res) {
-        std::cout << "ERROR. res or req == null in handle_add_cgroup_to_ec()" << std::endl;
+        SPDLOG_ERROR("res or req == null in handle_add_cgroup_to_ec()");
         return __ALLOC_FAILED__;
     }
 
@@ -378,7 +363,7 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
 
     auto *sc = _ec->create_new_sc(req->cgroup_id, ip, fd, quota, req->request); //update with throttle and quota
     if (!sc) {
-        std::cerr << "[ERROR] Unable to create new sc object: Line 147" << std::endl;
+        SPDLOG_ERROR("Unable to create new sc object");
         return __ALLOC_FAILED__;
     }
 
@@ -386,32 +371,20 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
     int ret = _ec->insert_sc(*sc);
 
     //todo: Delete sc if ret == alloc_failed!
-//    _ec->incr_total_cpu(sc->get_quota());
     _ec->update_fair_cpu_share();
-//    std::cout << "fair share: " << ec_get_fair_cpu_share() << std::endl;
-
-//    auto mem = sc_get_memory_limit_in_bytes(*sc->get_c_id());
-//    ec_incr_memory_limit_in_pages(mem);
+    SPDLOG_TRACE("fair share: {}", ec_get_fair_cpu_share());
 
     // And so once a subcontainer is created and added to the appropriate distributed container,
     // we can now create a map to link the container_id and agent_client
-
-    //std::cout << "[dbg]: Init. Added cgroup to _ec. cgroup id: " << *sc->get_c_id() << std::endl;
     AgentClientDB* acdb = AgentClientDB::get_agent_client_db_instance();
     auto agent_ip = sc->get_c_id()->server_ip;
     auto target_agent = acdb->get_agent_client_by_ip(agent_ip);
-    //std::cout << "[dbg] Agent client ip: " << target_agent-> get_agent_ip() << std::endl;
-    //std::cout << "[dbg] Agent ip: " << agent_ip << std::endl;
     if ( target_agent ){
-//        mtx.lock();
-        //std::cout << "add to sc_ac map" << std::endl;
         std::lock_guard<std::mutex> lk(cv_mtx);
         _ec->add_to_sc_ac_map(*sc->get_c_id(), target_agent);
-        //std::cout << "handle() sc_id, agent_ip: " << *sc->get_c_id() << ", " << target_agent->get_agent_ip() << std::endl;
         cv.notify_one();
-//        mtx.unlock();
     } else {
-        std::cerr<< "[ERROR] SubContainer's node IP or Agent IP not found!" << std::endl;
+        SPDLOG_ERROR("SubContainer's node IP or Agent IP not found!");
     }
 
     //Update pod quota
@@ -424,22 +397,19 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
     std::thread update_mem_limit_thread(&ec::Manager::determine_mem_limit_for_new_pod, this, sc, fd);
     update_mem_limit_thread.detach();
 
-#ifdef DEBUG
-    std::cout << "total pods added to map: " << ec_get_num_subcontainers() << std::endl;
-#endif
+    SPDLOG_DEBUG("total pods added to map: {}", ec_get_num_subcontainers());
     res->request += 1; //giveback (or send back)
     return ret;
 }
 
 void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clifd) {
     if(!sc) {
-        std::cerr << "sc in determine_mem_limit_for_new_pod() is NULL" << std::endl;
+        SPDLOG_ERROR("sc in determine_mem_limit_for_new_pod() is NULL");
         return;
     }
 
     std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
     cv_dock.wait(lk_dock, [this, sc] {
-        //std::cout << "in wait for docker id to be set" << std::endl;
         return !sc->get_docker_id().empty();
     });
     auto sc_mem_limit_in_pages = byte_to_page(sc_get_memory_limit_in_bytes(*sc->get_c_id()));
@@ -451,25 +421,25 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
         ec_update_alloc_memory_in_pages(sc_mem_limit_in_pages);
     }
     else if(!ec_get_unalloc_memory_in_pages()) {
-        std::cerr << "[ERROR]: No Memory available to allocate to newly connected container!" << std::endl;
-        std::cerr << "tbh not sure how to handle this" << std::endl;
+        SPDLOG_ERROR("No Memory available to allocate to newly connected container!");
+        SPDLOG_ERROR("tbh not sure how to handle this");
     }
     else if(sc_mem_limit_in_pages > ec_get_unalloc_memory_in_pages()) {
-        std::cout << "new sc mem limit > unalloc mem in pages. reclaim" << std::endl;
+        SPDLOG_DEBUG("new sc mem limit > unalloc mem in pages. reclaim");
         //need to get back memory from other pods
         auto reclaimed_mem = handle_reclaim_memory(clifd);
         ec_update_reclaim_memory_in_pages(reclaimed_mem);
-        std::cout << "ec_get_unalloc_mem after reclaim: " << ec_get_unalloc_memory_in_pages() << std::endl;
+        SPDLOG_DEBUG("ec_get_unalloc_mem after reclaim: {}", ec_get_unalloc_memory_in_pages());
         if(sc_mem_limit_in_pages <= ec_get_unalloc_memory_in_pages()) {
             ec_update_alloc_memory_in_pages(sc_mem_limit_in_pages);
         }
         else {
             //mem_limit_in_pages still too high for mem_avail. try to reduce mem_limit_in_pages on pod
-            std::cout << "not enough pages reclaimed. trying to reduce mem limit on new pod" << std::endl;
+            SPDLOG_DEBUG("not enough pages reclaimed. trying to reduce mem limit on new pod");
             auto is_max_mem_resized = sc_resize_memory_limit_in_pages(*sc->get_c_id(), ec_get_unalloc_memory_in_pages());
             if(is_max_mem_resized) {
-                std::cerr << "[ERROR]: Can't reclaim enough memory to deploy this new pod" << std::endl;
-                std::cout << "tbh don't know how to handle this." << std::endl;
+                SPDLOG_ERROR("Can't reclaim enough memory to deploy this new pod");
+                SPDLOG_ERROR("tbh don't know how to handle this.");
             }
             else {
                 ec_update_alloc_memory_in_pages(sc_mem_limit_in_pages);
@@ -489,9 +459,8 @@ void ec::Manager::serveGrpcDeployExport() {
     builder.RegisterService(grpcServer);
     std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
 
-    std::cout << "Grpc Server listening on: " << server_addr << std::endl;
+    SPDLOG_DEBUG("Grpc Server listening on: {}", server_addr);
     server->Wait();
-
 }
 
 //TODO: this should be separated out into own file

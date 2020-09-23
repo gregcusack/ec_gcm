@@ -11,6 +11,7 @@
 #include "types/types.h"
 #include "stats/local/cpu_l.h"
 #include "stats/local/mem_l.h"
+#include "spdlog/spdlog.h"
 
 namespace ec {
     /*!

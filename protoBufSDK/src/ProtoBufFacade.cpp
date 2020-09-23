@@ -9,7 +9,7 @@ int ec::Facade::ProtoBufFacade::ProtoBuf::sendMessage(const int &sock_fd, const 
     msg.SerializeToCodedStream(&codedOut);
 //    std::cout << "[PROTOBUF log]: TX Message Body length size: " << tx_size-4 << std::endl;
     if (write(sock_fd, (void*) tx_buf, tx_size) < 0) {
-        std::cout << "[PROTOBUF ERROR]: Error in writing to agent_clients socket: " << sock_fd << std::endl;
+        SPDLOG_ERROR("Error in writing to agent_clients socket: {}", sock_fd);
         return -1;
     }
     delete[] tx_buf;
@@ -23,14 +23,11 @@ void ec::Facade::ProtoBufFacade::ProtoBuf::recvMessage(const int &sock_fd, struc
 
     res = read(sock_fd, rx_buffer, __BUFFSIZE__);
     if (res <= 0) {
-        std::cout << "[PROTOBUF ERROR]: Can't read from socket" << std::endl;
+        SPDLOG_ERROR("Can't read from socket");
     }
-    
-//    std::cout << "[PROTOBUF log]: RX Message Body length size: " << res << std::endl;
 
     google::protobuf::io::ArrayInputStream arrayIn(rx_buffer, res);
     google::protobuf::io::CodedInputStream codedIn(&arrayIn);
-    //codedIn.ReadVarint32(&size);
     google::protobuf::io::CodedInputStream::Limit msgLimit = codedIn.PushLimit(res);
     rx_msg.ParseFromCodedStream(&codedIn);
     codedIn.PopLimit(msgLimit);

@@ -9,7 +9,6 @@ ec::rpc::DeployerExportServiceImpl::ReportPodSpec(grpc::ServerContext *context, 
                                                   ec::rpc::PodSpecReply *reply) {
     std::string status;
     int ret = insertPodSpec(pod);
-
     SPDLOG_DEBUG("Insert Pod Spec ret: {}", ret);
 
     status = ret ? fail : success;
@@ -69,10 +68,10 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     ec->incr_unallocated_rt(quota);
 
 #if(SPDLOG_ACTIVE_LEVEL == SPDLOG_LEVEL_TRACE)
-    std::cout << "fair cpu share post delete: " << ec->get_fair_cpu_share() << std::endl;
-    std::cout << "post delete unalloc rt + allcoc_rt: " << ec->get_cpu_unallocated_rt() + ec->get_alloc_rt() << std::endl;
-    std::cout << "delete pod mem_limit to ret to global pool: " << sc_mem_limit << std::endl;
-    std::cout << "ec_mem_avail pre delete: " << ec->get_unallocated_memory_in_pages() << std::endl;
+    SPDLOG_TRACE("fair cpu share post delete: {}", ec->get_fair_cpu_share());
+    SPDLOG_TRACE("post delete unalloc rt + allcoc_rt: {}", ec->get_cpu_unallocated_rt() + ec->get_alloc_rt());
+    SPDLOG_TRACE("delete pod mem_limit to ret to global pool: {}", sc_mem_limit);
+    SPDLOG_TRACE("ec_mem_avail pre delete: {}", ec->get_unallocated_memory_in_pages());
 #endif
 
     //MEM
@@ -80,26 +79,23 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     ec->decr_alloc_memory_in_pages(sc_mem_limit);
 
 #if(SPDLOG_ACTIVE_LEVEL == SPDLOG_LEVEL_TRACE)
-    std::cout << "ec_mem_avail post delete: " << ec->get_unallocated_memory_in_pages() << std::endl;
+    SPDLOG_TRACE("ec_mem_avail post delete: {}", ec->get_unallocated_memory_in_pages());
 
     mem_alloced_in_pages = 0;
     for (const auto &i : ec->get_subcontainers()) {
         mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
     }
-    std::cout << "tot mem in sys post delete pod: " << mem_alloced_in_pages + ec->get_unallocated_memory_in_pages() << std::endl;
-    std::cout << "tot alloc, unalloc mem post delete pod: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_unallocated_memory_in_pages() << std::endl;
-    std::cout << "tot mem in sys (alloc+unalloc) post delete: " << ec->get_allocated_memory_in_pages() + ec->get_unallocated_memory_in_pages() << std::endl;
-    std::cout << "tot_alloc virtual, tot_alloc physical post delete: " << ec->get_allocated_memory_in_pages() << ", " << ec->get_tot_mem_alloc_in_pages() << std::endl;
+    SPDLOG_TRACE("tot mem in sys post delete pod: {}", mem_alloced_in_pages + ec->get_unallocated_memory_in_pages());
+    SPDLOG_TRACE("tot alloc, unalloc mem post delete pod: {}, {}", ec->get_allocated_memory_in_pages(), ec->get_unallocated_memory_in_pages());
+    SPDLOG_TRACE("tot mem in sys (alloc+unalloc) post delete: {}", ec->get_allocated_memory_in_pages() + ec->get_unallocated_memory_in_pages());
+    SPDLOG_TRACE("tot_alloc virtual, tot_alloc physical post delete: {}, {}", ec->get_allocated_memory_in_pages(), ec->get_tot_mem_alloc_in_pages());
 #endif
 
     status = (s1 != success || s2 != success || s3 != success || s4 != success) ? fail : success;
 
     setDeletePodReply(pod, reply, status);
 
-#ifndef DEBUG
-    std::cout << "delete pod completed with status: " << status << std::endl;
-#endif
-
+    SPDLOG_DEBUG("delete pod completed with status: {}", status);
     return grpc::Status::OK;
 }
 
@@ -107,19 +103,14 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
 grpc::Status
 ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, const ec::rpc::ExportAppSpec *appSpec,
                                                   ec::rpc::AppSpecReply *reply) {
-    // std::cout << "Report App Spec Values: " << std::endl;
-    // std::cout << "App Name: " <<  appSpec->app_name() << std::endl;
-    // std::cout << "CPU Limit: " << appSpec->cpu_limit()  << std::endl;
-    // std::cout << "Mem Limit " << appSpec->mem_limit_in_pages()  << std::endl;
-
     if(!reply || !appSpec) {
-        std::cout << "[ERROR DeployService]: ReportAppSpec reply or appSpec is NULL";
+        SPDLOG_ERROR("ReportAppSpec reply or appSpec is NULL");
         return grpc::Status::CANCELLED;
     }
 
     // Set Application Global limits here:
     if (!ec){
-        std::cout << "[ERROR DeployService]: EC is NULL in ReportAppSpec";
+        SPDLOG_ERROR("EC is NULL in ReportAppSpec");
         return grpc::Status::CANCELLED;
     }
     // Passed in value is in mi but set_total_cpu takes ns
@@ -130,8 +121,8 @@ ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, 
     ec->set_unalloc_memory_in_pages((appSpec->mem_limit() * 1048576) / 4000);
     ec->set_alloc_memory_in_pages(0);
 
-    std::cout << "Set CPU Limit: " << ec->get_total_cpu()  << std::endl;
-    std::cout << "Set Mem Limit " << ec->get_mem_limit_in_pages() << std::endl;
+    SPDLOG_DEBUG("Set CPU Limit: {}", ec->get_total_cpu());
+    SPDLOG_DEBUG("Set Mem Limit {}", ec->get_mem_limit_in_pages());
 
     // Set response here
     reply->set_app_name(appSpec->app_name());
@@ -139,18 +130,16 @@ ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, 
     reply->set_mem_limit(appSpec->mem_limit());
     reply->set_thanks(success);
 
-
     return grpc::Status::OK;
 }
 
 
 
 int ec::rpc::DeployerExportServiceImpl::insertPodSpec(const ec::rpc::ExportPodSpec *pod) {
-    if(!pod) { std::cout << "[ERROR DeployService]: ExportPodSpec *pod is NULL"; return -1; }
+    if(!pod) { SPDLOG_ERROR("ExportPodSpec *pod is NULL"); }
 
-#ifndef DEBUG
-    std::cout << "sc_id to insertPodSpec: " << SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()) << std::endl;
-#endif
+    SPDLOG_DEBUG("sc_id to insertPodSpec: {}", SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()));
+
     dep_pod_lock.lock();
     auto inserted = deployedPods.emplace(
             SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()),
@@ -159,7 +148,7 @@ int ec::rpc::DeployerExportServiceImpl::insertPodSpec(const ec::rpc::ExportPodSp
     dep_pod_lock.unlock();
 
     if(!inserted) {
-        std::cout << "[ERROR]: Already deployed pod!" << std::endl;
+        SPDLOG_ERROR("Already deployed pod!");
         return -2;
     }
 
@@ -170,7 +159,7 @@ int ec::rpc::DeployerExportServiceImpl::insertPodSpec(const ec::rpc::ExportPodSp
             ).second;
 
     if(!dockInsert) {
-        std::cout << "[ERROR]: Docker ID already exists" << std::endl;
+        SPDLOG_ERROR("Docker ID already exists");
         return -3;
     }
 
@@ -180,7 +169,7 @@ int ec::rpc::DeployerExportServiceImpl::insertPodSpec(const ec::rpc::ExportPodSp
 void ec::rpc::DeployerExportServiceImpl::setPodSpecReply(const ExportPodSpec* pod,
                                                          ec::rpc::PodSpecReply *reply, std::string &status) {
     if(!reply || !pod) {
-        std::cout << "[ERROR DeployService]: ExportPodSpec reply or pod is NULL";
+        SPDLOG_ERROR("ExportPodSpec reply or pod is NULL");
         return;
     }
 
@@ -195,33 +184,25 @@ void ec::rpc::DeployerExportServiceImpl::spinUpDockerIdThread(const ec::SubConta
 
     //todo: delete this after we match
     auto *args = new matchingThreadArgs(sc_id, docker_id);
-    //std::cout << "created matching args: " << args->sc_id << ", " << args->docker_id << std::endl;
     std::thread match_sc_id_thread(&DeployerExportServiceImpl::scIdToDockerIdMatcherThread, this, (void*)args);
     match_sc_id_thread.detach();
-//    match_sc_id_thread.join();
 }
 
 void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* arguments) {
     auto threadArgs = reinterpret_cast<matchingThreadArgs*>(arguments);
     std::unique_lock<std::mutex> lk(cv_mtx);
     cv.wait(lk, [this, threadArgs] {
-            //std::cout << "in cv wait" << std::endl;
         auto itr = ec->get_sc_ac_map_for_update()->find(threadArgs->sc_id);
-        //std::cout << "wait for sc_id to exist in sc_ac_map: " << threadArgs->sc_id << ", d_id: " << threadArgs->docker_id << std::endl;
+        SPDLOG_TRACE("wait for sc_id to exist in sc_ac_map: {}, d_id: {}", threadArgs->sc_id, threadArgs->docker_id);
         return itr != ec->get_sc_ac_map_for_update()->end();
     });
 
-    //std::cout << "sc in sc_ac map. set docker_id" << std::endl;
     std::lock_guard<std::mutex> lk_dock(cv_mtx_dock);
     ec->get_subcontainer(threadArgs->sc_id).set_docker_id(threadArgs->docker_id);
     if(unlikely(ec->get_subcontainer(threadArgs->sc_id).get_docker_id().empty())) {
-        std::cout << "docker_id set failed in grpcDockerIdMatcher()!" << std::endl;
-    } else {
-        //std::cout << "docker_id set: " << ec->get_subcontainer(threadArgs->sc_id).get_docker_id() << std::endl;
+        SPDLOG_ERROR("docker_id set failed in grpcDockerIdMatcher()!");
     }
     cv_dock.notify_one();
-    // std::cout << "<-------------------------  spinUpDockerIdThread " << threadArgs->sc_id <<  "END ------------------------->" << std::endl;
-    // std::cout << "match thread end" << std::endl;
 }
 
 int ec::rpc::DeployerExportServiceImpl::deleteFromScAcMap(const ec::SubContainer::ContainerId &sc_id) {
@@ -231,7 +212,7 @@ int ec::rpc::DeployerExportServiceImpl::deleteFromScAcMap(const ec::SubContainer
         ec->get_sc_ac_map_for_update()->erase(sc_id);
     }
     else {
-        std::cerr << "[GRPC Service Error]: Can't find sc_id to delete! sc_id: " << sc_id << std::endl;
+        SPDLOG_ERROR("Can't find sc_id to delete! sc_id: {}", sc_id);
         return -1;
     }
     return 0;
@@ -251,7 +232,7 @@ int ec::rpc::DeployerExportServiceImpl::deleteFromDeployedPodsMap(const ec::SubC
         deployedPods.erase(sc_id);
     }
     else {
-        std::cerr << "[GRPC Service Error]: Can't find sc_id to delete from deployedPods! sc_id: " << sc_id << std::endl;
+        SPDLOG_ERROR("Can't find sc_id to delete from deployedPods! sc_id: {}", sc_id);
         return -1;
     }
     return 0;
@@ -263,7 +244,7 @@ int ec::rpc::DeployerExportServiceImpl::deleteFromDockerIdScMap(const std::strin
         dockerToSubContainer.erase(docker_id);
     }
     else {
-        std::cerr << "[GRPC Service Error]: Can't find docker ID to delete from deployedPods! sc_id: " << docker_id << std::endl;
+        SPDLOG_ERROR("Can't find docker ID to delete from deployedPods! sc_id: {}", docker_id);
         return -1;
     }
     return 0;
@@ -275,7 +256,7 @@ ec::SubContainer::ContainerId ec::rpc::DeployerExportServiceImpl::getScIdFromDoc
         return dockerToSubContainer.find(docker_id)->second;
     }
     else {
-        std::cerr << "[GRPC Service Error]: Can't find sc_id from dockerId!: " << docker_id << std::endl;
+        SPDLOG_ERROR("Can't find sc_id from dockerId!: {}", docker_id);
         return SubContainer::ContainerId();
     }
 }
@@ -284,11 +265,10 @@ void ec::rpc::DeployerExportServiceImpl::setDeletePodReply(const ec::rpc::Export
                                                            ec::rpc::DeletePodReply *reply, const std::string &status) {
 
     if(!reply || !pod) {
-        std::cout << "[ERROR DeployService]: ExportPodSpec reply or pod is NULL";
+        SPDLOG_ERROR("ExportPodSpec reply or pod is NULL");
         return;
     }
 
     reply->set_docker_id(pod->docker_id());
     reply->set_thanks(status);
 }
-

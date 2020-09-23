@@ -15,13 +15,12 @@ void ec::global::stats::cpu::decr_unallocated_rt(uint64_t _decr) {
     std::unique_lock<std::mutex> lk(unalloc_lock);
     //std::cout << "Decr unalloc: " << unallocated_rt << std::endl;
     if( ((int64_t) unallocated_rt - (int64_t) _decr) < 0) {
-        std::cout << "unalloc - decr < 0. decr: " << _decr << std::endl;
+        SPDLOG_DEBUG("unalloc - decr < 0. decr: {}", _decr);
         unallocated_rt = 0;
     }
     else {
         unallocated_rt -= _decr;
     }
-    //std::cout << "decr unalloc post update: " << unallocated_rt << std::endl;
 }
 
 
