@@ -75,9 +75,7 @@ ec::ElasticContainer::~ElasticContainer() {
     subcontainers.clear();
 }
 void ec::ElasticContainer::update_fair_cpu_share() {
-#ifndef DEBUG_MAX
-    std::cout << "update fair share. (tot_cpu, # subconts): (" << _cpu.get_total_cpu() << ", " << subcontainers.size() << ")" << std::endl;
-#endif
+    SPDLOG_TRACE("update fair share. (tot_cpu, # subconts): ({}, {})", _cpu.get_total_cpu(), subcontainers.size());
     if(subcontainers.empty()) {
         fair_cpu_share = _cpu.get_total_cpu();
         return;

@@ -81,8 +81,12 @@ set(GCM_CORE
         ${GCM_PROTO_SRC}    ${GCM_GRPC_SRC} ${AGENTS} ${STATS}
         )
 
+file(GLOB spdlog
+        "spdlog.h"
+        )
+
 add_executable(ec_gcm main.cpp
-        ${GCM_CORE})
+        ${GCM_CORE} ${spdlog})
 
 add_executable(deploy_test tests/grpc_test.cpp
         ${GCM_CORE})
@@ -105,5 +109,4 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 elseif(CMAKE_BUILD_TYPE MATCHES Release)
     target_compile_definitions(ec_gcm PUBLIC DEBUG=0)
     target_compile_definitions(ec_gcm PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_CRITICAL)
-    target_compile_definitions(ec_gcm PUBLIC DEBUG_MAX=0)
 endif()

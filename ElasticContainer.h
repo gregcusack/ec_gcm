@@ -25,6 +25,7 @@
 #include "stats/global/mem_g.h"
 #include "stats/global/cpu_g.h"
 #include "cAdvisorSDK/include/cAdvisorFacade.h"
+#include "spdlog/spdlog.h"
 
 #define __ALLOC_FAILED__ 0
 #define __ALLOC_SUCCESS__ 1

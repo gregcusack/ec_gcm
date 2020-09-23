@@ -11,7 +11,6 @@
 #endif
 
 #include "spdlog/spdlog.h"
-#include <spdlog/sinks/stdout_color_sinks.h>
 #define GCM_PORT        8888             //Not sure if we need a port here tbh
 
 /* LOG LEVELS

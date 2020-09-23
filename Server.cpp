@@ -107,9 +107,8 @@ void ec::Server::handle_client_reqs(void *args) {
         auto *req = reinterpret_cast<msg_t*>(buff_in);
         req->set_ip_from_net(client_ip); //this needs to be removed eventually
         auto *res = new msg_t(*req);
-#ifndef DEBUG_MAX
-        std::cout << "received: " << *req << std::endl;
-#endif
+        SPDLOG_TRACE("received: {}", *req);
+
         ret = handle_req(req, res, om::net::ip4_addr::from_net(client_ip).to_uint32(), client_fd);
 
         if(ret == __ALLOC_INIT__) { 
@@ -118,19 +117,17 @@ void ec::Server::handle_client_reqs(void *args) {
                 break;
             }
         }
-	    else if(ret == __ALLOC_SUCCESS__ && !res->request) {
+        else if(ret == __ALLOC_SUCCESS__ && !res->request) {
             std::cout << "sending back alloc success!" << std::endl;
             if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                 std::cerr << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket" << std::endl;
                 break;
             }
-#ifndef DEBUG
             else {
-                std::cout << "sucess writing back to socket on mem resize!" << std::endl;
+                SPDLOG_INFO("sucess writing back to socket on mem resize!");
             }
-#endif
         }
-		else if(ret == __ALLOC_MEM_FAILED__) {
+        else if(ret == __ALLOC_MEM_FAILED__) {
             if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
                 std::cerr << "[ERROR]: EC Server id: " << server_id << ". Failed writing to socket on mem failed" << std::endl;
                 break;
@@ -172,10 +169,10 @@ bool ec::Server::init_agent_connections() {
         }
         auto* ac = new AgentClient(ag, sockfd);
         agent_clients_db->add_agent_client(ac);
-#ifndef DEBUG_MAX
-        std::cout << "[dbg] Agent client added to db and agent_clients sockfd: " << sockfd << ", " << agent_clients_db->get_agent_client_by_ip(ag->get_ip())->get_socket()
-        <<" agent db size is: " << agent_clients_db->get_agent_clients_db_size()<< std::endl;
-#endif
+
+        SPDLOG_TRACE("[dbg] Agent client added to db and agent_clients sockfd: {}, {} agent db size is: {}", sockfd, \
+        agent_clients_db->get_agent_client_by_ip(ag->get_ip())->get_socket(), agent_clients_db->get_agent_clients_db_size());
+
     }
     return num_connections == agent_clients_db->get_agent_clients_db_size();
 

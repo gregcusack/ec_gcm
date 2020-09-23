@@ -443,10 +443,10 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
         return !sc->get_docker_id().empty();
     });
     auto sc_mem_limit_in_pages = byte_to_page(sc_get_memory_limit_in_bytes(*sc->get_c_id()));
-#ifndef DEBUG_MAX
-    std::cout << "ec_get_unalloc_mem rn: " << ec_get_unalloc_memory_in_pages() << std::endl;
-    std::cout << "sc_mem_limit_in_pages on deploy: " << sc_mem_limit_in_pages << std::endl;
-#endif
+
+    SPDLOG_TRACE("ec_get_unalloc_mem rn: {}", ec_get_unalloc_memory_in_pages());
+    SPDLOG_TRACE("sc_mem_limit_in_pages on deploy: {}", sc_mem_limit_in_pages);
+
     if(sc_mem_limit_in_pages <= ec_get_unalloc_memory_in_pages()) {
         ec_update_alloc_memory_in_pages(sc_mem_limit_in_pages);
     }
@@ -476,9 +476,7 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
             }
         }
     }
-#ifndef DEBUG_MAX
-    std::cout << "ec_get_unalloc_mem after mem alloc: " << ec_get_unalloc_memory_in_pages() << std::endl;
-#endif
+    SPDLOG_TRACE("ec_get_unalloc_mem after mem alloc: {}", ec_get_unalloc_memory_in_pages());
     sc->set_mem_limit_in_pages(sc_mem_limit_in_pages);
 }
 
