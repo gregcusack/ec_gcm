@@ -19,7 +19,7 @@ ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient 
 //    _cpu = global::stats::cpu();
 
 //    std::cout << "[Elastic Container Log] runtime_remaining on init: " << _cpu.get_runtime_remaining() << std::endl;
-//    std::cout << "[Elastic Container Log] unallocated_memory_in_pages on init: " << _mem.get_unallocated_memory_in_pages() << std::endl;
+    std::cout << "[Elastic Container Log] unallocated_memory_in_pages on init: " << _mem.get_unallocated_memory_in_pages() << std::endl;
 
     subcontainers = subcontainer_map();
     sc_ac_map = subcontainer_agentclient_map();
