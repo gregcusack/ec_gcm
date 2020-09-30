@@ -121,7 +121,7 @@ void ec::Server::handle_client_reqs(void *args) {
                 break;
             }
             else {
-                SPDLOG_INFO("sucess writing back to socket on mem resize!");
+                SPDLOG_DEBUG("sucess writing back to socket on mem resize!");
             }
         }
         else if(ret == __ALLOC_MEM_FAILED__) {

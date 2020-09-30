@@ -243,7 +243,7 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
         SPDLOG_CRITICAL("req or res == null in handle_mem_req()");
         exit(EXIT_FAILURE);
     }
-    SPDLOG_DEBUG("handle_mem_req()");
+    SPDLOG_INFO("handle_mem_req()");
     uint64_t ret = 0;
     if(req->req_type != _MEM_) { res->rsrc_amnt = 0; return __ALLOC_MEM_FAILED__; }
     memlock.lock();
@@ -268,7 +268,7 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
         }
         else {
             memlock.unlock();
-            SPDLOG_DEBUG("no memory available!");
+            SPDLOG_INFO("no memory available!");
             res->rsrc_amnt = 0;
             return __ALLOC_MEM_FAILED__;
         }
