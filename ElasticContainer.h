@@ -25,6 +25,8 @@
 #include "stats/global/mem_g.h"
 #include "stats/global/cpu_g.h"
 #include "cAdvisorSDK/include/cAdvisorFacade.h"
+#include "spdlog/spdlog.h"
+#include "spdlog/fmt/ostr.h"
 
 #define __ALLOC_FAILED__ 0
 #define __ALLOC_SUCCESS__ 1
@@ -139,12 +141,6 @@ namespace ec {
 
         int ec_delete_from_subcontainers_map(const SubContainer::ContainerId &sc_id);
 
-        // int insert_pid(int pid);
-        // std::vector<int> get_pids();
-
-        //CPU
-
-        //MEM
 
     private:
         uint32_t ec_id;
@@ -153,14 +149,9 @@ namespace ec {
         uint64_t fair_cpu_share;
         std::mutex sc_lock;
 
-        //cpu
-//        uint64_t runtime_remaining;
-        //TODO: need file/struct of macros - like slice, failed, etc
-        //mem
-        std::ofstream test_file;
-
         //test
         int flag{};
+        std::ofstream test_file;
 
         global::stats::mem _mem;
         global::stats::cpu _cpu;

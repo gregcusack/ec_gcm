@@ -14,6 +14,10 @@ find_package(Boost REQUIRED system)
 add_subdirectory(protoBufSDK)
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
+if(NOT TARGET spdlog)
+    # Stand-alone build
+    find_package(spdlog REQUIRED)
+endif()
 
 add_custom_command(
         OUTPUT
@@ -92,8 +96,33 @@ add_executable(loop_test tests/run_continuous.cpp
         types/msg.cpp                   types/msg.h
         om.h)
 
+target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB} spdlog::spdlog)
+target_link_libraries(deploy_test PRIVATE ${PTHREAD_LIB} -lssl -lcrypto  cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB} spdlog::spdlog)
 
-
-
-target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB})
-target_link_libraries(deploy_test PRIVATE ${PTHREAD_LIB} -lssl -lcrypto  cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB})
+if(DEFINED WITH_DEBUG)
+    if(WITH_DEBUG MATCHES DEBUG OR WITH_DEBUG MATCHES debug)
+        message(STATUS "LOG LEVEL --> DEBUG")
+        target_compile_definitions(ec_gcm PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
+    elseif(WITH_DEBUG MATCHES TRACE OR WITH_DEBUG MATCHES trace)
+        message(STATUS "LOG LEVEL --> TRACE")
+        target_compile_definitions(ec_gcm PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+    elseif(WITH_DEBUG MATCHES INFO OR WITH_DEBUG MATCHES error)
+        message(STATUS "LOG LEVEL --> ERROR")
+        target_compile_definitions(ec_gcm PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_ERROR)
+    elseif(WITH_DEBUG MATCHES INFO OR WITH_DEBUG MATCHES info)
+        message(STATUS "LOG LEVEL --> INFO")
+        target_compile_definitions(ec_gcm PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO)
+    elseif(WITH_DEBUG MATCHES CRITICAL OR WITH_DEBUG MATCHES critical)
+        message(STATUS "LOG LEVEL --> CRITICAL")
+        target_compile_definitions(ec_gcm PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_CRITICAL)
+    else()
+        message(STATUS "LOG LEVEL Default --> DEBUG")
+        target_compile_definitions(ec_gcm PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
+    endif()
+elseif(CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES debug OR CMAKE_BUILD_TYPE MATCHES DEBUG)
+    message(STATUS "LOG LEVEL Default --> DEBUG")
+    target_compile_definitions(ec_gcm PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
+else()
+    message(STATUS "LOG LEVEL --> INFO")
+    target_compile_definitions(ec_gcm PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO)
+endif()

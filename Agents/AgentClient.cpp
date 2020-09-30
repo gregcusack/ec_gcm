@@ -14,7 +14,7 @@ int64_t ec::AgentClient::send_request(const struct msg_struct::ECMessage &msg) c
     ec::Facade::ProtoBufFacade::ProtoBuf::recvMessage(sockfd_new, rx_msg);
     ret = rx_msg.rsrc_amnt();
     if(msg.request() != rx_msg.request()) {
-        std::cout << "sequence number mismatch: (" << msg.request() << ", " << rx_msg.request() << ")" << std::endl;
+        SPDLOG_ERROR("sequence number mismatch: ({}, {})", msg.request(), rx_msg.request());
     }
     return ret;
 }

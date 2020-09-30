@@ -7,6 +7,7 @@
 #include <cpprest/http_client.h>
 #include <cpprest/json.h>
 #include <unordered_map>
+#include "spdlog/spdlog.h"
 
 #define __ERROR__ -1
 

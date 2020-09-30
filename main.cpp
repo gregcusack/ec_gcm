@@ -4,20 +4,37 @@
 #include "GlobalControlManager.h"
 #include "ElasticContainer.h"
 #include "SubContainer.h"
-#include "types/msg.h"
 #include "Agents/AgentClientDB.h"
-#include <cpprest/http_client.h>
-#include <cpprest/json.h> // JSON library
 
+#ifndef SPDLOG_ACTIVE_LEVEL
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
+#endif
+
+#include "spdlog/spdlog.h"
 #define GCM_PORT        8888             //Not sure if we need a port here tbh
+
+/* LOG LEVELS
+ *  SPDLOG_TRACE("Some trace message with param {}", 42);
+ *  SPDLOG_DEBUG("Some debug message");
+ *  SPDLOG_INFO("SUHHH");
+ *  SPDLOG_WARN("WARN");
+ *  SPDLOG_ERROR("ERROR");
+ *  SPDLOG_CRITICAL("CRITICAL");
+ */
+
 ec::AgentClientDB* ec::AgentClientDB::agent_clients_db_instance = nullptr;
 
 int main(int argc, char* argv[]){
+#if(SPDLOG_ACTIVE_LEVEL == SPDLOG_LEVEL_DEBUG)
+    spdlog::set_level(spdlog::level::debug);
+#elif(SPDLOG_ACTIVE_LEVEL == SPDLOG_LEVEL_TRACE)
+    spdlog::set_level(spdlog::level::trace);
+#endif
 
     // Check the number of parameters
     if (argc < 2) {
         // Tell the user how to run the program
-        std::cerr << "Usage: " << argv[0] << " <path-to-json-file>" << std::endl;
+        SPDLOG_ERROR("Usage: {} <path-to-json-file>", argv[0]);
         return 1;
     }
     const std::string &jsonFile = argv[1];
@@ -26,8 +43,8 @@ int main(int argc, char* argv[]){
     ec::Facade::JSONFacade::json jsonFacade;
     status = jsonFacade.parseFile(jsonFile);
     if (status != 0) {
-        std::cout << "[dbg] Error in parsing file.. exiting" << std::endl;
-        std::cout << "[status code]: " << status << std::endl;
+        SPDLOG_ERROR("[dbg] Error in parsing file.. exiting");
+        SPDLOG_ERROR("[status code]: {}", status);
         return 1;
     }
     auto app_name = jsonFacade.getAppName();
@@ -41,7 +58,7 @@ int main(int argc, char* argv[]){
     for(const auto &i : server_ports) {
         gcm->create_manager();
     }
-    std::cout << "[dbg] num managers: " << gcm->get_managers().size() << std::endl;
+    SPDLOG_INFO("[dbg] num managers: {}", gcm->get_managers().size());
     
     gcm->run(app_name, gcm_ip);
 

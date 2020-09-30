@@ -20,5 +20,7 @@ minikube
 *.grpc*
 *.pb*
 cmake-build-relwithdebinfo/
+cmake-build-debug_max/
 cmake_install.cmake
 deploy_test
+tests/app_def.json

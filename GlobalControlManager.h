@@ -17,6 +17,8 @@
 #include "om.h"
 #include <thread>
 #include "Manager.h"
+#include "spdlog/spdlog.h"
+
 
 #define __NUM_THREADS__ 32
 //std::mutex eclock;

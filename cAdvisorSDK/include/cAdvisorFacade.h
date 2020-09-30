@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include "../../jsonSDK/include/JSONFacade.h"
+#include "spdlog/spdlog.h"
 
 namespace ec {
     namespace Facade {
