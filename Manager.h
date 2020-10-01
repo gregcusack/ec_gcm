@@ -11,6 +11,9 @@
 #include "Agents/AgentClientDB.h"
 #include <cstdint>
 #include <mutex>
+#include <future>
+#include <numeric>
+#include <vector>
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
@@ -37,6 +40,7 @@ namespace ec {
         virtual void run();
         int handle_add_cgroup_to_ec(const msg_t *req, msg_t *res, uint32_t ip, int fd) override;
 
+	uint64_t reclaim(SubContainer::ContainerId containerId, SubContainer* subContainer);
         // Need to remove this when Agent code gets merged with the correct codebase version
         struct reclaim_msg {
             uint16_t cgroup_id;

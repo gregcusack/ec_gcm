@@ -296,36 +296,52 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
     return __ALLOC_SUCCESS__;
 }
 
+uint64_t ec::Manager::reclaim(SubContainer::ContainerId containerId, SubContainer* subContainer){
+
+	uint64_t ret = 0;
+	auto mem_limit_pages = subContainer->get_mem_limit_in_pages();
+    auto mem_limit_bytes = page_to_byte(mem_limit_pages);
+    auto mem_usage_bytes = sc_get_memory_usage_in_bytes(containerId);
+
+	if(mem_limit_bytes - mem_usage_bytes > _SAFE_MARGIN_BYTES_) {
+        auto is_max_mem_resized = sc_resize_memory_limit_in_pages(containerId,
+                                                                  byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
+        SPDLOG_TRACE("byte to page macro output: {}", byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_)));
+        SPDLOG_TRACE("is_max_mem_resized: {}", is_max_mem_resized);
+        if(!is_max_mem_resized) {
+            ret = byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_));
+            sc_set_memory_limit_in_pages(*subContainer->get_c_id(), byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
+        }
+    }
+	else {
+        SPDLOG_DEBUG("mem usage to close to mem_limit_bytes to resize! --> limit - usage: {}", mem_limit_bytes - mem_usage_bytes);
+        SPDLOG_DEBUG("safe margin: {}", _SAFE_MARGIN_BYTES_);
+    }
+	return ret;
+
+}
+
 //todo: reclaim memory should already know what each container mem limit is
 uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
-    uint64_t total_reclaimed = 0;
+	std::vector<std::future<uint64_t>> futures;
+    std::vector<uint64_t> reclaim_amounts;
 
     SPDLOG_DEBUG("GCM: Trying to reclaim memory from other cgroups!");
     for (const auto &container : ec_get_subcontainers()) {
         if (container.second->get_fd() == client_fd) {
             continue;
         }
-        auto mem_limit_pages = container.second->get_mem_limit_in_pages();
-        auto mem_limit_bytes = page_to_byte(mem_limit_pages);
-
-        auto mem_usage_bytes = sc_get_memory_usage_in_bytes(container.first);
-        if(mem_limit_bytes - mem_usage_bytes > _SAFE_MARGIN_BYTES_) {
-            auto is_max_mem_resized = sc_resize_memory_limit_in_pages(container.first,
-                                                                      byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
-            SPDLOG_TRACE("byte to page macro output: {}", byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_)));
-            SPDLOG_TRACE("is_max_mem_resized: {}", is_max_mem_resized);
-            if(!is_max_mem_resized) {
-                total_reclaimed += byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_));
-                sc_set_memory_limit_in_pages(*container.second->get_c_id(), byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
-            }
-        }
-        else {
-            SPDLOG_DEBUG("mem usage to close to mem_limit_bytes to resize! --> limit - usage: {}", mem_limit_bytes - mem_usage_bytes);
-            SPDLOG_DEBUG("safe margin: {}", _SAFE_MARGIN_BYTES_);
-        }
+        std::future<uint64_t> reclaimed = std::async(std::launch::async, &ec::Manager::reclaim, this, container.first, container.second);
+        futures.push_back(std::move(reclaimed));
     }
-    SPDLOG_DEBUG("Recalimed memory at the end of the reclaim function: {}", total_reclaimed);
-    return total_reclaimed;
+
+    uint64_t ret = 0;
+    for(auto &rec : futures) {
+        ret += rec.get();   //TODO: get blocks. do we need a timeout if reclaim() never returns??
+    }
+
+    SPDLOG_DEBUG("Recalimed memory at the end of the reclaim function: {}", ret);
+    return ret;
 }
 
 int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd){
