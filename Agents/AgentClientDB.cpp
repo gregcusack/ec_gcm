@@ -13,12 +13,10 @@ ec::AgentClientDB * ec::AgentClientDB::get_agent_client_db_instance() {
 
 void ec::AgentClientDB::add_agent_client(AgentClient* new_agent_client) {
     if(agents_db.find(new_agent_client->get_agent_ip()) != agents_db.end()) {
-        std::cout << "[Error] This agent has been already added! it cannot be added again." << std::endl;
+        SPDLOG_ERROR("This agent has been already added! it cannot be added again.");
         return;
     }
-    //std::cout << "[dbg] this is ne agent clients added to the db: " << new_agent_client->get_agent_ip() << std::endl;
     agents_db.insert({new_agent_client->get_agent_ip(), new_agent_client});
-    //std::cout << "[dbg] add_agent_client: Size of the agent client db: " << agents_db.size() << std::endl;
 }
 
 void ec::AgentClientDB::remove_agent_client(const AgentClient& target_agent_client) {
@@ -31,6 +29,5 @@ ec::AgentClient *ec::AgentClientDB::get_agent_client_by_ip(const om::net::ip4_ad
         return itr->second;
     }
     return nullptr;
-//    return agents_db.find(req) != agents_db.end() ? agents_db[req] : nullptr;
 }
 

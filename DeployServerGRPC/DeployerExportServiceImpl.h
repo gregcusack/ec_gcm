@@ -19,7 +19,8 @@
 #include "../SubContainer.h"
 #include "../Agents/AgentClient.h"
 #include "../ElasticContainer.h"
-//#include "../Manager.h"
+#include "spdlog/spdlog.h"
+#include "spdlog/fmt/ostr.h"
 
 namespace ec {
     namespace rpc {

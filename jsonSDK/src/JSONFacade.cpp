@@ -69,23 +69,23 @@ int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
 //        parseSpecs();
     }
     catch (const web::json::json_exception& excep) {
-        std::cout << "ERROR Parsing JSON file: " << excep.what() << std::endl;
+        SPDLOG_ERROR("ERROR Parsing JSON file: {}", excep.what());
         return __ERROR__;
     }
     catch(const std::runtime_error& re) {
         // speciffic handling for runtime_error
-        std::cerr << "Runtime error: " << re.what() << std::endl;
+        SPDLOG_ERROR("Runtime error: {}", re.what());
         return __ERROR__;
     }
     catch(const std::exception& ex) {
         // speciffic handling for all exceptions extending std::exception, except
         // std::runtime_error which is handled explicitly
-        std::cerr << "Error occurred: " << ex.what() << std::endl;
+        SPDLOG_ERROR("Error occurred: {}", ex.what());
         return __ERROR__;
     }
     catch(...) {
         // catch any other errors (that we have no information about)
-        std::cerr << "Unknown failure occurred. Possible memory corruption" << std::endl;
+        SPDLOG_ERROR("Unknown failure occurred. Possible memory corruption");
         return __ERROR__;
     }
 
@@ -192,7 +192,7 @@ void ec::Facade::JSONFacade::json::postJSONRequest(const std::string &url, const
         try {
             json_return = task.get();
         }
-        catch (const web::http::http_exception& e) {                    
+        catch (const web::http::http_exception& e) {
             std::cout << "error " << e.what() << std::endl;
         }
         catch(...) {
@@ -278,8 +278,7 @@ uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseSpecs(const std::str
     web::json::value jsonResponse = web::json::value::parse(jsonResp);
     const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
     const web::json::value &kubePodSpecs = jsonResponse.as_object().cbegin()->second;
-    const web::json::object &k = kubePodSpecs.as_object();//["spec"]]["memory"]["limit"]
-//    std::cout << "resource: " << resource << ", type: " << type << std::endl;
+    const web::json::object &k = kubePodSpecs.as_object();
     return k.at("spec").at(resource).at(type).as_number().to_uint64();
 }
 
@@ -287,10 +286,8 @@ uint64_t ec::Facade::JSONFacade::json::parseCAdvisorCPUResponseStats(const std::
     web::json::value jsonResponse = web::json::value::parse(jsonResp);
     const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
     const web::json::value &kubePodStats = jsonResponse.as_object().cbegin()->second;
-    const web::json::object &k = kubePodStats.as_object();//["stats"]{["memory"]["limit"]}{}{}{}..
-//    std::cout << "resource: " << resource << ", type: " << type << std::endl;
+    const web::json::object &k = kubePodStats.as_object();
     const auto len = k.at("stats").as_array().size();
-//    std::cout << "length of array response " << len << std::endl;
     const auto &last = k.at("stats").as_array().at(len-1).as_object();
     return last.at(resource).at("cfs").at(type).as_number().to_uint64();
 }
@@ -299,10 +296,8 @@ uint64_t ec::Facade::JSONFacade::json::parseCAdvisorResponseStats(const std::str
     web::json::value jsonResponse = web::json::value::parse(jsonResp);
     const utility::string_t &kubePodName = jsonResponse.as_object().cbegin()->first;
     const web::json::value &kubePodStats = jsonResponse.as_object().cbegin()->second;
-    const web::json::object &k = kubePodStats.as_object();//["stats"]{["memory"]["limit"]}{}{}{}..
-//    std::cout << "resource: " << resource << ", type: " << type << std::endl;
+    const web::json::object &k = kubePodStats.as_object();
     const auto len = k.at("stats").as_array().size();
-//    std::cout << "length of array response " << len << std::endl;
     const auto &last = k.at("stats").as_array().at(len-1).as_object();
     return last.at(resource).at(type).as_number().to_uint64();
 }
