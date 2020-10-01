@@ -335,12 +335,11 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
         futures.push_back(std::move(reclaimed));
     }
 
-	reclaim_amounts.reserve(futures.size());
+    uint64_t ret = 0;
     for(auto &rec : futures) {
-        reclaim_amounts.push_back(rec.get());
+        ret += rec.get();   //TODO: get blocks. do we need a timeout if reclaim() never returns??
     }
 
-    uint64_t ret = std::accumulate(reclaim_amounts.begin(), reclaim_amounts.end(), 0.0);
     SPDLOG_DEBUG("Recalimed memory at the end of the reclaim function: {}", ret);
     return ret;
 }
