@@ -315,23 +315,23 @@ uint64_t ec::Manager::reclaim(SubContainer::ContainerId containerId, SubContaine
 
 	uint64_t ret = 0;
 	auto mem_limit_pages = subContainer->get_mem_limit_in_pages();
-        auto mem_limit_bytes = page_to_byte(mem_limit_pages);
-        auto mem_usage_bytes = sc_get_memory_usage_in_bytes(containerId);
+    auto mem_limit_bytes = page_to_byte(mem_limit_pages);
+    auto mem_usage_bytes = sc_get_memory_usage_in_bytes(containerId);
 
 	if(mem_limit_bytes - mem_usage_bytes > _SAFE_MARGIN_BYTES_) {
-            auto is_max_mem_resized = sc_resize_memory_limit_in_pages(containerId,
-                                                                      byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
-            std::cout << "[dbg] byte to page macro output: " << byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_)) << std :: endl;
-            std::cout << "[dbg] is_max_mem_resized: " << is_max_mem_resized << std::endl;
-            if(!is_max_mem_resized) {
-                ret = byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_));
-                sc_set_memory_limit_in_pages(*subContainer->get_c_id(), byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
-            }
+        auto is_max_mem_resized = sc_resize_memory_limit_in_pages(containerId,
+                                                                  byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
+        std::cout << "[dbg] byte to page macro output: " << byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_)) << std :: endl;
+        std::cout << "[dbg] is_max_mem_resized: " << is_max_mem_resized << std::endl;
+        if(!is_max_mem_resized) {
+            ret = byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_));
+            sc_set_memory_limit_in_pages(*subContainer->get_c_id(), byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
         }
-        else {
-            std::cout << "mem usage to close to mem_limit_bytes to resize! --> limit - usage: " << mem_limit_bytes - mem_usage_bytes << std::endl;
-            std::cout << "safe margin: " << _SAFE_MARGIN_BYTES_ << std::endl;
-        }
+    }
+	else {
+        std::cout << "mem usage to close to mem_limit_bytes to resize! --> limit - usage: " << mem_limit_bytes - mem_usage_bytes << std::endl;
+        std::cout << "safe margin: " << _SAFE_MARGIN_BYTES_ << std::endl;
+    }
 	return ret;
 
 }
@@ -339,24 +339,26 @@ uint64_t ec::Manager::reclaim(SubContainer::ContainerId containerId, SubContaine
 //todo: reclaim memory should already know what each container mem limit is
 uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
 	std::vector<std::future<uint64_t>> futures;
-        std::vector<uint64_t> reclaim_amounts;
+    std::vector<uint64_t> reclaim_amounts;
 
-        std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
-        for (const auto &container : ec_get_subcontainers()) {
-            if (container.second->get_fd() == client_fd) {
-                continue;
-            }
-
-            std::future<uint64_t> reclaimed = std::async(std::launch::async, &ec::Manager::reclaim, this, container.first, container.second);
-	    futures.push_back(std::move(reclaimed));
+    std::cout << "[INFO] GCM: Trying to reclaim memory from other cgroups!" << std::endl;
+    for (const auto &container : ec_get_subcontainers()) {
+        if (container.second->get_fd() == client_fd) {
+            continue;
         }
 
-	for(auto &rec : futures)
-	    reclaim_amounts.push_back(rec.get());
+        std::future<uint64_t> reclaimed = std::async(std::launch::async, &ec::Manager::reclaim, this, container.first, container.second);
+        futures.push_back(std::move(reclaimed));
+    }
 
-        uint64_t ret = std::accumulate(reclaim_amounts.begin(), reclaim_amounts.end(), 0);
-        std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " <<  ret << std::endl;
-        return ret;
+	reclaim_amounts.reserve(futures.size());
+    for(auto &rec : futures) {
+        reclaim_amounts.push_back(rec.get());
+    }
+
+    uint64_t ret = std::accumulate(reclaim_amounts.begin(), reclaim_amounts.end(), 0.0);
+    std::cout << "[dbg] Recalimed memory at the end of the reclaim function: " <<  ret << std::endl;
+    return ret;
 }
 
 int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd){
