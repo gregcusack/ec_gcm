@@ -132,7 +132,7 @@ void ec::Server::handle_client_reqs(void *args) {
         }
         else if(ret == __ALLOC_FAILED__) {
             SPDLOG_ERROR("handle_req() failed!");
-            break;
+//            break;
         }
         delete res;
     }
