@@ -44,6 +44,11 @@ namespace ec {
         };
         struct serv_thread_args {
             serv_thread_args()              = default;
+            ~serv_thread_args() {
+                if(cliaddr) {
+                    cliaddr = nullptr;
+                }
+            }
             serv_thread_args(int _clifd, struct sockaddr_in *_cliaddr)
                     : clifd(_clifd), cliaddr(_cliaddr) {}
             int clifd                       = 0;
