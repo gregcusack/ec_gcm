@@ -362,6 +362,9 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
             ret = Manager::handle_add_cgroup_to_ec(req, res, host_ip, clifd);
             break;
         default:
+#if(SPDLOG_ACTIVE_LEVEL == SPDLOG_LEVEL_TRACE)
+                std::cout << "Get ec_get_num_subcontainers(): " << ec_get_num_subcontainers() << std::endl;
+#endif
             SPDLOG_ERROR("Handling memory/cpu request failed! manager_id: {}", manager_id);
     }
     return ret;
