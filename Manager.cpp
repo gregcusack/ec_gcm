@@ -10,6 +10,7 @@ ec::Manager::Manager( int _manager_id, ec::ip4_addr gcm_ip, uint16_t server_port
 
     //init server
     initialize();
+    hotos_logs = std::unordered_map<SubContainer::ContainerId, std::ofstream *>();
 }
 
 void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip) {
@@ -67,29 +68,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         return __ALLOC_SUCCESS__;
     }
 
-//    sc_map_lock.lock();
-/*    for (const auto &i : get_subcontainers()) {
-        //todo: need total_rt_in_sys as val like unalloc_rt -> update at every update.
-        tot_rt_and_overrun += i.second->get_quota();
-    }
-    if(tot_rt_and_overrun != ec_get_alloc_rt()) {
-        std::cout << "[MANAGER ERROR]: tot_rt != alloc_rt: (" << tot_rt_and_overrun << ", " << ec_get_alloc_rt() << ")" << std::endl;
-    }
-*/
-//    std::cout << "tot_rt sum sc vs tot_alloc: (" << tot_rt_and_overrun << ", " << ec_get_alloc_rt() << ")" << std::endl;
-//    std::cout << "rt in subcontainers: " << total_rt_in_sys << std::endl;
-//    std::cout << "rt in unallocated pool: " << ec_get_cpu_unallocated_rt() << std::endl;
-//    std::cout << "fair_share: " << ec_get_fair_cpu_share() << std::endl;
-//    std::cout << "max cpu: " << ec_get_total_cpu() << std::endl;
-
-
-//    sc_map_lock.unlock();
-
-//    std::cout << "total rt given to containers: " << total_rt_in_sys << std::endl;
     total_rt_in_sys = ec_get_alloc_rt() + ec_get_cpu_unallocated_rt(); //alloc, overrun, unalloc
-//    auto tot_rt_and_overrun = total_rt_in_sys + ec_get_overrun();
-    //std::cout << "total rt in system, ovrn: " << total_rt_in_sys << ", " << ec_get_overrun() << std::endl;
-
     cpuleak += (int64_t)ec_get_total_cpu() - (int64_t)total_rt_in_sys;
 
     if( cpuleak >= _MAX_CPU_LOSS_IN_NS_) {
@@ -98,7 +77,32 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         cpuleak = 0;
     }
 
-//    std::cout << "total rt + overrun in system: " << tot_rt_and_overrun << std::endl;
+
+    /***
+     * HotOS Logging. Per-container metrics
+     * Quota (this is what we have set)
+     * quota - rt_remaining = usage
+     */
+
+    auto logger = hotos_logs.find(sc_id);
+    if(logger != hotos_logs.end()) {
+        auto fp = logger->second;
+        fp->open("/home/greg/Desktop/hotos_logs/logger_cgid_" + std::to_string(req->cgroup_id) + ".txt", std::ios_base::app);
+        auto runtime = rx_quota - rt_remaining;
+
+        auto us = std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::system_clock::now().time_since_epoch()
+        ).count();
+
+        *fp << std::to_string(rx_quota) + "," + std::to_string(runtime) + "," + std::to_string(us) + "\n";
+        fp->close();
+    }
+    else {
+        std::cout << "can't find file pointed for sc_id: " << sc_id << std::endl;
+    }
+
+
+
 
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
@@ -385,6 +389,10 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
         SPDLOG_ERROR("Unable to create new sc object");
         return __ALLOC_FAILED__;
     }
+
+    /* HOTOS LOGGING */
+    auto *f = new std::ofstream();
+    hotos_logs.insert({*sc->get_c_id(), f});
 
     //todo: possibly lock subcontainers map here
     int ret = _ec->insert_sc(*sc);
