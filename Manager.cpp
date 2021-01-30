@@ -87,7 +87,8 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     auto logger = hotos_logs.find(sc_id);
     if(logger != hotos_logs.end()) {
         auto fp = logger->second;
-        fp->open("/home/greg/Desktop/hotos_logs/logger_cgid_" + std::to_string(req->cgroup_id) + ".txt", std::ios_base::app);
+	//fp->open("/home/greg/Desktop/hotos_logs/logger_cgid_" + std::to_string(req->cgroup_id) + ".txt", std::ios_base::app);
+	fp->open("/users/gcusack/hotos/hotos_logs/logger_node_" + req->client_ip.to_string() + "_cgid_" + std::to_string(req->cgroup_id) + ".txt", std::ios_base::app);
         auto runtime = rx_quota - rt_remaining;
 
         auto us = std::chrono::duration_cast<std::chrono::microseconds>(
