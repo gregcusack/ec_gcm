@@ -89,7 +89,8 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     auto logger = hotos_logs.find(sc_id);
     if(logger != hotos_logs.end()) {
         auto fp = logger->second;
-        fp->open("/home/greg/Desktop/hotos_logs/logger_cgid_" + std::to_string(req->cgroup_id) + ".txt", std::ios_base::app);
+	//fp->open("/home/greg/Desktop/hotos_logs/logger_cgid_" + std::to_string(req->cgroup_id) + ".txt", std::ios_base::app);
+	fp->open("/users/gcusack/hotos/hotos_logs/logger_node_" + req->client_ip.to_string() + "_cgid_" + std::to_string(req->cgroup_id) + ".txt", std::ios_base::app);
         auto runtime = rx_quota - rt_remaining;
 
         auto us = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -106,9 +107,12 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
-
+    //auto percent_decr = (((int64_t)rx_quota-(int64_t)rt_mean) / (int64_t)rx_quota);
+    auto percent_decr = (double)((int64_t)rx_quota-((int64_t)rx_quota - (int64_t)rt_remaining)) / (double)rx_quota;
+    //std::cout << "rx_quota, rt_remaining, percent_decr: " << rx_quota << "," << rt_remaining << "," << percent_decr << std::endl;
+    
     if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
-        uint64_t to_sub;
+	uint64_t to_sub;
         uint64_t amnt_share_over = rx_quota - ec_get_fair_cpu_share();
         uint64_t overrun = ec_get_overrun();
         double percent_over = ((double)rx_quota - (double)ec_get_fair_cpu_share()) / (double)ec_get_fair_cpu_share();
@@ -137,7 +141,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(rx_quota < ec_get_fair_cpu_share() && thr_mean > 0.5) {   //throttled but don't have fair share
-        uint64_t amnt_share_lacking = ec_get_fair_cpu_share() - rx_quota;
+	uint64_t amnt_share_lacking = ec_get_fair_cpu_share() - rx_quota;
         if (ec_get_cpu_unallocated_rt() > 0) {
             //TODO: take min of to_Add and slice. don't full reset
             double percent_under = ((double)ec_get_fair_cpu_share() - (double)rx_quota) / (double)ec_get_fair_cpu_share();
@@ -183,8 +187,8 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
         }
     }
-    else if(thr_mean >= 0.2 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
-        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(2 * thr_mean * ec_get_cpu_slice()));
+    else if(thr_mean >= 0.1 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
+	auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(4 * thr_mean * ec_get_cpu_slice()));
         if(extra_rt > 0) {
             updated_quota = rx_quota + extra_rt;
             ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
@@ -200,9 +204,11 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
         }
     }
-    else if(rt_mean > rx_quota * 0.2 && rx_quota >= ec_get_cpu_slice()) { //greater than 20% of quota unused
-        uint64_t new_quota = rx_quota * (1 - 0.4); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
+    else if(percent_decr > 0.2 && rx_quota >= ec_get_cpu_slice()) { //greater than 20% of quota unused
+        //std::cout << "rx_quota, rt_mean, percent_decr: " << rx_quota << "," << rt_mean << "," << percent_decr << std::endl;
+	    uint64_t new_quota = rx_quota * (1 - 0.2); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
+	    //std::cout << "scale down!. rx, new: " << rx_quota << "," << new_quota << std::endl;
         if(new_quota != rx_quota) {
             ret = set_sc_quota_syscall(sc, new_quota, seq_num); //give back what was used + 5ms
             if(ret) {
@@ -217,9 +223,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
         }
     }
-    else if(rt_mean > _MAX_UNUSED_RT_IN_NS_ && rx_quota >= ec_get_cpu_slice()) {
-        uint64_t new_quota = rx_quota - _MAX_UNUSED_RT_IN_NS_;
+    else if(rt_mean > _MAX_UNUSED_RT_IN_NS_ && rx_quota > ec_get_cpu_slice()) {
+	uint64_t new_quota = rx_quota - _MAX_UNUSED_RT_IN_NS_;
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
+	//std::cout << "rt_mean, rx_quota, rx_quota-new_quota: " << rt_mean << "," << rx_quota << "," << rx_quota-new_quota << std::endl;
         if(new_quota != rx_quota) {
             ret = set_sc_quota_syscall(sc, new_quota, seq_num); //give back what was used + 5ms
             if(ret) {
