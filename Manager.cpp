@@ -10,7 +10,9 @@ ec::Manager::Manager( int _manager_id, ec::ip4_addr gcm_ip, uint16_t server_port
 
     //init server
     initialize();
+#ifndef NDEBUG
     hotos_logs = std::unordered_map<SubContainer::ContainerId, std::ofstream *>();
+#endif
 }
 
 void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip) {
@@ -83,7 +85,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
      * Quota (this is what we have set)
      * quota - rt_remaining = usage
      */
-
+#ifndef NDEBUG
     auto logger = hotos_logs.find(sc_id);
     if(logger != hotos_logs.end()) {
         auto fp = logger->second;
@@ -100,9 +102,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     else {
         std::cout << "can't find file pointed for sc_id: " << sc_id << std::endl;
     }
-
-
-
+#endif
 
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
@@ -201,7 +201,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(rt_mean > rx_quota * 0.2 && rx_quota >= ec_get_cpu_slice()) { //greater than 20% of quota unused
-        uint64_t new_quota = rx_quota * (1 - 0.2); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
+        uint64_t new_quota = rx_quota * (1 - 0.4); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
         if(new_quota != rx_quota) {
             ret = set_sc_quota_syscall(sc, new_quota, seq_num); //give back what was used + 5ms
@@ -390,9 +390,11 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
         return __ALLOC_FAILED__;
     }
 
+#ifndef NDEBUG
     /* HOTOS LOGGING */
     auto *f = new std::ofstream();
     hotos_logs.insert({*sc->get_c_id(), f});
+#endif
 
     //todo: possibly lock subcontainers map here
     int ret = _ec->insert_sc(*sc);

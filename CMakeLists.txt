@@ -3,6 +3,8 @@ project(ec_gcm)
 
 set(CMAKE_CXX_STANDARD 17)
 set(PTHREAD_LIB pthread)
+set(ignoreMe "${LOG_CPU_TRACKING}")
+
 
 include(FindProtobuf)
 include(cmake/grpc.cmake)

@@ -71,7 +71,9 @@ namespace ec {
         void determine_mem_limit_for_new_pod(SubContainer *sc, int clifd);
 
         /* HOTOS LOGGING */
+#ifndef NDEBUG
         std::unordered_map<SubContainer::ContainerId, std::ofstream*> hotos_logs;
+#endif
 
 
     };
