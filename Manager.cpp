@@ -112,7 +112,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     //std::cout << "rx_quota, rt_remaining, percent_decr: " << rx_quota << "," << rt_remaining << "," << percent_decr << std::endl;
     
     if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
-	uint64_t to_sub;
+	    uint64_t to_sub;
         uint64_t amnt_share_over = rx_quota - ec_get_fair_cpu_share();
         uint64_t overrun = ec_get_overrun();
         double percent_over = ((double)rx_quota - (double)ec_get_fair_cpu_share()) / (double)ec_get_fair_cpu_share();
