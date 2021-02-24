@@ -79,7 +79,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         cpuleak = 0;
     }
 
-
+    std::cout << "in cpu loop" << std::endl;
     /***
      * HotOS Logging. Per-container metrics
      * Quota (this is what we have set)
@@ -110,9 +110,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     //auto percent_decr = (((int64_t)rx_quota-(int64_t)rt_mean) / (int64_t)rx_quota);
     auto percent_decr = (double)((int64_t)rx_quota-((int64_t)rx_quota - (int64_t)rt_remaining)) / (double)rx_quota;
     //std::cout << "rx_quota, rt_remaining, percent_decr: " << rx_quota << "," << rt_remaining << "," << percent_decr << std::endl;
-    
+    std::cout << "here1" << std::endl;
     if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
-	    uint64_t to_sub;
+        std::cout << "here2" << std::endl;
+        uint64_t to_sub;
         uint64_t amnt_share_over = rx_quota - ec_get_fair_cpu_share();
         uint64_t overrun = ec_get_overrun();
         double percent_over = ((double)rx_quota - (double)ec_get_fair_cpu_share()) / (double)ec_get_fair_cpu_share();
@@ -141,7 +142,8 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(rx_quota < ec_get_fair_cpu_share() && thr_mean > 0.5) {   //throttled but don't have fair share
-	uint64_t amnt_share_lacking = ec_get_fair_cpu_share() - rx_quota;
+        std::cout << "here2" << std::endl;
+        uint64_t amnt_share_lacking = ec_get_fair_cpu_share() - rx_quota;
         if (ec_get_cpu_unallocated_rt() > 0) {
             //TODO: take min of to_Add and slice. don't full reset
             double percent_under = ((double)ec_get_fair_cpu_share() - (double)rx_quota) / (double)ec_get_fair_cpu_share();
@@ -188,7 +190,8 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(thr_mean >= 0.1 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
-	auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(4 * thr_mean * ec_get_cpu_slice()));
+        std::cout << "here3" << std::endl;
+        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(4 * thr_mean * ec_get_cpu_slice()));
         if(extra_rt > 0) {
             updated_quota = rx_quota + extra_rt;
             ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
@@ -205,12 +208,15 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(percent_decr > 0.2 && rx_quota >= ec_get_cpu_slice()) { //greater than 20% of quota unused
+        std::cout << "here12" << std::endl;
         //std::cout << "rx_quota, rt_mean, percent_decr: " << rx_quota << "," << rt_mean << "," << percent_decr << std::endl;
 	    uint64_t new_quota = rx_quota * (1 - 0.2); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
 	    //std::cout << "scale down!. rx, new: " << rx_quota << "," << new_quota << std::endl;
         if(new_quota != rx_quota) {
+            std::cout << "here7" << std::endl;
             ret = set_sc_quota_syscall(sc, new_quota, seq_num); //give back what was used + 5ms
+            std::cout << "here8" << std::endl;
             if(ret) {
                 SPDLOG_ERROR("Can't read from socket to resize quota (decr). ret: {}", ret);
             }
@@ -224,15 +230,21 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(rt_mean > _MAX_UNUSED_RT_IN_NS_ && rx_quota > ec_get_cpu_slice()) {
-	uint64_t new_quota = rx_quota - _MAX_UNUSED_RT_IN_NS_;
+        std::cout << "here4-: " << rx_quota << ", " << _MAX_UNUSED_RT_IN_NS_ << std::endl;
+        uint64_t new_quota = rx_quota - _MAX_UNUSED_RT_IN_NS_;
+        std::cout << "here9" << std::endl;
+
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
-	//std::cout << "rt_mean, rx_quota, rx_quota-new_quota: " << rt_mean << "," << rx_quota << "," << rx_quota-new_quota << std::endl;
+        std::cout << "here10" << std::endl;
+
+        //std::cout << "rt_mean, rx_quota, rx_quota-new_quota: " << rt_mean << "," << rx_quota << "," << rx_quota-new_quota << std::endl;
         if(new_quota != rx_quota) {
             ret = set_sc_quota_syscall(sc, new_quota, seq_num); //give back what was used + 5ms
             if(ret) {
                 SPDLOG_ERROR("Can't read from socket to resize quota (decr 5ms diff). ret: {}", ret);
             }
             else {
+                std::cout << "here6" << std::endl;
                 sc->set_quota_flag(true);
                 ec_incr_unallocated_rt(rx_quota - new_quota); //unalloc_rt <-- old quota - new quota
                 sc->set_quota(new_quota);
@@ -240,7 +252,9 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
                 ec_decr_alloc_rt(rx_quota - new_quota);
             }
         }
+        std::cout << "here11" << std::endl;
     }
+    std::cout << "here5" << std::endl;
 
     seq_number++;
     res->request = 1;
