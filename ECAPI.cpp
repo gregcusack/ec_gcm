@@ -145,7 +145,8 @@ int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, u
     msg_req.set_cgroup_id(sc->get_c_id()->cgroup_id);
     msg_req.set_request(seq_number);
     msg_req.set_quota(_quota);
-    msg_req.set_payload_string("test");
+//    msg_req.set_payload_string("test");
+    msg_req.set_payload_string(sc->get_docker_id());
 
     auto agent = _ec->get_corres_agent(*sc->get_c_id());
     if(!agent) {

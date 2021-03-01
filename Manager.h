@@ -14,6 +14,9 @@
 #include <future>
 #include <numeric>
 #include <vector>
+#include <fstream> //For HotOS Logging
+#include <chrono>
+#include <unistd.h>
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
@@ -67,6 +70,12 @@ namespace ec {
         std::string deploy_service_ip;
 
         void determine_mem_limit_for_new_pod(SubContainer *sc, int clifd);
+
+        /* HOTOS LOGGING */
+#ifndef NDEBUG
+        std::unordered_map<SubContainer::ContainerId, std::ofstream*> hotos_logs;
+        std::string get_current_dir();
+#endif
 
 
     };
