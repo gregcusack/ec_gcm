@@ -43,6 +43,9 @@ namespace ec {
         void set_ip_from_net(uint32_t ip) { //this will not be needed later
             client_ip = om::net::ip4_addr::from_net(ip);
         };
+        void set_ip_from_host(uint32_t ip) {
+            client_ip = om::net::ip4_addr::from_host(ip);
+        }
         void set_ip_from_string(std::string ip) { //this will not be needed later
             client_ip = om::net::ip4_addr::from_string(ip);
         };

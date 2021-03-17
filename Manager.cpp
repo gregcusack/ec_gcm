@@ -4,20 +4,33 @@
 
 #include "Manager.h"
 
-ec::Manager::Manager( int _manager_id, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
-            : Server(_manager_id, gcm_ip, server_port, agents), ECAPI(_manager_id), manager_id(_manager_id),
-            seq_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
+//ec::Manager::Manager( int _manager_id, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
+//            : Server(_manager_id, gcm_ip, server_port, agents), ECAPI(_manager_id), manager_id(_manager_id),
+//            seq_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
+//
+//    //init server
+//    initialize_tcp();
+//#ifndef NDEBUG
+//    hotos_logs = std::unordered_map<SubContainer::ContainerId, std::ofstream *>();
+//#endif
+//}
 
+ec::Manager::Manager(int _manager_id, ec::ip4_addr gcm_ip, ec::ports_t controller_ports, std::vector<Agent *> &agents)
+        : Server(_manager_id, gcm_ip, controller_ports, agents), ECAPI(_manager_id), manager_id(_manager_id),
+          seq_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {
     //init server
-    initialize();
+    initialize_tcp();
+    initialize_udp();
 #ifndef NDEBUG
     hotos_logs = std::unordered_map<SubContainer::ContainerId, std::ofstream *>();
 #endif
 }
 
+
 void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip) {
     //A thread to listen for subcontainers' events
-    std::thread event_handler_thread(&ec::Server::serve, this);
+    std::thread event_handler_thread_tcp(&ec::Server::serve_tcp, this);
+    std::thread event_handler_thread_udp(&ec::Server::serve_udp, this);
     ec::ECAPI::create_ec();
     grpcServer = new rpc::DeployerExportServiceImpl(_ec, cv, cv_dock, cv_mtx, cv_mtx_dock,sc_map_lock);
     std::thread grpc_handler_thread(&ec::Manager::serveGrpcDeployExport, this);
@@ -27,9 +40,9 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     std::thread application_thread(&ec::Manager::run, this);
     application_thread.join();
     grpc_handler_thread.join();
-    event_handler_thread.join();
+    event_handler_thread_tcp.join();
+    event_handler_thread_udp.join();
 
-//    delete get
     delete getGrpcServer();
 }
 
@@ -519,6 +532,8 @@ std::string ec::Manager::get_current_dir() {
     std::string current_working_dir(buff);
     return current_working_dir;
 }
+
+
 #endif
 
 

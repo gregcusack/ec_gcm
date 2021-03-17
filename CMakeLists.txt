@@ -84,7 +84,7 @@ set(GCM_CORE
         )
 
 add_executable(ec_gcm main.cpp
-        ${GCM_CORE})
+        ${GCM_CORE} types/ports.h)
 
 add_executable(deploy_test tests/grpc_test.cpp
         ${GCM_CORE})

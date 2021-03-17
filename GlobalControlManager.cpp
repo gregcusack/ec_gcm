@@ -17,14 +17,31 @@ ec::GlobalControlManager::GlobalControlManager(std::string ip_addr, uint16_t por
     }
 }
 
+ec::GlobalControlManager::GlobalControlManager(std::string ip_addr, uint16_t port, agents_ip_list &_agent_ips, std::vector<ports_t> &_server_ports)
+    : gcm_ip(ec::ip4_addr::from_string(std::move(ip_addr))), mngr(nullptr), gcm_port(port), controller_ports(_server_ports), manager_counts(1) {
+
+    for(const auto &i : _agent_ips) {
+        agents.emplace_back(new Agent(i));
+    }
+
+    if(agents.size() != _agent_ips.size()) {
+        SPDLOG_ERROR("ERROR: alloc agents failed!");
+        exit(EXIT_FAILURE);
+    }
+}
+
+
 uint32_t ec::GlobalControlManager::create_manager() {
     if(managers.find(manager_counts) != managers.end()) {
         SPDLOG_ERROR("Error allocating new Server. Server IDs not correct");
         return 0;
     }
 
-    uint16_t server_port = server_ports[manager_counts - 1]; //Give new EC, the next available port in the list
-    mngr = new Manager(manager_counts, gcm_ip, server_port, agents);
+    auto ports = controller_ports[manager_counts - 1];
+    mngr = new Manager(manager_counts, gcm_ip, ports, agents);
+
+//    uint16_t server_port = server_ports[manager_counts - 1]; //Give new EC, the next available port in the list
+//    mngr = new Manager(manager_counts, gcm_ip, server_port, agents);
 
     managers.insert({manager_counts, mngr});
 
