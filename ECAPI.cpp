@@ -149,14 +149,8 @@ int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, u
     msg_req.set_payload_string(sc->get_docker_id());
     std::cout << "set_quota cgid: " << *sc->get_c_id() << std::endl;
 
-    int itr = 0;
     while(unlikely(!sc->sc_inserted())) {
-        itr++;
         std::cout << "itr incr on sc inserted" << std::endl;
-        if(itr >= 20) {
-            SPDLOG_CRITICAL("agent for container == NULL. cg_id: {}", *sc->get_c_id());
-            std::exit(EXIT_FAILURE);
-        }
     }
 
     auto agent = _ec->get_corres_agent(*sc->get_c_id());
