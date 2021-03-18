@@ -420,7 +420,7 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
     // we can now create a map to link the container_id and agent_client
     AgentClientDB* acdb = AgentClientDB::get_agent_client_db_instance();
     auto agent_ip = sc->get_c_id()->server_ip;
-    std::cout << "add container. server_ip, cg_id: " << agent_ip << ", " << *sc->get_c_id() << std::endl;
+    std::cout << "add container. cg_id: " << *sc->get_c_id() << std::endl;
     auto target_agent = acdb->get_agent_client_by_ip(agent_ip);
     if ( target_agent ){
         std::lock_guard<std::mutex> lk(cv_mtx);

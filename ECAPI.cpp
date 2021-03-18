@@ -151,7 +151,7 @@ int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, u
 
     auto agent = _ec->get_corres_agent(*sc->get_c_id());
     if(!agent) {
-        SPDLOG_CRITICAL("agent for container == NULL");
+        SPDLOG_CRITICAL("agent for container == NULL. cg_id: {}", *sc->get_c_id());
         std::exit(EXIT_FAILURE);
     }
     int64_t ret = agent->send_request(msg_req);
