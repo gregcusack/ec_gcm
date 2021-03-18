@@ -150,7 +150,7 @@ int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, u
     std::cout << "set_quota cgid: " << *sc->get_c_id() << std::endl;
 
     while(unlikely(!sc->sc_inserted())) {
-        std::cout << "itr incr on sc inserted" << std::endl;
+//        std::cout << "itr incr on sc inserted" << std::endl;
     }
 
     auto agent = _ec->get_corres_agent(*sc->get_c_id());
