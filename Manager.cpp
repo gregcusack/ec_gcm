@@ -61,8 +61,8 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         SPDLOG_ERROR("sc is NULL!");
         return __ALLOC_SUCCESS__;
     }
-    sc->incr_counter();
-    auto req_count = sc->get_counter();
+    sc->incr_seq_num();
+    auto rx_seq_num = req->seq_num;
     auto rx_quota = req->rsrc_amnt;
     auto rt_remaining = req->runtime_remaining;
     auto throttled = req->request;
@@ -76,8 +76,15 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     uint64_t tot_rt_and_overrun = 0;
     uint32_t seq_num = seq_number;
 
+    if(sc->get_seq_num() != rx_seq_num) {
+        SPDLOG_ERROR("seq nums do not match for cg_id: {}, (rx, sc->get): ({}, {})", sc->get_c_id(), rx_seq_num, sc->get_seq_num());
+        cpulock.unlock();
+        res->request = 1;
+        return __ALLOC_SUCCESS__;
+    }
+
     if(rx_quota / 1000 != sc->get_quota() / 1000) {
-        SPDLOG_ERROR("quotas do not match (rx, sc->get): ({}, {})", rx_quota, sc->get_quota());
+        SPDLOG_ERROR("quotas do not match for cg_id: {}, (rx, sc->get): ({}, {})", sc->get_c_id(), rx_quota, sc->get_quota());
         cpulock.unlock();
         res->request = 1;
         return __ALLOC_SUCCESS__;

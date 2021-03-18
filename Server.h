@@ -11,8 +11,6 @@
 #include <string>
 #include "types/msg.h"
 #include "Agents/Agent.h"
-//#include "ECAPI.h"
-//#include "Manager.h"
 #include "Agents/AgentClient.h"
 #include "types/ports.h"
 #include "om.h"
@@ -21,15 +19,12 @@
 
 
 #define __MAX_CLIENT__ 128
-#define __HANDLE_REQ_BUFF__ 40 //TODO: may need to add back in
+#define __HANDLE_REQ_BUFF__ 48 //TODO: may need to add back in
 #define __FAILED__ -1
 
 #define __ALLOC_FAILED__ 0
 #define __ALLOC_SUCCESS__ 1
 #define __ALLOC_INIT__ 2
-#define __QUOTA__ 50000
-
-//using namespace utility;                    // Common utilities like string conversions
 
 namespace ec {
     class Server {

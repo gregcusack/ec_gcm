@@ -39,13 +39,13 @@ namespace ec {
 
                 void flush() { rt_winstats.flush(); th_winstats.flush(); }
 
+                void incr_seq_num() { seq_num++; }
+                uint64_t get_seq_num() { return seq_num; }
+
             private:
                 uint64_t quota;
-                uint64_t period;
-                bool alloc_extra_slices;
-                uint32_t num_local_slices_requested;
-                uint32_t num_local_slices_acquired;
-                uint64_t extra_runtime_to_give;
+                uint64_t seq_num;
+
 
                 uint32_t nr_throttled;
 

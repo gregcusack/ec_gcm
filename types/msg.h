@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <iostream>
 #include <cstdlib>
+#include <utility>
 #include "../om.h"
 
 namespace ec {
@@ -24,6 +25,7 @@ namespace ec {
         uint64_t            rsrc_amnt;      //amount of resources (cpu/mem)
         uint32_t                request;        //1: request, 0: give back
         uint64_t            runtime_remaining;
+        uint64_t            seq_num;
 //        uint64_t            cont_name;
 
         friend std::ostream& operator<<(std::ostream& os_, const msg_t& k) {
@@ -33,7 +35,8 @@ namespace ec {
                        << k.req_type << ","
                        << k.rsrc_amnt << ","
                        << k.request << ","
-                       << k.runtime_remaining;
+                       << k.runtime_remaining << ","
+                       << k.seq_num;
         }
 
         void from_net() {
@@ -47,7 +50,7 @@ namespace ec {
             client_ip = om::net::ip4_addr::from_host(ip);
         }
         void set_ip_from_string(std::string ip) { //this will not be needed later
-            client_ip = om::net::ip4_addr::from_string(ip);
+            client_ip = om::net::ip4_addr::from_string(std::move(ip));
         };
 
 
