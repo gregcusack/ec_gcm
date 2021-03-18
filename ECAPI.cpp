@@ -147,7 +147,7 @@ int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, u
     msg_req.set_quota(_quota);
 //    msg_req.set_payload_string("test");
     msg_req.set_payload_string(sc->get_docker_id());
-    std::cout << "set_quota cgid: " << *sc->get_c_id() << std::endl;
+//    std::cout << "set_quota cgid: " << *sc->get_c_id() << std::endl;
 
     while(unlikely(!sc->sc_inserted())) {
 //        std::cout << "itr incr on sc inserted" << std::endl;

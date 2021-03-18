@@ -420,20 +420,20 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
     // we can now create a map to link the container_id and agent_client
     AgentClientDB* acdb = AgentClientDB::get_agent_client_db_instance();
     auto agent_ip = sc->get_c_id()->server_ip;
-    std::cout << "add container. cg_id: " << *sc->get_c_id() << std::endl;
+//    std::cout << "add container. cg_id: " << *sc->get_c_id() << std::endl;
     auto target_agent = acdb->get_agent_client_by_ip(agent_ip);
     if ( target_agent ){
         std::lock_guard<std::mutex> lk(cv_mtx);
         _ec->add_to_sc_ac_map(*sc->get_c_id(), target_agent);
         sc->set_sc_inserted(true);
         /////
-        if(!_ec->get_corres_agent(*sc->get_c_id())) {
-            std::cout << "Bad! agent not found in sc_ac map" << std::endl;
-        }
-        else {
-            std::cout << "sc found in sc_ac map!" << std::endl;
-        }
-        /////
+//        if(!_ec->get_corres_agent(*sc->get_c_id())) {
+//            std::cout << "Bad! agent not found in sc_ac map" << std::endl;
+//        }
+//        else {
+//            std::cout << "sc found in sc_ac map!" << std::endl;
+//        }
+//        /////
         cv.notify_one();
     } else {
         SPDLOG_ERROR("SubContainer's node IP or Agent IP not found!");
