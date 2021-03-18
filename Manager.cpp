@@ -77,14 +77,16 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     uint32_t seq_num = seq_number;
 
     if(sc->get_seq_num() != rx_seq_num) {
-        SPDLOG_ERROR("seq nums do not match for cg_id: {}, (rx, sc->get): ({}, {})", sc->get_c_id(), rx_seq_num, sc->get_seq_num());
+        SPDLOG_ERROR("seq nums do not match for cg_id: ({}, {}), (rx, sc->get): ({}, {})",
+                     sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_seq_num, sc->get_seq_num());
         cpulock.unlock();
         res->request = 1;
         return __ALLOC_SUCCESS__;
     }
 
     if(rx_quota / 1000 != sc->get_quota() / 1000) {
-        SPDLOG_ERROR("quotas do not match for cg_id: {}, (rx, sc->get): ({}, {})", sc->get_c_id(), rx_quota, sc->get_quota());
+        SPDLOG_ERROR("quotas do not match for cg_id: ({}, {}), (rx, sc->get): ({}, {})",
+                     sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_quota, sc->get_quota());
         cpulock.unlock();
         res->request = 1;
         return __ALLOC_SUCCESS__;
