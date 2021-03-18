@@ -425,6 +425,7 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
     if ( target_agent ){
         std::lock_guard<std::mutex> lk(cv_mtx);
         _ec->add_to_sc_ac_map(*sc->get_c_id(), target_agent);
+        sc->set_sc_inserted(true);
         /////
         if(!_ec->get_corres_agent(*sc->get_c_id())) {
             std::cout << "Bad! agent not found in sc_ac map" << std::endl;

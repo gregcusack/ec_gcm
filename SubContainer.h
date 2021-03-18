@@ -72,10 +72,14 @@ namespace ec {
         void sc_incr_mem_limit(uint64_t _incr) { mem.incr_mem_limit(_incr); }
         void sc_decr_mem_limit(uint64_t _decr) { mem.decr_mem_limit(_decr); }
 
+        [[nodiscard]] bool sc_inserted() const { return inserted; }
+        void set_sc_inserted(bool _inserted) { inserted = _inserted; }
+
     private:
         ContainerId c_id;
         int fd;
         std::string _docker_id;
+        bool inserted;
 
         local::stats::cpu cpu;
         local::stats::mem mem;
