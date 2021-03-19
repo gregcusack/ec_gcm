@@ -54,17 +54,15 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //    std::mutex cpulock;
     if (req->req_type != _CPU_) { return __ALLOC_FAILED__; }
 
-//    cpulock.lock();
+    cpulock.lock();
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
     auto sc = ec_get_sc_for_update(sc_id);
     if (!sc) {
         SPDLOG_ERROR("sc is NULL!");
         return __ALLOC_SUCCESS__;
     }
-    cpulock.lock();
     sc->incr_seq_num();
     auto rx_seq_num = req->seq_num;
-    cpulock.unlock();
     auto rx_quota = req->rsrc_amnt;
     auto rt_remaining = req->runtime_remaining;
     auto throttled = req->request;
@@ -79,11 +77,11 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     cpulock.lock();
     uint32_t seq_num = seq_number;
     cpulock.unlock();
-    
+
     if(sc->get_seq_num() != rx_seq_num) {
         SPDLOG_ERROR("seq nums do not match for cg_id: ({}, {}), (rx, sc->get): ({}, {})",
                      sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_seq_num, sc->get_seq_num());
-//        cpulock.unlock();
+        cpulock.unlock();
         res->request = 1;
         return __ALLOC_SUCCESS__;
     }
@@ -91,7 +89,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     if(rx_quota / 1000 != sc->get_quota() / 1000) {
         SPDLOG_ERROR("quotas do not match for cg_id: ({}, {}), (rx, sc->get): ({}, {})",
                      sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_quota, sc->get_quota());
-//        cpulock.unlock();
+        cpulock.unlock();
         res->request = 1;
         return __ALLOC_SUCCESS__;
     }
@@ -261,11 +259,9 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
 
-    cpulock.lock();
     seq_number++;
-    cpulock.unlock();
     res->request = 1;
-//    cpulock.unlock();
+    cpulock.unlock();
     return __ALLOC_SUCCESS__;
 
 }
