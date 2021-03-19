@@ -166,7 +166,7 @@ void ec::Server::handle_client_reqs_tcp(void *args) {
     int client_fd = arguments->clifd;
     auto client_ip = arguments->cliaddr->sin_addr.s_addr;
     delete arguments;
-    delete (serv_thread_args*)args;
+//    delete (serv_thread_args*)args;
 
     num_of_cli++;
     while((num_bytes = read(client_fd, buff_in, __HANDLE_REQ_BUFF__)) > 0 ) {
@@ -220,7 +220,7 @@ void ec::Server::handle_client_reqs_udp(void *args) {
     auto cliaddr = &arguments->cliaddr;
     int len = sizeof(cliaddr);
     delete arguments;
-    delete (serv_thread_args*)args;
+//    delete (serv_thread_args*)args;
 
     num_of_cli++;
     while((num_bytes = recvfrom(client_fd, buff_in, sizeof(buff_in), 0, (struct sockaddr*)&cliaddr, (socklen_t *)&len)) > 0 ) {
