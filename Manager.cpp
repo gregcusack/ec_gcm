@@ -37,8 +37,8 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     sleep(10);
 
     std::cerr<<"[dbg] manager::just before running the app thread\n";
-    std::thread application_thread(&ec::Manager::run, this);
-    application_thread.join();
+//    std::thread application_thread(&ec::Manager::run, this);
+//    application_thread.join();
     grpc_handler_thread.join();
     event_handler_thread_tcp.join();
     event_handler_thread_udp.join();
@@ -531,16 +531,16 @@ void ec::Manager::run() {
     //ec::SubContainer::ContainerId x ;
 //    std::cout << "[dbg] In Manager Run function" << std::endl;
 //    std::cout << "EC Map Size: " << _ec->get_subcontainers().size() << std::endl;
-    while(true){
-//        for(auto sc_ : _ec->get_subcontainers()){
-//            std::cout << "=================================================================================================" << std::endl;
-//            std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
-//            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << sc_get_memory_limit_in_bytes(sc_.first) << "---" << sc_get_memory_usage_in_bytes(sc_.first) << std::endl;
-//            std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
-//            std::cout << "=================================================================================================\n";
-//            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
-//            sleep(1);
-        }
+//    while(true){
+////        for(auto sc_ : _ec->get_subcontainers()){
+////            std::cout << "=================================================================================================" << std::endl;
+////            std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
+////            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << sc_get_memory_limit_in_bytes(sc_.first) << "---" << sc_get_memory_usage_in_bytes(sc_.first) << std::endl;
+////            std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
+////            std::cout << "=================================================================================================\n";
+////            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
+////            sleep(1);
+//        }
 //        std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << std::endl;
 //        sleep(10);
 //    }
