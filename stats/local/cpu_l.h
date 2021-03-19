@@ -41,12 +41,11 @@ namespace ec {
                 void flush() { rt_winstats.flush(); th_winstats.flush(); }
 
                 void incr_seq_num();
-                uint64_t get_seq_num();
+                [[nodiscard]] uint64_t get_seq_num() const;
 
             private:
                 uint64_t quota;
                 uint64_t seq_num;
-                std::mutex cpulock;
 
 
                 uint32_t nr_throttled;

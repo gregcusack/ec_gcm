@@ -61,8 +61,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         SPDLOG_ERROR("sc is NULL!");
         return __ALLOC_SUCCESS__;
     }
+    cpulock.lock();
     sc->incr_seq_num();
     auto rx_seq_num = req->seq_num;
+    cpulock.unlock();
     auto rx_quota = req->rsrc_amnt;
     auto rt_remaining = req->runtime_remaining;
     auto throttled = req->request;

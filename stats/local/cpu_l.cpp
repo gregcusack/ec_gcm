@@ -26,13 +26,11 @@ double ec::local::stats::cpu::insert_th_stats(uint32_t element) {
 }
 
 void ec::local::stats::cpu::incr_seq_num() {
-    std::unique_lock<std::mutex> lk(cpulock);
     seq_num++;
 }
 
-uint64_t ec::local::stats::cpu::get_seq_num() {
-    std::unique_lock<std::mutex> lk(cpulock);
-    return seq_num; 
+uint64_t ec::local::stats::cpu::get_seq_num() const {
+    return seq_num;
 }
 
 

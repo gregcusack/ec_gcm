@@ -104,6 +104,7 @@ uint64_t ec::ElasticContainer::get_sc_memory_limit_in_bytes(const ec::SubContain
         return 0;
     }
     auto sc = get_subcontainer(sc_id);
+//    auto sc = get_sc_for_update(sc_id);
 
     if(sc.get_docker_id().empty()) {
         SPDLOG_ERROR("docker_id is 0!");
