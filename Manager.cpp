@@ -76,8 +76,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     uint64_t rt_mean = 0;
     uint64_t total_rt_in_sys = 0;
     uint64_t tot_rt_and_overrun = 0;
+    cpulock.lock();
     uint32_t seq_num = seq_number;
-
+    cpulock.unlock();
+    
     if(sc->get_seq_num() != rx_seq_num) {
         SPDLOG_ERROR("seq nums do not match for cg_id: ({}, {}), (rx, sc->get): ({}, {})",
                      sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_seq_num, sc->get_seq_num());
@@ -259,7 +261,9 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
 
+    cpulock.lock();
     seq_number++;
+    cpulock.unlock();
     res->request = 1;
 //    cpulock.unlock();
     return __ALLOC_SUCCESS__;
