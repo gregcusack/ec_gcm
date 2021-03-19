@@ -204,7 +204,7 @@ void ec::Server::handle_client_reqs_tcp(void *args) {
 //            break;
         }
         delete res;
-        delete req;
+//        delete req;
     }
 }
 
@@ -245,7 +245,7 @@ void ec::Server::handle_client_reqs_udp(void *args) {
 //            break;
         }
         delete res;
-        delete req;
+//        delete req;
     }
 }
 
