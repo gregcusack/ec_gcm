@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include "../window/Window.h"
+#include <mutex>
 
 #define __WINDOW_STAT_SIZE_ 10
 
@@ -39,12 +40,13 @@ namespace ec {
 
                 void flush() { rt_winstats.flush(); th_winstats.flush(); }
 
-                void incr_seq_num() { seq_num++; }
-                uint64_t get_seq_num() { return seq_num; }
+                void incr_seq_num();
+                uint64_t get_seq_num();
 
             private:
                 uint64_t quota;
                 uint64_t seq_num;
+                std::mutex cpulock;
 
 
                 uint32_t nr_throttled;
