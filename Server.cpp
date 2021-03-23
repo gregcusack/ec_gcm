@@ -122,6 +122,58 @@ void ec::Server::initialize_udp() {
 
 }
 
+
+void ec::Server::handle_client_reqs_tcp(void *args) {
+    ssize_t num_bytes;
+    uint64_t ret;
+    char buff_in[__HANDLE_REQ_BUFF__] = {0};
+
+    auto *arguments = reinterpret_cast<serv_thread_args*>(args);
+    int client_fd = arguments->clifd;
+    auto client_ip = arguments->cliaddr->sin_addr.s_addr;
+    delete arguments;
+//    delete (serv_thread_args*)args;
+
+    num_of_cli++;
+    while((num_bytes = read(client_fd, buff_in, __HANDLE_REQ_BUFF__)) > 0 ) {
+        auto *req = reinterpret_cast<msg_t*>(buff_in);
+        req->set_ip_from_net(client_ip); //this needs to be removed eventually
+        auto *res = new msg_t(*req);
+        SPDLOG_TRACE("received: {}", *req);
+
+        ret = handle_req(req, res, om::net::ip4_addr::from_net(client_ip).to_uint32(), client_fd);
+
+        if(ret == __ALLOC_INIT__) {
+            if (write(client_fd, (const char *) &*res, sizeof(*res)) < 0) {
+                SPDLOG_ERROR("EC Server id: {}. Failed writing to socket", server_id);
+                break;
+            }
+        }
+        else if(ret == __ALLOC_SUCCESS__ && !res->request) {
+            SPDLOG_TRACE("sending back alloc success!");
+            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
+                SPDLOG_ERROR("EC Server id: {}. Failed writing to socket", server_id);
+                break;
+            }
+            else {
+                SPDLOG_DEBUG("sucess writing back to socket on mem resize!");
+            }
+        }
+        else if(ret == __ALLOC_MEM_FAILED__) {
+            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
+                SPDLOG_ERROR("EC Server id: {}. Failed writing to socket on mem failed", server_id);
+                break;
+            }
+        }
+        else if(ret == __ALLOC_FAILED__) {
+            SPDLOG_ERROR("handle_req() failed!");
+//            break;
+        }
+        delete res;
+//        delete req;
+    }
+}
+
 void ec::Server::serve_udp() {
     if(server_initialized != 2) {
         SPDLOG_CRITICAL("ERROR: Server has not been initialized! Must call initialize() before serve()");
@@ -157,57 +209,6 @@ void ec::Server::serve_udp() {
     }
 }
 
-void ec::Server::handle_client_reqs_tcp(void *args) {
-    ssize_t num_bytes;
-    uint64_t ret;
-    char buff_in[__HANDLE_REQ_BUFF__] = {0};
-
-    auto *arguments = reinterpret_cast<serv_thread_args*>(args);
-    int client_fd = arguments->clifd;
-    auto client_ip = arguments->cliaddr->sin_addr.s_addr;
-    delete arguments;
-//    delete (serv_thread_args*)args;
-
-    num_of_cli++;
-    while((num_bytes = read(client_fd, buff_in, __HANDLE_REQ_BUFF__)) > 0 ) {
-        auto *req = reinterpret_cast<msg_t*>(buff_in);
-        req->set_ip_from_net(client_ip); //this needs to be removed eventually
-        auto *res = new msg_t(*req);
-        SPDLOG_TRACE("received: {}", *req);
-
-        ret = handle_req(req, res, om::net::ip4_addr::from_net(client_ip).to_uint32(), client_fd);
-
-        if(ret == __ALLOC_INIT__) { 
-            if (write(client_fd, (const char *) &*res, sizeof(*res)) < 0) {
-                SPDLOG_ERROR("EC Server id: {}. Failed writing to socket", server_id);
-                break;
-            }
-        }
-        else if(ret == __ALLOC_SUCCESS__ && !res->request) {
-            SPDLOG_TRACE("sending back alloc success!");
-            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
-                SPDLOG_ERROR("EC Server id: {}. Failed writing to socket", server_id);
-                break;
-            }
-            else {
-                SPDLOG_DEBUG("sucess writing back to socket on mem resize!");
-            }
-        }
-        else if(ret == __ALLOC_MEM_FAILED__) {
-            if(write(client_fd, (const char*) &*res, sizeof(*res)) < 0) {
-                SPDLOG_ERROR("EC Server id: {}. Failed writing to socket on mem failed", server_id);
-                break;
-            }
-        }
-        else if(ret == __ALLOC_FAILED__) {
-            SPDLOG_ERROR("handle_req() failed!");
-//            break;
-        }
-        delete res;
-//        delete req;
-    }
-}
-
 void ec::Server::handle_client_reqs_udp(void *args) {
     ssize_t num_bytes;
     uint64_t ret;
@@ -223,7 +224,7 @@ void ec::Server::handle_client_reqs_udp(void *args) {
 //    delete (serv_thread_args*)args;
 
     num_of_cli++;
-    while((num_bytes = recvfrom(client_fd, buff_in, sizeof(buff_in), 0, (struct sockaddr*)&cliaddr, (socklen_t *)&len)) > 0 ) {
+    while(recvfrom(client_fd, buff_in, sizeof(buff_in), 0, (struct sockaddr*)&cliaddr, (socklen_t *)&len) > 0 ) {
         auto *req = reinterpret_cast<msg_t*>(buff_in);
         req->set_ip_from_host(req->client_ip.to_uint32()); //this needs to be removed eventually
         auto *res = new msg_t(*req);
@@ -245,6 +246,7 @@ void ec::Server::handle_client_reqs_udp(void *args) {
 //            break;
         }
         delete res;
+        break;
 //        delete req;
     }
 }
