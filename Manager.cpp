@@ -52,9 +52,9 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         exit(EXIT_FAILURE);
     }
 //    std::mutex cpulock;
-    std::cout << "in handle usage report" << std::endl;
+//    std::cout << "in handle usage report" << std::endl;
     if (req->req_type != _CPU_) { return __ALLOC_FAILED__; }
-    std::cout << "req type def cpu" << std::endl;
+//    std::cout << "req type def cpu" << std::endl;
 
     cpulock.lock();
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
@@ -76,11 +76,12 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     uint64_t rt_mean = 0;
     uint64_t total_rt_in_sys = 0;
     uint64_t tot_rt_and_overrun = 0;
-    cpulock.lock();
+//    cpulock.lock();
     uint32_t seq_num = seq_number;
-    cpulock.unlock();
+//    cpulock.unlock();
 
     if(sc->get_seq_num() != rx_seq_num) {
+//        std::cout << "seq nums don't match" << std::endl;
         SPDLOG_ERROR("seq nums do not match for cg_id: ({}, {}), (rx, sc->get): ({}, {})",
                      sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_seq_num, sc->get_seq_num());
         cpulock.unlock();
@@ -89,6 +90,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     }
 
     if(rx_quota / 1000 != sc->get_quota() / 1000) {
+//        std::cout << "quotas dont match"
         SPDLOG_ERROR("quotas do not match (ip, cgid, rx, sc->get): ({}, {}, {}, {})", sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_quota, sc->get_quota());
         cpulock.unlock();
         res->request = 1;
@@ -127,7 +129,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         std::cout << "can't find file pointed for sc_id: " << sc_id << std::endl;
     }
 #endif
-    std::cout << "diving into control loop for cpu alloc" << std::endl;
+//    std::cout << "diving into control loop for cpu alloc" << std::endl;
 
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
