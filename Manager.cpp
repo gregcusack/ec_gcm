@@ -268,6 +268,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     seq_number++;
     res->request = 1;
     cpulock.unlock();
+    std::cout << "1111111111111111111111111111111111111111111111111111111111111111111111111111111111" << std::endl;
     return __ALLOC_SUCCESS__;
 
 }
@@ -401,6 +402,7 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
 #endif
             SPDLOG_ERROR("Handling memory/cpu request failed! manager_id: {}", manager_id);
     }
+    std::cout << "22222222222222222222222222222222222222222222222222222222222222222222" << std::endl;
     return ret;
 }
 

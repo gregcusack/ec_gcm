@@ -233,6 +233,7 @@ void ec::Server::handle_client_reqs_udp(void *args) {
     auto *res = new msg_t(*req);
     std::cout << "req rx: " << *req << std::endl;
     ret = handle_req(req, res, om::net::ip4_addr::from_net(client_ip).to_uint32(), client_fd);
+    std::cout << "33333333333333333333333333333333333333333333333333333" << std::endl;
 
     if(!res->request && ret == __ALLOC_SUCCESS__) {
         SPDLOG_TRACE("sending back alloc success!");
