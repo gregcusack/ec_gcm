@@ -249,6 +249,7 @@ void ec::Server::handle_client_reqs_udp(void *args) {
         break;
 //        delete req;
     }
+    std::cout << "#################################THREAD IS DONE BIATCHHHH ########################333" << std::endl;
 }
 
 bool ec::Server::init_agent_connections() {
