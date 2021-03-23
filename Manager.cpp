@@ -273,7 +273,6 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     seq_number++;
     res->request = 1;
     cpulock.unlock();
-    std::cout << "1111111111111111111111111111111111111111111111111111111111111111111111111111111111" << std::endl;
     return __ALLOC_SUCCESS__;
 
 }
