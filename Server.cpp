@@ -142,6 +142,7 @@ void ec::Server::handle_client_reqs_tcp(void *args) {
         SPDLOG_TRACE("received: {}", *req);
 
         ret = handle_req(req, res, om::net::ip4_addr::from_net(client_ip).to_uint32(), client_fd);
+        std::cout << "TCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCP" << std::endl;
 
         if(ret == __ALLOC_INIT__) {
             if (write(client_fd, (const char *) &*res, sizeof(*res)) < 0) {
