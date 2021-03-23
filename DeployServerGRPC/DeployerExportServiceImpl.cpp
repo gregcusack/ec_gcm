@@ -198,8 +198,13 @@ void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* argum
     });
 
     std::lock_guard<std::mutex> lk_dock(cv_mtx_dock);
-    ec->get_subcontainer(threadArgs->sc_id).set_docker_id(threadArgs->docker_id);
-    if(unlikely(ec->get_subcontainer(threadArgs->sc_id).get_docker_id().empty())) {
+//    ec->get_subcontainer(threadArgs->sc_id).set_docker_id(threadArgs->docker_id);
+    threadArgs->sc_id.docker_id = threadArgs->docker_id;
+//    ec->get_subcontainer(threadArgs->sc_id).set_docker_id(threadArgs->docker_id);
+//    if(unlikely(ec->get_subcontainer(threadArgs->sc_id).get_docker_id().empty())) {
+//        SPDLOG_ERROR("docker_id set failed in grpcDockerIdMatcher()!");
+//    }
+    if(unlikely(threadArgs->sc_id.docker_id.empty())) {
         SPDLOG_ERROR("docker_id set failed in grpcDockerIdMatcher()!");
     }
     cv_dock.notify_one();

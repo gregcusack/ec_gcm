@@ -103,14 +103,12 @@ uint64_t ec::ElasticContainer::get_sc_memory_limit_in_bytes(const ec::SubContain
         SPDLOG_ERROR("NO AgentClient found for container id: {}. get_mem_limit_in_bytes()", sc_id);
         return 0;
     }
-    auto sc = get_subcontainer(sc_id);
-//    auto sc = get_sc_for_update(sc_id);
 
-    if(sc.get_docker_id().empty()) {
+    if(sc_id.docker_id.empty()) {
         SPDLOG_ERROR("docker_id is 0!");
         return 0;
     }
-    ret = ec::Facade::MonitorFacade::CAdvisor::getContMemLimit(ac->get_agent_ip().to_string(), sc.get_docker_id());
+    ret = ec::Facade::MonitorFacade::CAdvisor::getContMemLimit(ac->get_agent_ip().to_string(), sc_id.docker_id);
     return ret;
 }
 

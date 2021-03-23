@@ -173,7 +173,7 @@ void ec::Server::handle_client_reqs_tcp(void *args) {
         auto *req = reinterpret_cast<msg_t*>(buff_in);
         req->set_ip_from_net(client_ip); //this needs to be removed eventually
         auto *res = new msg_t(*req);
-//        SPDLOG_TRACE("received: {}", *req);
+        SPDLOG_TRACE("received: {}", *req);
 
         ret = handle_req(req, res, om::net::ip4_addr::from_net(client_ip).to_uint32(), client_fd);
 
@@ -227,7 +227,7 @@ void ec::Server::handle_client_reqs_udp(void *args) {
         auto *req = reinterpret_cast<msg_t*>(buff_in);
         req->set_ip_from_host(req->client_ip.to_uint32()); //this needs to be removed eventually
         auto *res = new msg_t(*req);
-//        std::cout << "req rx: " << *req << std::endl;
+        std::cout << "req rx: " << *req << std::endl;
         ret = handle_req(req, res, om::net::ip4_addr::from_net(client_ip).to_uint32(), client_fd);
 
         if(!res->request && ret == __ALLOC_SUCCESS__) {

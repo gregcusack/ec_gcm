@@ -6,6 +6,7 @@
 #define EC_GCM_CPU_L_H
 
 #include <cstdint>
+#include <mutex>
 #include "../window/Window.h"
 #include <mutex>
 
@@ -46,7 +47,7 @@ namespace ec {
             private:
                 uint64_t quota;
                 uint64_t seq_num;
-
+                uint64_t period;
 
                 uint32_t nr_throttled;
 
