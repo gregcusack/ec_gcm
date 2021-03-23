@@ -52,7 +52,9 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         exit(EXIT_FAILURE);
     }
 //    std::mutex cpulock;
+    std::cout << "in handle usage report" << std::endl;
     if (req->req_type != _CPU_) { return __ALLOC_FAILED__; }
+    std::cout << "req type def cpu" << std::endl;
 
     cpulock.lock();
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
@@ -125,6 +127,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         std::cout << "can't find file pointed for sc_id: " << sc_id << std::endl;
     }
 #endif
+    std::cout << "diving into control loop for cpu alloc" << std::endl;
 
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
@@ -391,6 +394,7 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
             ret = handle_mem_req(req, res, clifd);
             break;
         case _CPU_:
+            std::cout << "cpu req" << std::endl;
             ret = handle_cpu_usage_report(req, res);
             break;
         case _INIT_:
