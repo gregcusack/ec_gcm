@@ -396,7 +396,7 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
             ret = handle_mem_req(req, res, clifd);
             break;
         case _CPU_:
-            std::cout << "cpu req" << std::endl;
+//            std::cout << "cpu req" << std::endl;
             ret = handle_cpu_usage_report(req, res);
             break;
         case _INIT_:
@@ -408,7 +408,7 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
 #endif
             SPDLOG_ERROR("Handling memory/cpu request failed! manager_id: {}", manager_id);
     }
-    std::cout << "22222222222222222222222222222222222222222222222222222222222222222222" << std::endl;
+//    std::cout << "22222222222222222222222222222222222222222222222222222222222222222222" << std::endl;
     return ret;
 }
 
