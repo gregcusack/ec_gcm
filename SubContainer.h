@@ -22,7 +22,6 @@ namespace ec {
     public:
         SubContainer(uint32_t cgroup_id, uint32_t ip, int fd);     //from uint32_t
         SubContainer(uint32_t cgroup_id, uint32_t ip, int fd, uint64_t _quota, uint32_t _nr_throttled);
-//        SubContainer(const SubContainer &other_sc) {std::cout << "copy constructor!" << std::endl; };
         ~SubContainer() = default;
 
         struct ContainerId {
@@ -34,24 +33,23 @@ namespace ec {
             ContainerId() = default;
             uint32_t cgroup_id          = 0;
             ip4_addr server_ip;
+            std::string docker_id;
             bool operator==(const ContainerId& other_) const;
             friend std::ostream& operator<<(std::ostream& os, const ContainerId& rhs) {
                 os  << "cgroup_id: " << rhs.cgroup_id << ", "
-                    << "server_ip: " << rhs.server_ip;// << ", "
+                    << "server_ip: " << rhs.server_ip << ", "
+                    << "dock_id: " << rhs.docker_id;// << ", "
                 return os;
             };
         };
 
         ContainerId* get_c_id() {return &c_id;}
         [[nodiscard]] int get_fd() const { return fd; }
-        
-        void set_docker_id(std::string &docker_id) { _docker_id = docker_id; }
-        std::string get_docker_id() { return _docker_id; }
 
-        uint64_t get_quota() { return cpu.get_quota(); }
+        uint64_t get_quota();
         uint32_t get_throttled() { return cpu.get_throttled(); }
 
-        void set_quota(uint64_t _quota) { cpu.set_quota(_quota); }
+        void set_quota(uint64_t _quota);
         void set_throttled(uint32_t _throttled) { cpu.set_throttled(_throttled); }
 
         uint32_t get_throttle_increase(uint32_t _throttled) { return cpu.get_throttle_increase(_throttled); }
@@ -64,7 +62,7 @@ namespace ec {
         local::stats::mem *get_mem_stats() { return &mem; }
 
         bool get_set_quota_flag() { return cpu.get_set_quota_flag(); }
-        void set_quota_flag(bool val) { cpu.set_set_quota_flag(val); }
+        void set_quota_flag(bool val);
 
         //Mem
         uint64_t get_mem_limit_in_pages() { return mem.get_mem_limit_in_pages(); }
@@ -72,13 +70,21 @@ namespace ec {
         void sc_incr_mem_limit(uint64_t _incr) { mem.incr_mem_limit(_incr); }
         void sc_decr_mem_limit(uint64_t _decr) { mem.decr_mem_limit(_decr); }
 
+        [[nodiscard]] bool sc_inserted() const { return inserted; }
+        void set_sc_inserted(bool _inserted) { inserted = _inserted; }
+
+        void incr_cpustat_seq_num();
+        void set_cpustat_seq_num(uint64_t val);
+        uint64_t get_seq_num();
+
     private:
         ContainerId c_id;
         int fd;
-        std::string _docker_id;
+        bool inserted;
 
         local::stats::cpu cpu;
         local::stats::mem mem;
+        std::mutex lockcpu, lock_seqnum;
 
         int counter;
 

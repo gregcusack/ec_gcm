@@ -4,32 +4,34 @@
 
 #include "Manager.h"
 
-ec::Manager::Manager( int _manager_id, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
-            : Server(_manager_id, gcm_ip, server_port, agents), ECAPI(_manager_id), manager_id(_manager_id),
-            seq_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
-
+ec::Manager::Manager(int _manager_id, ec::ip4_addr gcm_ip, ec::ports_t controller_ports, std::vector<Agent *> &agents)
+        : Server(_manager_id, gcm_ip, controller_ports, agents), ECAPI(_manager_id), manager_id(_manager_id),
+          syscall_sequence_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {
     //init server
-    initialize();
+    initialize_tcp();
+    initialize_udp();
 #ifndef NDEBUG
     hotos_logs = std::unordered_map<SubContainer::ContainerId, std::ofstream *>();
 #endif
 }
 
+
 void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip) {
     //A thread to listen for subcontainers' events
-    std::thread event_handler_thread(&ec::Server::serve, this);
+    std::thread event_handler_thread_tcp(&ec::Server::serve_tcp, this);
+    std::thread event_handler_thread_udp(&ec::Server::serve_udp, this);
     ec::ECAPI::create_ec();
     grpcServer = new rpc::DeployerExportServiceImpl(_ec, cv, cv_dock, cv_mtx, cv_mtx_dock,sc_map_lock);
     std::thread grpc_handler_thread(&ec::Manager::serveGrpcDeployExport, this);
     sleep(10);
 
     std::cerr<<"[dbg] manager::just before running the app thread\n";
-    std::thread application_thread(&ec::Manager::run, this);
-    application_thread.join();
+//    std::thread application_thread(&ec::Manager::run, this);
+//    application_thread.join();
     grpc_handler_thread.join();
-    event_handler_thread.join();
+    event_handler_thread_tcp.join();
+    event_handler_thread_udp.join();
 
-//    delete get
     delete getGrpcServer();
 }
 
@@ -38,7 +40,6 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         SPDLOG_CRITICAL("req or res == null in handle_cpu_usage_report()");
         exit(EXIT_FAILURE);
     }
-//    std::mutex cpulock;
     if (req->req_type != _CPU_) { return __ALLOC_FAILED__; }
 
     cpulock.lock();
@@ -48,23 +49,31 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         SPDLOG_ERROR("sc is NULL!");
         return __ALLOC_SUCCESS__;
     }
-    sc->incr_counter();
-    auto req_count = sc->get_counter();
+    sc->incr_cpustat_seq_num();
+    auto rx_cpustat_seq_num = req->cpustat_seq_num;
     auto rx_quota = req->rsrc_amnt;
     auto rt_remaining = req->runtime_remaining;
     auto throttled = req->request;
     uint64_t updated_quota = rx_quota;
     uint64_t to_add = 0;
     int ret;
-    uint64_t rx_buff;
     double thr_mean = 0;
     uint64_t rt_mean = 0;
     uint64_t total_rt_in_sys = 0;
-    uint64_t tot_rt_and_overrun = 0;
-    uint32_t seq_num = seq_number;
+    uint32_t syscall_seq_num = syscall_sequence_number;
+
+    if(sc->get_seq_num() != rx_cpustat_seq_num) {
+        SPDLOG_ERROR("seq nums do not match for cg_id: ({}, {}), (rx, sc->get): ({}, {})",
+                     sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_cpustat_seq_num, sc->get_seq_num());
+        sc->set_cpustat_seq_num(rx_cpustat_seq_num);
+//        cpulock.unlock();
+//        res->request = 1;
+//        return __ALLOC_SUCCESS__;
+    }
 
     if(rx_quota / 1000 != sc->get_quota() / 1000) {
-        SPDLOG_ERROR("quotas do not match (rx, sc->get): ({}, {})", rx_quota, sc->get_quota());
+//        std::cout << "quotas dont match"
+        SPDLOG_ERROR("quotas do not match (ip, cgid, rx, sc->get): ({}, {}, {}, {})", sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_quota, sc->get_quota());
         cpulock.unlock();
         res->request = 1;
         return __ALLOC_SUCCESS__;
@@ -102,12 +111,14 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         std::cout << "can't find file pointed for sc_id: " << sc_id << std::endl;
     }
 #endif
+//    std::cout << "diving into control loop for cpu alloc" << std::endl;
 
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
     auto percent_decr = (double)((int64_t)rx_quota-((int64_t)rx_quota - (int64_t)rt_remaining)) / (double)rx_quota;
 
     if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
+//        std::cout << "here1. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
         uint64_t to_sub;
         uint64_t amnt_share_over = rx_quota - ec_get_fair_cpu_share();
         uint64_t overrun = ec_get_overrun();
@@ -124,7 +135,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
         to_sub = std::min(overrun, to_sub);
         updated_quota = rx_quota - to_sub;
-        ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
+        ret = set_sc_quota_syscall(sc, updated_quota, syscall_seq_num);
         if(ret) {
             SPDLOG_ERROR("Can't read from socket to resize quota (overrun sub quota). ret: {}", ret);
         }
@@ -137,8 +148,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(rx_quota < ec_get_fair_cpu_share() && thr_mean > 0.5) {   //throttled but don't have fair share
+        std::cout << "here2. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
         uint64_t amnt_share_lacking = ec_get_fair_cpu_share() - rx_quota;
         if (ec_get_cpu_unallocated_rt() > 0) {
+//            std::cout << "here3. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
             //TODO: take min of to_Add and slice. don't full reset
             double percent_under = ((double)ec_get_fair_cpu_share() - (double)rx_quota) / (double)ec_get_fair_cpu_share();
             if(amnt_share_lacking > ec_get_cpu_slice() / 2) {   //ensure we eventually converge
@@ -148,7 +161,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
                 to_add = amnt_share_lacking;
             }
             updated_quota = rx_quota + to_add;
-            ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
+            ret = set_sc_quota_syscall(sc, updated_quota, syscall_seq_num);
             if(ret) {
                 SPDLOG_ERROR("Can't read from socket to resize quota (incr fair share). ret: {}", ret);
             }
@@ -161,6 +174,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
         }
         else { //not enough in unalloc_rt to get back to fair share, even out
+//            std::cout << "here4. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
             uint64_t overrun;
             double percent_under = ((double)ec_get_fair_cpu_share() - (double)rx_quota) / (double)ec_get_fair_cpu_share();
             if(amnt_share_lacking > ec_get_cpu_slice() / 2) { //ensure we eventualyl converge
@@ -170,7 +184,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
                 overrun = amnt_share_lacking;
             }
             updated_quota = rx_quota + overrun;
-            ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
+            ret = set_sc_quota_syscall(sc, updated_quota, syscall_seq_num);
             if(ret) {
                 SPDLOG_ERROR("Can't read from socket to resize quota (incr fair share overrun). ret: {}", ret);
             }
@@ -184,10 +198,11 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(thr_mean >= 0.1 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
+//        std::cout << "here5. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
         auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(4 * thr_mean * ec_get_cpu_slice()));
         if(extra_rt > 0) {
             updated_quota = rx_quota + extra_rt;
-            ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
+            ret = set_sc_quota_syscall(sc, updated_quota, syscall_seq_num);
             if(ret) {
                 SPDLOG_ERROR("Can't read from socket to resize quota (incr). ret: {}", ret);
             }
@@ -201,10 +216,11 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(percent_decr > 0.2 && rx_quota >= ec_get_cpu_slice()) { //greater than 20% of quota unused
-	    uint64_t new_quota = rx_quota * (1 - 0.2); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
+//        std::cout << "here6. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
+        uint64_t new_quota = rx_quota * (1 - 0.2); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
         if(new_quota != rx_quota) {
-            ret = set_sc_quota_syscall(sc, new_quota, seq_num); //give back what was used + 5ms
+            ret = set_sc_quota_syscall(sc, new_quota, syscall_seq_num); //give back what was used + 5ms
             if(ret) {
                 SPDLOG_ERROR("Can't read from socket to resize quota (decr). ret: {}", ret);
             }
@@ -218,10 +234,11 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(rt_mean > _MAX_UNUSED_RT_IN_NS_ && rx_quota > ec_get_cpu_slice()) {
+//        std::cout << "here7. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
         uint64_t new_quota = rx_quota - _MAX_UNUSED_RT_IN_NS_;
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
         if(new_quota != rx_quota) {
-            ret = set_sc_quota_syscall(sc, new_quota, seq_num); //give back what was used + 5ms
+            ret = set_sc_quota_syscall(sc, new_quota, syscall_seq_num); //give back what was used + 5ms
             if(ret) {
                 SPDLOG_ERROR("Can't read from socket to resize quota (decr 5ms diff). ret: {}", ret);
             }
@@ -235,7 +252,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
 
-    seq_number++;
+    syscall_sequence_number++;
     res->request = 1;
     cpulock.unlock();
     return __ALLOC_SUCCESS__;
@@ -360,6 +377,7 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
             ret = handle_mem_req(req, res, clifd);
             break;
         case _CPU_:
+//            std::cout << "cpu req" << std::endl;
             ret = handle_cpu_usage_report(req, res);
             break;
         case _INIT_:
@@ -371,6 +389,7 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
 #endif
             SPDLOG_ERROR("Handling memory/cpu request failed! manager_id: {}", manager_id);
     }
+//    std::cout << "22222222222222222222222222222222222222222222222222222222222222222222" << std::endl;
     return ret;
 }
 
@@ -407,10 +426,20 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
     // we can now create a map to link the container_id and agent_client
     AgentClientDB* acdb = AgentClientDB::get_agent_client_db_instance();
     auto agent_ip = sc->get_c_id()->server_ip;
+//    std::cout << "add container. cg_id: " << *sc->get_c_id() << std::endl;
     auto target_agent = acdb->get_agent_client_by_ip(agent_ip);
     if ( target_agent ){
         std::lock_guard<std::mutex> lk(cv_mtx);
         _ec->add_to_sc_ac_map(*sc->get_c_id(), target_agent);
+        sc->set_sc_inserted(true);
+        /////
+//        if(!_ec->get_corres_agent(*sc->get_c_id())) {
+//            std::cout << "Bad! agent not found in sc_ac map" << std::endl;
+//        }
+//        else {
+//            std::cout << "sc found in sc_ac map!" << std::endl;
+//        }
+//        /////
         cv.notify_one();
     } else {
         SPDLOG_ERROR("SubContainer's node IP or Agent IP not found!");
@@ -439,7 +468,8 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
 
     std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
     cv_dock.wait(lk_dock, [this, sc] {
-        return !sc->get_docker_id().empty();
+        return !sc->get_c_id()->docker_id.empty();
+//        return !sc->get_docker_id().empty();
     });
     auto sc_mem_limit_in_pages = byte_to_page(sc_get_memory_limit_in_bytes(*sc->get_c_id()));
 
@@ -497,16 +527,16 @@ void ec::Manager::run() {
     //ec::SubContainer::ContainerId x ;
 //    std::cout << "[dbg] In Manager Run function" << std::endl;
 //    std::cout << "EC Map Size: " << _ec->get_subcontainers().size() << std::endl;
-    while(true){
-//        for(auto sc_ : _ec->get_subcontainers()){
-//            std::cout << "=================================================================================================" << std::endl;
-//            std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
-//            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << sc_get_memory_limit_in_bytes(sc_.first) << "---" << sc_get_memory_usage_in_bytes(sc_.first) << std::endl;
-//            std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
-//            std::cout << "=================================================================================================\n";
-//            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
-//            sleep(1);
-        }
+//    while(true){
+////        for(auto sc_ : _ec->get_subcontainers()){
+////            std::cout << "=================================================================================================" << std::endl;
+////            std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
+////            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << sc_get_memory_limit_in_bytes(sc_.first) << "---" << sc_get_memory_usage_in_bytes(sc_.first) << std::endl;
+////            std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
+////            std::cout << "=================================================================================================\n";
+////            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
+////            sleep(1);
+//        }
 //        std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << std::endl;
 //        sleep(10);
 //    }
@@ -519,6 +549,8 @@ std::string ec::Manager::get_current_dir() {
     std::string current_working_dir(buff);
     return current_working_dir;
 }
+
+
 #endif
 
 

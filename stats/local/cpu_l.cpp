@@ -5,16 +5,12 @@
 #include "cpu_l.h"
 
 ec::local::stats::cpu::cpu()
-    : quota(-1), period(100000000), alloc_extra_slices(false),
-    num_local_slices_requested(0), num_local_slices_acquired(0),
-    extra_runtime_to_give(0), nr_throttled(0),
+    : quota(-1), nr_throttled(0), seq_num(0),
     rt_winstats(__WINDOW_STAT_SIZE_), th_winstats(__WINDOW_STAT_SIZE_),
     set_quota_flag(false) {}
 
 ec::local::stats::cpu::cpu(uint64_t _quota, uint32_t _nr_throttled)     //TODO: may need to fix here
-    : quota(_quota), period(100000000), alloc_extra_slices(false),
-    num_local_slices_requested(0), num_local_slices_acquired(0),
-    extra_runtime_to_give(0), nr_throttled(_nr_throttled),
+    : quota(_quota), nr_throttled(_nr_throttled), seq_num(0),
       rt_winstats(__WINDOW_STAT_SIZE_), th_winstats(__WINDOW_STAT_SIZE_),
       set_quota_flag(false) {}
 
@@ -29,4 +25,14 @@ double ec::local::stats::cpu::insert_th_stats(uint32_t element) {
     return insert;
 }
 
+void ec::local::stats::cpu::incr_seq_num() {
+    seq_num++;
+}
 
+uint64_t ec::local::stats::cpu::get_seq_num() const {
+    return seq_num;
+}
+
+void ec::local::stats::cpu::set_seq_num(uint64_t val) {
+    seq_num = val;
+}

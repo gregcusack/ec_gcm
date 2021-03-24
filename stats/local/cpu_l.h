@@ -6,7 +6,9 @@
 #define EC_GCM_CPU_L_H
 
 #include <cstdint>
+#include <mutex>
 #include "../window/Window.h"
+#include <mutex>
 
 #define __WINDOW_STAT_SIZE_ 10
 
@@ -39,13 +41,14 @@ namespace ec {
 
                 void flush() { rt_winstats.flush(); th_winstats.flush(); }
 
+                void incr_seq_num();
+                void set_seq_num(uint64_t val);
+                [[nodiscard]] uint64_t get_seq_num() const;
+
             private:
                 uint64_t quota;
+                uint64_t seq_num;
                 uint64_t period;
-                bool alloc_extra_slices;
-                uint32_t num_local_slices_requested;
-                uint32_t num_local_slices_acquired;
-                uint64_t extra_runtime_to_give;
 
                 uint32_t nr_throttled;
 

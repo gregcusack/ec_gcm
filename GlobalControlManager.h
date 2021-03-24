@@ -18,6 +18,7 @@
 #include <thread>
 #include "Manager.h"
 #include "spdlog/spdlog.h"
+#include "types/ports.h"
 
 
 #define __NUM_THREADS__ 32
@@ -30,6 +31,7 @@ namespace ec {
     public:
 //        GlobalControlManager();
         GlobalControlManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<uint16_t> &_server_ports);
+        GlobalControlManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<ports_t> &_server_ports);
         ~GlobalControlManager();
 
         void run(const std::string &app_name, const std::string &_gcm_ip);
@@ -48,6 +50,7 @@ namespace ec {
     private:
         ip4_addr                gcm_ip;
         uint16_t                gcm_port;           //unknown if needed
+        std::vector<ports_t>    controller_ports;
 
         manager_map              managers;
         int                manager_counts;

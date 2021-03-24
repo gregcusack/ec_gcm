@@ -92,13 +92,17 @@ uint64_t ec::ECAPI::sc_get_memory_usage_in_bytes(const ec::SubContainer::Contain
         SPDLOG_ERROR("NO AgentClient found for container id: {}", container_id);
         return 0;
     }
-    ec::SubContainer sc = _ec->get_subcontainer(container_id);
+//    ec::SubContainer sc = _ec->get_subcontainer(container_id);
 
-    if(sc.get_docker_id().empty()) {
+//    if(sc.get_docker_id().empty()) {
+//        SPDLOG_ERROR("docker_id is 0!");
+//        return 0;
+//    }
+    if(container_id.docker_id.empty()) {
         SPDLOG_ERROR("docker_id is 0!");
         return 0;
     }
-    ret = ec::Facade::MonitorFacade::CAdvisor::getContMemUsage(ac->get_agent_ip().to_string(), sc.get_docker_id());
+    ret = ec::Facade::MonitorFacade::CAdvisor::getContMemUsage(ac->get_agent_ip().to_string(), container_id.docker_id);
     return ret;
 }
 
@@ -110,7 +114,7 @@ uint64_t ec::ECAPI::get_machine_free_memory(const ec::SubContainer::ContainerId 
         SPDLOG_ERROR("NO AgentClient found for container id: {}", container_id);
         return 0;
     }
-    ec::SubContainer sc = _ec->get_subcontainer(container_id);
+//    ec::SubContainer sc = _ec->get_subcontainer(container_id);
     ret = ec::Facade::MonitorFacade::CAdvisor::getMachineFreeMem(ac->get_agent_ip().to_string());
     return ret;
 }
@@ -123,13 +127,18 @@ int64_t ec::ECAPI::get_cpu_quota_in_us(const ec::SubContainer::ContainerId &cont
         SPDLOG_ERROR("NO AgentClient found for container id: {}", container_id);
         return 0;
     }
-    ec::SubContainer sc = _ec->get_subcontainer(container_id);
+//    ec::SubContainer sc = _ec->get_subcontainer(container_id);
 
-    if(sc.get_docker_id().empty()) {
+//    if(sc.get_docker_id().empty()) {
+//        SPDLOG_ERROR("docker_id is 0!");
+//        return 0;
+//    }
+    if(container_id.docker_id.empty()) {
         SPDLOG_ERROR("docker_id is 0!");
         return 0;
     }
-    ret = ec::Facade::MonitorFacade::CAdvisor::getContCPUQuota(ac->get_agent_ip().to_string(), sc.get_docker_id());
+//    ret = ec::Facade::MonitorFacade::CAdvisor::getContCPUQuota(ac->get_agent_ip().to_string(), sc.get_docker_id());
+    ret = ec::Facade::MonitorFacade::CAdvisor::getContCPUQuota(ac->get_agent_ip().to_string(), container_id.docker_id);
     return ret;
 }
 
@@ -145,12 +154,17 @@ int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, u
     msg_req.set_cgroup_id(sc->get_c_id()->cgroup_id);
     msg_req.set_request(seq_number);
     msg_req.set_quota(_quota);
-//    msg_req.set_payload_string("test");
-    msg_req.set_payload_string(sc->get_docker_id());
+    msg_req.set_payload_string("test");
+//    msg_req.set_payload_string(sc->get_docker_id());
+//    std::cout << "set_quota cgid: " << *sc->get_c_id() << std::endl;
+
+    while(unlikely(!sc->sc_inserted())) {
+//        std::cout << "itr incr on sc inserted" << std::endl;
+    }
 
     auto agent = _ec->get_corres_agent(*sc->get_c_id());
     if(!agent) {
-        SPDLOG_CRITICAL("agent for container == NULL");
+        SPDLOG_CRITICAL("agent for container == NULL. cg_id: {}", *sc->get_c_id());
         std::exit(EXIT_FAILURE);
     }
     int64_t ret = agent->send_request(msg_req);
@@ -180,7 +194,7 @@ int64_t ec::ECAPI::get_sc_quota(ec::SubContainer *sc) {
 }
 
 
-int64_t ec::ECAPI::sc_resize_memory_limit_in_pages(ec::SubContainer::ContainerId container_id, uint64_t new_mem_limit) {
+int64_t ec::ECAPI::sc_resize_memory_limit_in_pages(const ec::SubContainer::ContainerId& container_id, uint64_t new_mem_limit) {
     uint64_t ret = 0;
     msg_struct::ECMessage msg_req;
     msg_req.set_req_type(5); //RESIZE_MEM_LIMIT

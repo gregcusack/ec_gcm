@@ -5,6 +5,7 @@
 #include "ElasticContainer.h"
 #include "SubContainer.h"
 #include "Agents/AgentClientDB.h"
+#include "types/ports.h"
 
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
@@ -51,11 +52,18 @@ int main(int argc, char* argv[]){
     auto agent_ips = jsonFacade.getAgentIPs();
     auto gcm_ip = jsonFacade.getGCMIP();
     
-    std::vector<uint16_t>       server_ports{4444};
+//    std::vector<uint16_t>       server_ports{4444};
+    ec::ports_t ports(4444, 4447);
 
-    auto *gcm = new ec::GlobalControlManager(gcm_ip, GCM_PORT, agent_ips, server_ports);
-    
-    for(const auto &i : server_ports) {
+    std::vector<ec::ports_t> controller_ports{ports};
+
+//    auto *gcm = new ec::GlobalControlManager(gcm_ip, GCM_PORT, agent_ips, server_ports);
+    auto *gcm = new ec::GlobalControlManager(gcm_ip, GCM_PORT, agent_ips, controller_ports);
+//
+//    for(const auto &i : server_ports) {
+//        gcm->create_manager();
+//    }
+    for(const auto &i : controller_ports) {
         gcm->create_manager();
     }
     SPDLOG_INFO("[dbg] num managers: {}", gcm->get_managers().size());

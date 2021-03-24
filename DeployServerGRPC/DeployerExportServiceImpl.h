@@ -73,11 +73,6 @@ namespace ec {
             const std::string success, fail;
             ElasticContainer *ec;
 
-
-
-
-
-
         };
 
     }
