@@ -12,6 +12,6 @@ ec::msg_t::msg_t(const ec::msg_t &msg_req) {
     rsrc_amnt = msg_req.rsrc_amnt;
     request = msg_req.request;
     runtime_remaining = msg_req.runtime_remaining;
-    seq_num = msg_req.seq_num;
+    cpustat_seq_num = msg_req.cpustat_seq_num;
 //    cont_name = msg_req.cont_name;
 }

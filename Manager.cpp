@@ -6,7 +6,7 @@
 
 //ec::Manager::Manager( int _manager_id, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
 //            : Server(_manager_id, gcm_ip, server_port, agents), ECAPI(_manager_id), manager_id(_manager_id),
-//            seq_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
+//            syscall_sequence_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
 //
 //    //init server
 //    initialize_tcp();
@@ -17,7 +17,7 @@
 
 ec::Manager::Manager(int _manager_id, ec::ip4_addr gcm_ip, ec::ports_t controller_ports, std::vector<Agent *> &agents)
         : Server(_manager_id, gcm_ip, controller_ports, agents), ECAPI(_manager_id), manager_id(_manager_id),
-          seq_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {
+          syscall_sequence_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {
     //init server
     initialize_tcp();
     initialize_udp();
@@ -51,10 +51,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         SPDLOG_CRITICAL("req or res == null in handle_cpu_usage_report()");
         exit(EXIT_FAILURE);
     }
-//    std::mutex cpulock;
-//    std::cout << "in handle usage report" << std::endl;
     if (req->req_type != _CPU_) { return __ALLOC_FAILED__; }
-//    std::cout << "req type def cpu" << std::endl;
 
     cpulock.lock();
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
@@ -63,26 +60,22 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         SPDLOG_ERROR("sc is NULL!");
         return __ALLOC_SUCCESS__;
     }
-    sc->incr_seq_num();
-    auto rx_seq_num = req->seq_num;
+    sc->incr_cpustat_seq_num();
+    auto rx_cpustat_seq_num = req->cpustat_seq_num;
     auto rx_quota = req->rsrc_amnt;
     auto rt_remaining = req->runtime_remaining;
     auto throttled = req->request;
     uint64_t updated_quota = rx_quota;
     uint64_t to_add = 0;
     int ret;
-    uint64_t rx_buff;
     double thr_mean = 0;
     uint64_t rt_mean = 0;
     uint64_t total_rt_in_sys = 0;
-    uint64_t tot_rt_and_overrun = 0;
-//    cpulock.lock();
-    uint32_t seq_num = seq_number;
-//    cpulock.unlock();
+    uint32_t syscall_seq_num = syscall_sequence_number;
 
-    if(sc->get_seq_num() != rx_seq_num) {
+    if(sc->get_seq_num() != rx_cpustat_seq_num) {
         SPDLOG_ERROR("seq nums do not match for cg_id: ({}, {}), (rx, sc->get): ({}, {})",
-                     sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_seq_num, sc->get_seq_num());
+                     sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_cpustat_seq_num, sc->get_seq_num());
 //        cpulock.unlock();
 //        res->request = 1;
 //        return __ALLOC_SUCCESS__;
@@ -152,7 +145,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
         to_sub = std::min(overrun, to_sub);
         updated_quota = rx_quota - to_sub;
-        ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
+        ret = set_sc_quota_syscall(sc, updated_quota, syscall_seq_num);
         if(ret) {
             SPDLOG_ERROR("Can't read from socket to resize quota (overrun sub quota). ret: {}", ret);
         }
@@ -178,7 +171,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
                 to_add = amnt_share_lacking;
             }
             updated_quota = rx_quota + to_add;
-            ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
+            ret = set_sc_quota_syscall(sc, updated_quota, syscall_seq_num);
             if(ret) {
                 SPDLOG_ERROR("Can't read from socket to resize quota (incr fair share). ret: {}", ret);
             }
@@ -201,7 +194,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
                 overrun = amnt_share_lacking;
             }
             updated_quota = rx_quota + overrun;
-            ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
+            ret = set_sc_quota_syscall(sc, updated_quota, syscall_seq_num);
             if(ret) {
                 SPDLOG_ERROR("Can't read from socket to resize quota (incr fair share overrun). ret: {}", ret);
             }
@@ -219,7 +212,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(4 * thr_mean * ec_get_cpu_slice()));
         if(extra_rt > 0) {
             updated_quota = rx_quota + extra_rt;
-            ret = set_sc_quota_syscall(sc, updated_quota, seq_num);
+            ret = set_sc_quota_syscall(sc, updated_quota, syscall_seq_num);
             if(ret) {
                 SPDLOG_ERROR("Can't read from socket to resize quota (incr). ret: {}", ret);
             }
@@ -237,7 +230,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         uint64_t new_quota = rx_quota * (1 - 0.2); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
         if(new_quota != rx_quota) {
-            ret = set_sc_quota_syscall(sc, new_quota, seq_num); //give back what was used + 5ms
+            ret = set_sc_quota_syscall(sc, new_quota, syscall_seq_num); //give back what was used + 5ms
             if(ret) {
                 SPDLOG_ERROR("Can't read from socket to resize quota (decr). ret: {}", ret);
             }
@@ -255,7 +248,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         uint64_t new_quota = rx_quota - _MAX_UNUSED_RT_IN_NS_;
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
         if(new_quota != rx_quota) {
-            ret = set_sc_quota_syscall(sc, new_quota, seq_num); //give back what was used + 5ms
+            ret = set_sc_quota_syscall(sc, new_quota, syscall_seq_num); //give back what was used + 5ms
             if(ret) {
                 SPDLOG_ERROR("Can't read from socket to resize quota (decr 5ms diff). ret: {}", ret);
             }
@@ -269,7 +262,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
 
-    seq_number++;
+    syscall_sequence_number++;
     res->request = 1;
     cpulock.unlock();
     return __ALLOC_SUCCESS__;

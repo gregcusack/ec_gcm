@@ -77,7 +77,7 @@ namespace ec {
         [[nodiscard]] bool sc_inserted() const { return inserted; }
         void set_sc_inserted(bool _inserted) { inserted = _inserted; }
 
-        void incr_seq_num() { cpu.incr_seq_num(); }
+        void incr_cpustat_seq_num() { cpu.incr_seq_num(); }
         uint64_t get_seq_num() { return cpu.get_seq_num(); }
 
     private:

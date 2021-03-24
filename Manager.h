@@ -64,7 +64,7 @@ namespace ec {
         int manager_id;
         std::mutex cpulock;
         std::mutex memlock;
-        int64_t seq_number;
+        int64_t syscall_sequence_number;
 
         int64_t cpuleak;
 

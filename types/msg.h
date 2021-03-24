@@ -25,7 +25,7 @@ namespace ec {
         uint64_t            rsrc_amnt;      //amount of resources (cpu/mem)
         uint32_t                request;        //1: request, 0: give back
         uint64_t            runtime_remaining;
-        uint64_t            seq_num;
+        uint64_t            cpustat_seq_num;
 //        uint64_t            cont_name;
 
         friend std::ostream& operator<<(std::ostream& os_, const msg_t& k) {
@@ -36,7 +36,7 @@ namespace ec {
                        << k.rsrc_amnt << ","
                        << k.request << ","
                        << k.runtime_remaining << ","
-                       << k.seq_num;
+                       << k.cpustat_seq_num;
         }
 
         void from_net() {
