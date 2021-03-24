@@ -4,17 +4,6 @@
 
 #include "Manager.h"
 
-//ec::Manager::Manager( int _manager_id, ec::ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents )
-//            : Server(_manager_id, gcm_ip, server_port, agents), ECAPI(_manager_id), manager_id(_manager_id),
-//            syscall_sequence_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {//, grpcServer(rpc::DeployerExportServiceImpl()) {
-//
-//    //init server
-//    initialize_tcp();
-//#ifndef NDEBUG
-//    hotos_logs = std::unordered_map<SubContainer::ContainerId, std::ofstream *>();
-//#endif
-//}
-
 ec::Manager::Manager(int _manager_id, ec::ip4_addr gcm_ip, ec::ports_t controller_ports, std::vector<Agent *> &agents)
         : Server(_manager_id, gcm_ip, controller_ports, agents), ECAPI(_manager_id), manager_id(_manager_id),
           syscall_sequence_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {
@@ -76,6 +65,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     if(sc->get_seq_num() != rx_cpustat_seq_num) {
         SPDLOG_ERROR("seq nums do not match for cg_id: ({}, {}), (rx, sc->get): ({}, {})",
                      sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_cpustat_seq_num, sc->get_seq_num());
+        sc->set_cpustat_seq_num(rx_cpustat_seq_num);
 //        cpulock.unlock();
 //        res->request = 1;
 //        return __ALLOC_SUCCESS__;

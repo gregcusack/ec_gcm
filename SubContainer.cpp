@@ -43,6 +43,21 @@ void ec::SubContainer::set_quota_flag(bool val) {
     cpu.set_set_quota_flag(val);
 }
 
+void ec::SubContainer::incr_cpustat_seq_num() {
+    std::unique_lock<std::mutex> lk(lock_seqnum);
+    cpu.incr_seq_num();
+}
+
+void ec::SubContainer::set_cpustat_seq_num(uint64_t val) {
+    std::unique_lock<std::mutex> lk(lock_seqnum);
+    cpu.set_seq_num(val);
+}
+
+uint64_t ec::SubContainer::get_seq_num() {
+    std::unique_lock<std::mutex> lk(lock_seqnum);
+    return cpu.get_seq_num();
+}
+
 bool ec::SubContainer::ContainerId::operator==(const ec::SubContainer::ContainerId &other_) const {
     return  cgroup_id   == other_.cgroup_id
             && server_ip == other_.server_ip;

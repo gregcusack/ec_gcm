@@ -33,4 +33,6 @@ uint64_t ec::local::stats::cpu::get_seq_num() const {
     return seq_num;
 }
 
-
+void ec::local::stats::cpu::set_seq_num(uint64_t val) {
+    seq_num = val;
+}

@@ -32,7 +32,6 @@ namespace ec {
     class Manager : public ECAPI, public Server {
     public:
         //TODO: initialize_tcp ECAPI and SERVER here?
-        Manager(int server_counts, ip4_addr gcm_ip, uint16_t server_port, std::vector<Agent *> &agents);
         Manager(int server_counts, ip4_addr gcm_ip, ports_t controller_ports, std::vector<Agent *> &agents);
 
         int handle_cpu_usage_report(const msg_t *req, msg_t *res) override;

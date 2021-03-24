@@ -42,6 +42,7 @@ namespace ec {
                 void flush() { rt_winstats.flush(); th_winstats.flush(); }
 
                 void incr_seq_num();
+                void set_seq_num(uint64_t val);
                 [[nodiscard]] uint64_t get_seq_num() const;
 
             private:
