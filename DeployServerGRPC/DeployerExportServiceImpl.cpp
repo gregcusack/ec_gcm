@@ -42,7 +42,7 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
 
     for(const auto &q : ec->get_subcontainers()) {
         std::cout << "sc_id: " << q.first << std::endl;
-        std::cout << "q.back, q.front: " << q.second->back()->get_c_id() << ", " << q.second->front()->get_c_id() << std::endl;
+        std::cout << "q.back, q.front: " << *q.second->back()->get_c_id() << ", " << *q.second->front()->get_c_id() << std::endl;
     }
 
     std::cout << "getting pod to delete's mem and cpu vals" << std::endl;
