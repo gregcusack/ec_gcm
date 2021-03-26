@@ -92,7 +92,7 @@ uint64_t ec::ECAPI::sc_get_memory_usage_in_bytes(const ec::SubContainer::Contain
         SPDLOG_ERROR("NO AgentClient found for container id: {}", container_id);
         return 0;
     }
-//    ec::SubContainer sc = _ec->get_subcontainer(container_id);
+//    ec::SubContainer sc = _ec->get_subcontainer_front(container_id);
 
 //    if(sc.get_docker_id().empty()) {
 //        SPDLOG_ERROR("docker_id is 0!");
@@ -114,7 +114,7 @@ uint64_t ec::ECAPI::get_machine_free_memory(const ec::SubContainer::ContainerId 
         SPDLOG_ERROR("NO AgentClient found for container id: {}", container_id);
         return 0;
     }
-//    ec::SubContainer sc = _ec->get_subcontainer(container_id);
+//    ec::SubContainer sc = _ec->get_subcontainer_front(container_id);
     ret = ec::Facade::MonitorFacade::CAdvisor::getMachineFreeMem(ac->get_agent_ip().to_string());
     return ret;
 }
@@ -127,7 +127,7 @@ int64_t ec::ECAPI::get_cpu_quota_in_us(const ec::SubContainer::ContainerId &cont
         SPDLOG_ERROR("NO AgentClient found for container id: {}", container_id);
         return 0;
     }
-//    ec::SubContainer sc = _ec->get_subcontainer(container_id);
+//    ec::SubContainer sc = _ec->get_subcontainer_front(container_id);
 
 //    if(sc.get_docker_id().empty()) {
 //        SPDLOG_ERROR("docker_id is 0!");

@@ -39,20 +39,20 @@ namespace ec {
                     const ExportDeletePod* pod, DeletePodReply* reply) override;
 
 
-            const std::unordered_map<SubContainer::ContainerId, std::string>& getDeployedPods() { return deployedPods; }
+            const std::unordered_map<SubContainer::ContainerId, std::queue<std::string>*>& getDeployedPods() { return deployedPods; }
 
             struct matchingThreadArgs {
-                matchingThreadArgs(const SubContainer::ContainerId& _sc_id, std::string  _docker_id)
-                    : sc_id(_sc_id), docker_id(std::move(_docker_id)) {}
+                matchingThreadArgs(SubContainer::ContainerId  _sc_id, std::string  _docker_id)
+                    : sc_id(std::move(_sc_id)), docker_id(std::move(_docker_id)) {}
                 SubContainer::ContainerId sc_id;
-                std::string docker_id = "";
+                std::string docker_id;
             };
 
             grpc::Status ReportAppSpec(grpc::ServerContext *context, const ec::rpc::ExportAppSpec *appSpec,
                     ec::rpc::AppSpecReply *reply) override;
 
         private:
-            std::unordered_map<SubContainer::ContainerId, std::string> deployedPods;
+            std::unordered_map<SubContainer::ContainerId, std::queue<std::string>*> deployedPods;
             std::unordered_map<std::string, SubContainer::ContainerId> dockerToSubContainer;
             int insertPodSpec(const ExportPodSpec* pod);
             static void setPodSpecReply(const ExportPodSpec* pod, PodSpecReply* reply, std::string &status);

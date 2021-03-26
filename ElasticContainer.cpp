@@ -24,36 +24,42 @@ ec::SubContainer *ec::ElasticContainer::create_new_sc(uint32_t cgroup_id, uint32
     return new SubContainer(cgroup_id, host_ip, sockfd, quota, nr_throttled);
 }
 
-ec::SubContainer &ec::ElasticContainer::get_subcontainer(const ec::SubContainer::ContainerId &container_id) {
+////// Get oldest subcontainer with the cg_id provided
+ec::SubContainer &ec::ElasticContainer::get_subcontainer_front(const ec::SubContainer::ContainerId &container_id) {
     auto itr = subcontainers.find(container_id);
     if(itr == subcontainers.end()) {
         SPDLOG_CRITICAL("No EC with manager_id: {}. Exiting....", ec_id);
         std::exit(EXIT_FAILURE);
     }
-    return *itr->second;
+    return *itr->second->front();
 }
 
-ec::SubContainer *ec::ElasticContainer::get_sc_for_update(ec::SubContainer::ContainerId &container_id) {
+////// Get most recent container (current)
+ec::SubContainer *ec::ElasticContainer::get_sc_for_update_back(ec::SubContainer::ContainerId &container_id) {
     auto itr = subcontainers.find(container_id);
     if(itr == subcontainers.end()) {
         SPDLOG_CRITICAL("For EC: {}, no subcontainer with container_id: {}. Exiting...(sc for update).", ec_id, container_id);
         std::exit(EXIT_FAILURE);
     }
-    return itr->second;
+    return itr->second->back();
 }
 
 int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
-    if (subcontainers.find(*_sc.get_c_id()) != subcontainers.end()) {
-        SPDLOG_ERROR("This SubContainer already exists! Can't allocate identical one!");
-        //TODO: should delete sc
-        return __ALLOC_FAILED__;
+    auto inserted = subcontainers.find(*_sc.get_c_id());
+    if(inserted != subcontainers.end()) { //already inserted. add to queue
+        auto q = inserted->second;
+        q->push(&_sc);
+        subcontainers.insert({*_sc.get_c_id(), q});
     }
-    subcontainers.insert({*(_sc.get_c_id()), &_sc});
+    else { // not already inserted. create queue
+        auto q =  new std::queue<SubContainer *>();// (&_sc);
+        q->push(&_sc);
+        subcontainers.insert({*_sc.get_c_id(), q});
+    }
     return __ALLOC_INIT__;
 }
 
 void ec::ElasticContainer::get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res) {
-//    while(sc_ac_map.empty()) {}
     if (sc_ac_map.empty()) {
         SPDLOG_CRITICAL("ERROR: SC-AGENT Map is empty");
         std::exit(EXIT_FAILURE);
@@ -82,12 +88,18 @@ void ec::ElasticContainer::update_fair_cpu_share() {
 }
 
 int ec::ElasticContainer::ec_delete_from_subcontainers_map(const SubContainer::ContainerId &sc_id) {
-    //todo: delete reduce pod fair share!
     auto itr = subcontainers.find(sc_id);
     if(itr != subcontainers.end()) {
-        auto tmp = itr->second;
-        subcontainers.erase(sc_id);
-        delete tmp;
+        if(itr->second->size() > 1) {   //size queue > 1, delete element at front of queue (oldest element)
+            auto cont = itr->second->front();
+            itr->second->pop();
+            delete cont;
+        }
+        else {                          // if size queue == 1, delete back and delete queue
+            auto q = itr->second;
+            subcontainers.erase(sc_id);
+            delete q;
+        }
     }
     else {
         SPDLOG_ERROR("Can't find sc_id in subcontainers map! sc_id: {}", sc_id);
