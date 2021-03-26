@@ -41,12 +41,12 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     std::cout << "sc_id to delete: " << sc_id << std::endl;
     std::string s1, s2, s3, s4, status;
 
-    for(const auto &q : ec->get_subcontainers()) {
-        std::cout << "sc_id: " << q.first << std::endl;
-        std::cout << "q.back, q.front: " << *q.second->back()->get_c_id() << ", " << *q.second->front()->get_c_id() << std::endl;
-    }
+//    for(const auto &q : ec->get_subcontainers()) {
+//        std::cout << "sc_id: " << q.first << std::endl;
+//        std::cout << "q.back, q.front: " << *q.second->back()->get_c_id() << ", " << *q.second->front()->get_c_id() << std::endl;
+//    }
 
-    std::cout << "getting pod to delete's mem and cpu vals" << std::endl;
+//    std::cout << "getting pod to delete's mem and cpu vals" << std::endl;
     uint64_t sc_mem_limit = ec->get_subcontainer_front(sc_id).get_mem_limit_in_pages();
     uint64_t quota = ec->get_subcontainer_front(sc_id).get_cpu_stats()->get_quota(); //todo: race condition
 
@@ -102,7 +102,7 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
 
     setDeletePodReply(pod, reply, status);
 
-    SPDLOG_DEBUG("delete pod completed with status: {}", status);
+    SPDLOG_INFO("delete pod completed with status: {}", status);
     return grpc::Status::OK;
 }
 
@@ -146,8 +146,7 @@ int ec::rpc::DeployerExportServiceImpl::insertPodSpec(const ec::rpc::ExportPodSp
     if(!pod) { SPDLOG_ERROR("ExportPodSpec *pod is NULL"); }
 
     SPDLOG_DEBUG("sc_id to insertPodSpec: {}", SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()));
-
-    std::cout << "inserting pod cgid, nodeip: " << pod->cgroup_id() << ", " << pod->node_ip() << std::endl;
+//    std::cout << "inserting pod cgid, nodeip: " << pod->cgroup_id() << ", " << pod->node_ip() << std::endl;
 
     dep_pod_lock.lock();
     auto sc_id = SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip());
