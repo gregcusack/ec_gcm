@@ -38,6 +38,7 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
         return grpc::Status::CANCELLED;
     }
     SPDLOG_DEBUG("Sc_id to delete: {}", sc_id);
+    std::cout << "sc_id to delete: " << sc_id << std::endl;
     std::string s1, s2, s3, s4, status;
 
     for(const auto &q : ec->get_subcontainers()) {
