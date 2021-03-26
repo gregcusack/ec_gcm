@@ -40,6 +40,12 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     SPDLOG_DEBUG("Sc_id to delete: {}", sc_id);
     std::string s1, s2, s3, s4, status;
 
+    for(const auto &q : ec->get_subcontainers()) {
+        std::cout << "sc_id: " << q.first << std::endl;
+        std::cout << "q.back, q.front: " << q.second->back() << ", " << q.second->front() << std::endl;
+    }
+
+    std::cout << "getting pod to delete's mem and cpu vals" << std::endl;
     uint64_t sc_mem_limit = ec->get_subcontainer_front(sc_id).get_mem_limit_in_pages();
     uint64_t quota = ec->get_subcontainer_front(sc_id).get_cpu_stats()->get_quota(); //todo: race condition
 
