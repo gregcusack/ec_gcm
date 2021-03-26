@@ -147,6 +147,8 @@ int ec::rpc::DeployerExportServiceImpl::insertPodSpec(const ec::rpc::ExportPodSp
 
     SPDLOG_DEBUG("sc_id to insertPodSpec: {}", SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()));
 
+    std::cout << "inserting pod cgid, nodeip: " << pod->cgroup_id() << ", " << pod->node_ip() << std::endl;
+
     dep_pod_lock.lock();
     auto sc_id = SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip());
     auto cont = deployedPods.find(sc_id);
