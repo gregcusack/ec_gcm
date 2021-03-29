@@ -13,6 +13,7 @@
 #include <iostream>
 #include <functional> //for std::hash
 #include <string>
+#include <queue>
 #include "jsonSDK/include/JSONFacade.h"
 #include "protoBufSDK/include/ProtoBufFacade.h"
 #include "protoBufSDK/msg.pb.h"
@@ -24,7 +25,7 @@
 
 namespace ec {
     class ECAPI {
-    using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
+    using subcontainer_map = std::unordered_map<SubContainer::ContainerId, std::queue<SubContainer *>*>;
     using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
 
     public:
@@ -53,9 +54,9 @@ namespace ec {
         int ec_get_num_subcontainers() { return _ec->get_num_subcontainers(); }
         [[nodiscard]] const subcontainer_agent_map  &get_subcontainer_agents() const {return _ec->get_sc_ac_map(); }
 
-        const SubContainer &get_subcontainer(SubContainer::ContainerId &container_id) {return _ec->get_subcontainer(
+        const SubContainer &get_subcontainer_front(SubContainer::ContainerId &container_id) {return _ec->get_subcontainer_front(
                     container_id);}
-        SubContainer *ec_get_sc_for_update(SubContainer::ContainerId &container_id) {return _ec->get_sc_for_update(
+        SubContainer *ec_get_sc_for_update(SubContainer::ContainerId &container_id) {return _ec->get_sc_for_update_back(
                     container_id);}
 
         //CPU

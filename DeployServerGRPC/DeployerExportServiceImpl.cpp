@@ -38,10 +38,17 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
         return grpc::Status::CANCELLED;
     }
     SPDLOG_DEBUG("Sc_id to delete: {}", sc_id);
+    std::cout << "sc_id to delete: " << sc_id << std::endl;
     std::string s1, s2, s3, s4, status;
 
-    uint64_t sc_mem_limit = ec->get_subcontainer(sc_id).get_mem_limit_in_pages();
-    uint64_t quota = ec->get_subcontainer(sc_id).get_cpu_stats()->get_quota(); //todo: race condition
+//    for(const auto &q : ec->get_subcontainers()) {
+//        std::cout << "sc_id: " << q.first << std::endl;
+//        std::cout << "q.back, q.front: " << *q.second->back()->get_c_id() << ", " << *q.second->front()->get_c_id() << std::endl;
+//    }
+
+//    std::cout << "getting pod to delete's mem and cpu vals" << std::endl;
+    uint64_t sc_mem_limit = ec->get_subcontainer_front(sc_id).get_mem_limit_in_pages();
+    uint64_t quota = ec->get_subcontainer_front(sc_id).get_cpu_stats()->get_quota(); //todo: race condition
 
 #if(SPDLOG_ACTIVE_LEVEL == SPDLOG_LEVEL_TRACE)
     SPDLOG_TRACE("deleted container quota, mem_in_pages: {}, {}", quota, sc_mem_limit);
@@ -95,7 +102,7 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
 
     setDeletePodReply(pod, reply, status);
 
-    SPDLOG_DEBUG("delete pod completed with status: {}", status);
+    SPDLOG_INFO("delete pod completed with status: {}", status);
     return grpc::Status::OK;
 }
 
@@ -139,18 +146,32 @@ int ec::rpc::DeployerExportServiceImpl::insertPodSpec(const ec::rpc::ExportPodSp
     if(!pod) { SPDLOG_ERROR("ExportPodSpec *pod is NULL"); }
 
     SPDLOG_DEBUG("sc_id to insertPodSpec: {}", SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()));
+//    std::cout << "inserting pod cgid, nodeip: " << pod->cgroup_id() << ", " << pod->node_ip() << std::endl;
 
     dep_pod_lock.lock();
-    auto inserted = deployedPods.emplace(
-            SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()),
-            pod->docker_id()
-            ).second;
+    auto sc_id = SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip());
+    auto cont = deployedPods.find(sc_id);
+    if(cont != deployedPods.end()) {
+        auto q = cont->second;
+        q->push(pod->docker_id());
+        deployedPods.emplace(sc_id, q);
+    }
+    else {
+        auto q = new std::queue<std::string>();
+        q->push(pod->docker_id());
+        deployedPods.emplace(sc_id, q);
+    }
     dep_pod_lock.unlock();
 
-    if(!inserted) {
-        SPDLOG_ERROR("Already deployed pod!");
-        return -2;
-    }
+//    auto inserted = deployedPods.emplace(
+//            SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()),
+//            pod->docker_id()
+//            ).second;
+//
+//    if(!inserted) {
+//        SPDLOG_ERROR("Already deployed pod!");
+//        return -2;
+//    }
 
     std::unique_lock<std::mutex> lk(dockId_sc_lock);
     auto dockInsert = dockerToSubContainer.emplace(
@@ -198,10 +219,10 @@ void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* argum
     });
 
     std::lock_guard<std::mutex> lk_dock(cv_mtx_dock);
-//    ec->get_subcontainer(threadArgs->sc_id).set_docker_id(threadArgs->docker_id);
+//    ec->get_subcontainer_front(threadArgs->sc_id).set_docker_id(threadArgs->docker_id);
     threadArgs->sc_id.docker_id = threadArgs->docker_id;
-//    ec->get_subcontainer(threadArgs->sc_id).set_docker_id(threadArgs->docker_id);
-//    if(unlikely(ec->get_subcontainer(threadArgs->sc_id).get_docker_id().empty())) {
+//    ec->get_subcontainer_front(threadArgs->sc_id).set_docker_id(threadArgs->docker_id);
+//    if(unlikely(ec->get_subcontainer_front(threadArgs->sc_id).get_docker_id().empty())) {
 //        SPDLOG_ERROR("docker_id set failed in grpcDockerIdMatcher()!");
 //    }
     if(unlikely(threadArgs->sc_id.docker_id.empty())) {
@@ -235,8 +256,11 @@ int ec::rpc::DeployerExportServiceImpl::deleteFromSubcontainersMap(const ec::Sub
 
 int ec::rpc::DeployerExportServiceImpl::deleteFromDeployedPodsMap(const ec::SubContainer::ContainerId &sc_id) {
     std::unique_lock<std::mutex> lk(dep_pod_lock);
-    if(deployedPods.find(sc_id) != deployedPods.end()) {
+    auto deployed_pod_entry = deployedPods.find(sc_id);
+    if(deployed_pod_entry != deployedPods.end()) {
+        auto q = deployed_pod_entry->second;
         deployedPods.erase(sc_id);
+        delete q;
     }
     else {
         SPDLOG_ERROR("Can't find sc_id to delete from deployedPods! sc_id: {}", sc_id);

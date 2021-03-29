@@ -348,11 +348,11 @@ uint64_t ec::Manager::handle_reclaim_memory(int client_fd) {
     std::vector<uint64_t> reclaim_amounts;
 
     SPDLOG_DEBUG("GCM: Trying to reclaim memory from other cgroups!");
-    for (const auto &container : ec_get_subcontainers()) {
-        if (container.second->get_fd() == client_fd) {
+    for (const auto &sc_map : ec_get_subcontainers()) {
+        if (sc_map.second->back()->get_fd() == client_fd) {
             continue;
         }
-        std::future<uint64_t> reclaimed = std::async(std::launch::async, &ec::Manager::reclaim, this, container.first, container.second);
+        std::future<uint64_t> reclaimed = std::async(std::launch::async, &ec::Manager::reclaim, this, sc_map.first, sc_map.second->back());
         futures.push_back(std::move(reclaimed));
     }
 

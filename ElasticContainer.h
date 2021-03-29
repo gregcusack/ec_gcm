@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <vector>
 #include <string>
+#include <queue>
 
 #include <chrono>
 #include <thread>
@@ -45,7 +46,8 @@ namespace ec {
      */
 //    struct Server;
     class ElasticContainer {
-    using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
+//    using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
+    using subcontainer_map = std::unordered_map<SubContainer::ContainerId, std::queue<SubContainer *>*>;
     using subcontainer_agentclient_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
     public:
         explicit ElasticContainer(uint32_t _ec_id);
@@ -62,9 +64,9 @@ namespace ec {
         const subcontainer_map &get_subcontainers() {return subcontainers;}
         const int get_num_subcontainers() { return subcontainers.size(); }
         subcontainer_map *get_subcontainers_map_for_update() { return &subcontainers; }
-        SubContainer &get_subcontainer(const SubContainer::ContainerId &container_id);
+        SubContainer &get_subcontainer_front(const SubContainer::ContainerId &container_id);
         AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_ac_map[container_id];}
-        SubContainer *get_sc_for_update(SubContainer::ContainerId &container_id);
+        SubContainer *get_sc_for_update_back(SubContainer::ContainerId &container_id);
         const subcontainer_agentclient_map &get_sc_ac_map() {return sc_ac_map;}
         subcontainer_agentclient_map *get_sc_ac_map_for_update() {return &sc_ac_map; }
         void get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res);
