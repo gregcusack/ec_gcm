@@ -23,7 +23,7 @@ namespace ec {
                 uint64_t get_quota() { return quota; }
                 uint32_t get_throttled() { return nr_throttled; }
 
-                void set_quota(uint64_t _quota) {} // { quota = _quota; }
+                void set_quota(uint64_t _quota) { quota = _quota; }
                 void set_throttled(uint32_t _throttled) { nr_throttled = _throttled; }
 
                 uint32_t get_throttle_increase(uint32_t _throttled) { return _throttled - nr_throttled; }
