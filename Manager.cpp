@@ -66,9 +66,6 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         SPDLOG_ERROR("seq nums do not match for cg_id: ({}, {}), (rx, sc->get): ({}, {})",
                      sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_cpustat_seq_num, sc->get_seq_num());
         sc->set_cpustat_seq_num(rx_cpustat_seq_num);
-//        cpulock.unlock();
-//        res->request = 1;
-//        return __ALLOC_SUCCESS__;
     }
 
     if(rx_quota / 1000 != sc->get_quota() / 1000) {
