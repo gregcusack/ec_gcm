@@ -232,9 +232,11 @@ void ec::Server::handle_client_reqs_udp(void *args) {
     auto *req = reinterpret_cast<msg_t*>(buff_in);
     req->set_ip_from_host(req->client_ip.to_uint32()); //this needs to be removed eventually
     auto *res = new msg_t(*req);
-    std::cout << "req rx: " << *req << std::endl;
+//    std::cout << "req rx: " << *req << std::endl;
+    SPDLOG_INFO("req rx: {}", *req);
     ret = handle_req(req, res, om::net::ip4_addr::from_net(client_ip).to_uint32(), client_fd);
-    std::cout << "post req rx: " << *res << std::endl;
+//    std::cout << "post req rx: " << *res << std::endl;
+    SPDLOG_INFO("p_req tx: {}", *res);
 //    std::cout << "33333333333333333333333333333333333333333333333333333" << std::endl;
 
     if(!res->request && ret == __ALLOC_SUCCESS__) {
