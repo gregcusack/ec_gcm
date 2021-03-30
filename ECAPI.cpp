@@ -152,6 +152,8 @@ int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, u
     auto change = "";
     auto diff_quota = (int64_t)_quota - (int64_t)sc->get_quota(); //new quota - old
     change = diff_quota < 0 ? "decr" : "incr";
+    SPDLOG_INFO("diff_quota, change: {}, {}", diff_quota, change);
+
 
     msg_struct::ECMessage msg_req;
     msg_req.set_req_type(0); //__CPU__
