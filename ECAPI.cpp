@@ -149,11 +149,9 @@ int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, u
         std::exit(EXIT_FAILURE);
     }
 
-    auto change = "";
     auto diff_quota = (int64_t)_quota - (int64_t)sc->get_quota(); //new quota - old
-    change = diff_quota < 0 ? "decr" : "incr";
-    SPDLOG_INFO("diff_quota, change: {}, {}", diff_quota, change);
-
+    auto change = diff_quota < 0 ? "decr" : "incr";
+//    SPDLOG_INFO("diff_quota, change: {}, {}", diff_quota, change);
 
     msg_struct::ECMessage msg_req;
     msg_req.set_req_type(0); //__CPU__
@@ -162,7 +160,7 @@ int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, u
     msg_req.set_quota(_quota);
     msg_req.set_payload_string(change);
 //    msg_req.set_payload_string(sc->get_docker_id());
-    SPDLOG_INFO("set_quota cgid: {}", *sc->get_c_id());
+//    SPDLOG_INFO("set_quota cgid: {}", *sc->get_c_id());
 
     while(unlikely(!sc->sc_inserted())) {
 //        std::cout << "itr incr on sc inserted" << std::endl;
