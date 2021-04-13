@@ -258,5 +258,24 @@ void ec::ECAPI::sc_set_memory_limit_in_pages(ec::SubContainer::ContainerId sc_id
     sc->set_mem_limit_in_pages(new_mem_limit);
 }
 
+uint64_t ec::ECAPI::__syscall_get_memory_usage_in_bytes(const ec::SubContainer::ContainerId &container_id) {
+
+    uint64_t ret = 0;
+    //initialize request body
+    msg_struct::ECMessage msg_req;
+    msg_req.set_req_type(6); //MEM_usage_IN_PAGES 
+    msg_req.set_cgroup_id(container_id.cgroup_id);
+    msg_req.set_payload_string("test");
+    std::cerr << "[dbg] get_memory_usage_in_bytes: get the corresponding agent\n";
+    auto agent = _ec->get_corres_agent(container_id);
+    if(!agent) {
+        std::cerr << "[dbg] agent is NULL" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    ret = agent->send_request(msg_req);
+    return ret * __PAGE_SIZE__ ;
+}
+
 
 

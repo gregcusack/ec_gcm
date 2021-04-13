@@ -319,7 +319,7 @@ uint64_t ec::Manager::reclaim(SubContainer::ContainerId containerId, SubContaine
 	uint64_t ret = 0;
 	auto mem_limit_pages = subContainer->get_mem_limit_in_pages();
     auto mem_limit_bytes = page_to_byte(mem_limit_pages);
-    auto mem_usage_bytes = sc_get_memory_usage_in_bytes(containerId);
+    auto mem_usage_bytes = __syscall_get_memory_usage_in_bytes(containerId);
 
 	if(mem_limit_bytes - mem_usage_bytes > _SAFE_MARGIN_BYTES_) {
         auto is_max_mem_resized = sc_resize_memory_limit_in_pages(containerId,
@@ -521,22 +521,35 @@ void ec::Manager::serveGrpcDeployExport() {
 
 //TODO: this should be separated out into own file
 void ec::Manager::run() {
-    //ec::SubContainer::ContainerId x ;
-//    std::cout << "[dbg] In Manager Run function" << std::endl;
-//    std::cout << "EC Map Size: " << _ec->get_subcontainers().size() << std::endl;
-//    while(true){
-////        for(auto sc_ : _ec->get_subcontainers()){
-////            std::cout << "=================================================================================================" << std::endl;
-////            std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
-////            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << sc_get_memory_limit_in_bytes(sc_.first) << "---" << sc_get_memory_usage_in_bytes(sc_.first) << std::endl;
-////            std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
-////            std::cout << "=================================================================================================\n";
-////            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
-////            sleep(1);
-//        }
-//        std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << std::endl;
-//        sleep(10);
-//    }
+
+    while (true)
+    {
+
+        std::vector<std::future<uint64_t>> futures;
+        std::vector<uint64_t> reclaim_amounts;
+        uint64_t ret = 0;
+
+        SPDLOG_DEBUG("Periodic reclaim started!");
+        for (const auto &sc_map : ec_get_subcontainers()) {
+            std::future<uint64_t> reclaimed = std::async(std::launch::async, &ec::Manager::reclaim, this, sc_map.first, sc_map.second->back());
+            futures.push_back(std::move(reclaimed));
+        }
+
+        
+        for(auto &rec : futures) {
+            ret += rec.get();   //TODO: get blocks. do we need a timeout if reclaim() never returns??
+        }
+
+        SPDLOG_DEBUG("Recalimed memory at the end of the periodic reclaim function: {}", ret);
+        if(ret > 0){
+            memlock.lock();
+            ec_update_reclaim_memory_in_pages(ret);
+            memlock.unlock();
+        }
+        
+        sleep(5);
+        
+    }
 }
 
 #ifndef NDEBUG

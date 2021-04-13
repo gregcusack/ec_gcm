@@ -87,6 +87,7 @@ namespace ec {
         //uint32_t get_num_agent_clients() { return _ec->get_num_agent_clients(); }
         // [[nodiscard]] const std::vector<AgentClient*> &get_agent_clients() const {return _ec->get_agent_clients(); }
         int64_t get_sc_quota(ec::SubContainer *sc);
+        uint64_t __syscall_get_memory_usage_in_bytes(const SubContainer::ContainerId &container_id);
 
         /**
          *******************************************************
