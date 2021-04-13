@@ -69,8 +69,10 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     }
 
     if(rx_quota / 1000 != sc->get_quota() / 1000) {
-//        std::cout << "quotas dont match"
         SPDLOG_ERROR("quotas do not match (ip, cgid, rx, sc->get): ({}, {}, {}, {})", sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_quota, sc->get_quota());
+        /// TEST. DELETE LATER!
+//        sc->set_quota(rx_quota);
+        /// END TEST
         cpulock.unlock();
         res->request = 1;
         return __ALLOC_SUCCESS__;
@@ -145,7 +147,6 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(rx_quota < ec_get_fair_cpu_share() && thr_mean > 0.5) {   //throttled but don't have fair share
-        std::cout << "here2. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
         uint64_t amnt_share_lacking = ec_get_fair_cpu_share() - rx_quota;
         if (ec_get_cpu_unallocated_rt() > 0) {
 //            std::cout << "here3. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
