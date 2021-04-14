@@ -11,7 +11,7 @@
 
 ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, ec::ports_t _ports, std::vector<Agent *> &_agents)
     : server_id(_server_id), ip_address(_ip_address), ports(_ports), agents(_agents), server_initialized(0),
-      num_of_cli(0) {}
+      num_of_cli(0), udp_threads_created(0), udp_threads_closed(0), mod_counter(0) {}
 
 
 
@@ -201,6 +201,9 @@ void ec::Server::serve_udp() {
             auto args = new serv_thread_args(server_sock_udp.sock_fd, &server_sock_udp.addr);
             std::thread client_handler(&Server::handle_client_reqs_udp, this, (void*)args);
             client_handler.detach();
+            if(get_mod_counter() % 10 == 0) {
+                SPDLOG_INFO("(thr_created, thr_closed): ({},{})", get_threads_created(), get_threads_closed());
+            }
 //            else {
 //                SPDLOG_ERROR("[ERROR]: EC Server id: {}. Unable to accept connection. "
 //                             "Trying again. Error response: {}", server_id, clifd);
@@ -225,10 +228,12 @@ void ec::Server::handle_client_reqs_udp(void *args) {
 //    delete (serv_thread_args*)args;
 
     num_of_cli++;
+    incr_threads_created();
     num_bytes = recvfrom(client_fd, buff_in, sizeof(buff_in), 0, (struct sockaddr*)&cliaddr, (socklen_t *)&len);
     if(num_bytes < 0) {
         SPDLOG_ERROR("EC Server id: {}. Failed reading from udp socket", server_id);
     }
+    incr_threads_closed();
     auto *req = reinterpret_cast<msg_t*>(buff_in);
     req->set_ip_from_host(req->client_ip.to_uint32()); //this needs to be removed eventually
     auto *res = new msg_t(*req);
@@ -253,7 +258,6 @@ void ec::Server::handle_client_reqs_udp(void *args) {
     delete res;
 //    break;
 //        delete req;
-
 //    std::cout << "#################################THREAD IS DONE BIATCHHHH ########################333" << std::endl;
 }
 
@@ -292,6 +296,36 @@ bool ec::Server::init_agent_connections() {
     }
     return num_connections == agent_clients_db->get_agent_clients_db_size();
 
+}
+
+void ec::Server::incr_threads_created() {
+    std::unique_lock<std::mutex> lk(thr_created_mtx);
+    udp_threads_created++;
+}
+
+int ec::Server::get_threads_created() {
+    std::unique_lock<std::mutex> lk(thr_created_mtx);
+    return udp_threads_created;
+}
+
+void ec::Server::incr_threads_closed() {
+    std::unique_lock<std::mutex> lk(thr_closed_mtx);
+    udp_threads_closed++;
+}
+
+int ec::Server::get_threads_closed() {
+    std::unique_lock<std::mutex> lk(thr_closed_mtx);
+    return udp_threads_closed;
+}
+
+void ec::Server::incr_mod_counter() {
+    std::unique_lock<std::mutex> lk(mod_cntr_mtx);
+    mod_counter++;
+}
+
+int ec::Server::get_mod_counter() {
+    std::unique_lock<std::mutex> lk(mod_cntr_mtx);
+    return mod_counter;
 }
 
 
