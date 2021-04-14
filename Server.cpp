@@ -199,16 +199,9 @@ void ec::Server::serve_udp() {
 
         if(FD_ISSET(server_sock_udp.sock_fd, &readfds)) {
             auto args = new serv_thread_args(server_sock_udp.sock_fd, &server_sock_udp.addr);
-            std::thread client_handler(&Server::handle_client_reqs_udp, this, (void*)args);
-            client_handler.detach();
-            if(get_mod_counter() % 10 == 0) {
-                SPDLOG_INFO("(thr_created, thr_closed): ({},{})", get_threads_created(), get_threads_closed());
-            }
-//            else {
-//                SPDLOG_ERROR("[ERROR]: EC Server id: {}. Unable to accept connection. "
-//                             "Trying again. Error response: {}", server_id, clifd);
-//                continue;
-//            }
+            handle_client_reqs_udp((void*)args);
+//            std::thread client_handler(&Server::handle_client_reqs_udp, this, (void*)args);
+//            client_handler.detach();
         }
     }
 }
@@ -234,13 +227,13 @@ void ec::Server::handle_client_reqs_udp(void *args) {
         SPDLOG_ERROR("EC Server id: {}. Failed reading from udp socket", server_id);
     }
     incr_threads_closed();
+//    if(get_mod_counter() % 10 == 0) {
+//        SPDLOG_INFO("(thr_created, thr_closed): ({},{})", get_threads_created(), get_threads_closed());
+//    }
     auto *req = reinterpret_cast<msg_t*>(buff_in);
     req->set_ip_from_host(req->client_ip.to_uint32()); //this needs to be removed eventually
     auto *res = new msg_t(*req);
-//    SPDLOG_INFO("req rx: {}", *req);
     ret = handle_req(req, res, om::net::ip4_addr::from_net(client_ip).to_uint32(), client_fd);
-//    SPDLOG_INFO("p_req tx: {}", *res);
-//    std::cout << "33333333333333333333333333333333333333333333333333333" << std::endl;
 
     if(!res->request && ret == __ALLOC_SUCCESS__) {
         SPDLOG_TRACE("sending back alloc success!");
