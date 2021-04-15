@@ -42,7 +42,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     }
     if (req->req_type != _CPU_) { return __ALLOC_FAILED__; }
 
-    cpulock.lock();
+//    cpulock.lock();
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
     auto sc = ec_get_sc_for_update(sc_id);
     if (!sc) {
@@ -54,12 +54,9 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     auto rx_quota = req->rsrc_amnt;
     auto rt_remaining = req->runtime_remaining;
     auto throttled = req->request;
-    uint64_t updated_quota = rx_quota;
-    uint64_t to_add = 0;
     int ret;
     double thr_mean = 0;
-    uint64_t rt_mean = 0;
-    uint64_t total_rt_in_sys = 0;
+    uint64_t total_rt_in_sys, rt_mean, to_add, updated_quota;
     uint32_t syscall_seq_num = syscall_sequence_number;
 
     if(sc->get_seq_num() != rx_cpustat_seq_num) {
@@ -73,7 +70,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         /// TEST. DELETE LATER!
 //        sc->set_quota(rx_quota);
         /// END TEST
-        cpulock.unlock();
+//        cpulock.unlock();
         res->request = 1;
         return __ALLOC_SUCCESS__;
     }
@@ -252,7 +249,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 
     syscall_sequence_number++;
     res->request = 1;
-    cpulock.unlock();
+//    cpulock.unlock();
     return __ALLOC_SUCCESS__;
 
 }
