@@ -221,12 +221,12 @@ void ec::Server::handle_client_reqs_udp(void *args) {
 //    delete (serv_thread_args*)args;
 
     num_of_cli++;
-    incr_threads_created();
+//    incr_threads_created();
     num_bytes = recvfrom(client_fd, buff_in, sizeof(buff_in), 0, (struct sockaddr*)&cliaddr, (socklen_t *)&len);
     if(num_bytes < 0) {
         SPDLOG_ERROR("EC Server id: {}. Failed reading from udp socket", server_id);
     }
-    incr_threads_closed();
+//    incr_threads_closed();
 //    if(get_mod_counter() % 10 == 0) {
 //        SPDLOG_INFO("(thr_created, thr_closed): ({},{})", get_threads_created(), get_threads_closed());
 //    }
