@@ -225,10 +225,7 @@ void ec::Server::handle_client_reqs_udp(void *args) {
     if(num_bytes < 0) {
         SPDLOG_ERROR("EC Server id: {}. Failed reading from udp socket", server_id);
     }
-//    incr_threads_closed();
-//    if(get_mod_counter() % 10 == 0) {
-//        SPDLOG_INFO("(thr_created, thr_closed): ({},{})", get_threads_created(), get_threads_closed());
-//    }
+
     auto *req = reinterpret_cast<msg_t*>(buff_in);
     req->set_ip_from_host(req->client_ip.to_uint32()); //this needs to be removed eventually
     auto *res = new msg_t(*req);
@@ -238,7 +235,6 @@ void ec::Server::handle_client_reqs_udp(void *args) {
         SPDLOG_TRACE("sending back alloc success!");
         if(send(client_fd, (const char*) &*res, sizeof(*res), MSG_CONFIRM) < 0) {
             SPDLOG_ERROR("EC Server id: {}. Failed writing to socket", server_id);
-//            break;
         }
         else {
             SPDLOG_DEBUG("sucess writing back to socket on mem resize!");
@@ -246,12 +242,8 @@ void ec::Server::handle_client_reqs_udp(void *args) {
     }
     else if(ret == __ALLOC_FAILED__) {
         SPDLOG_ERROR("handle_req() failed!");
-//            break;
     }
     delete res;
-//    break;
-//        delete req;
-//    std::cout << "#################################THREAD IS DONE BIATCHHHH ########################333" << std::endl;
 }
 
 bool ec::Server::init_agent_connections() {
