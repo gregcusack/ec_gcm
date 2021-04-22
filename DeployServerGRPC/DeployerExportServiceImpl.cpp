@@ -163,16 +163,6 @@ int ec::rpc::DeployerExportServiceImpl::insertPodSpec(const ec::rpc::ExportPodSp
     }
     dep_pod_lock.unlock();
 
-//    auto inserted = deployedPods.emplace(
-//            SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()),
-//            pod->docker_id()
-//            ).second;
-//
-//    if(!inserted) {
-//        SPDLOG_ERROR("Already deployed pod!");
-//        return -2;
-//    }
-
     std::unique_lock<std::mutex> lk(dockId_sc_lock);
     auto dockInsert = dockerToSubContainer.emplace(
             pod->docker_id(),
