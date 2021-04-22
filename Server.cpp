@@ -11,7 +11,7 @@
 
 ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, ec::ports_t _ports, std::vector<Agent *> &_agents)
     : server_id(_server_id), ip_address(_ip_address), ports(_ports), agents(_agents), server_initialized(0),
-      num_of_cli(0), udp_threads_created(0), udp_threads_closed(0), mod_counter(0) {}
+      num_of_cli(0) {}
 
 
 
@@ -142,7 +142,6 @@ void ec::Server::handle_client_reqs_tcp(void *args) {
         SPDLOG_TRACE("received: {}", *req);
 
         ret = handle_req(req, res, om::net::ip4_addr::from_net(client_ip).to_uint32(), client_fd);
-//        std::cout << "TCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCPTCP" << std::endl;
 
         if(ret == __ALLOC_INIT__) {
             if (write(client_fd, (const char *) &*res, sizeof(*res)) < 0) {
@@ -291,37 +290,3 @@ bool ec::Server::init_agent_connections() {
     return num_connections == agent_clients_db->get_agent_clients_db_size();
 
 }
-
-void ec::Server::incr_threads_created() {
-    std::unique_lock<std::mutex> lk(thr_created_mtx);
-    udp_threads_created++;
-}
-
-int ec::Server::get_threads_created() {
-    std::unique_lock<std::mutex> lk(thr_created_mtx);
-    return udp_threads_created;
-}
-
-void ec::Server::incr_threads_closed() {
-    std::unique_lock<std::mutex> lk(thr_closed_mtx);
-    udp_threads_closed++;
-}
-
-int ec::Server::get_threads_closed() {
-    std::unique_lock<std::mutex> lk(thr_closed_mtx);
-    return udp_threads_closed;
-}
-
-void ec::Server::incr_mod_counter() {
-    std::unique_lock<std::mutex> lk(mod_cntr_mtx);
-    mod_counter++;
-}
-
-int ec::Server::get_mod_counter() {
-    std::unique_lock<std::mutex> lk(mod_cntr_mtx);
-    return mod_counter;
-}
-
-
-
-
