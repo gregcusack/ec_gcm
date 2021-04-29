@@ -47,6 +47,8 @@ namespace ec {
             std::vector<std::string> *app_images = nullptr;
         };
 
+        bool init_agent_connections();
+
     private:
         ip4_addr                gcm_ip;
         uint16_t                gcm_port;           //unknown if needed

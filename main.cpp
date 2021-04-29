@@ -52,21 +52,25 @@ int main(int argc, char* argv[]){
     auto agent_ips = jsonFacade.getAgentIPs();
     auto gcm_ip = jsonFacade.getGCMIP();
     
-//    std::vector<uint16_t>       server_ports{4444};
-    ec::ports_t ports(4444, 4447);
+//    ec::ports_t app1_ports(4444, 4447);
+    ec::ports_t app1_ports(5000, 6000);
+//    ec::ports_t app2_ports(5001, 6001);
 
-    std::vector<ec::ports_t> controller_ports{ports};
+    std::vector<ec::ports_t> controller_ports{app1_ports};
+//    std::vector<ec::ports_t> controller_ports{app1_ports, app2_ports};
 
-//    auto *gcm = new ec::GlobalControlManager(gcm_ip, GCM_PORT, agent_ips, server_ports);
     auto *gcm = new ec::GlobalControlManager(gcm_ip, GCM_PORT, agent_ips, controller_ports);
-//
-//    for(const auto &i : server_ports) {
-//        gcm->create_manager();
-//    }
+
     for(const auto &i : controller_ports) {
         gcm->create_manager();
     }
     SPDLOG_INFO("[dbg] num managers: {}", gcm->get_managers().size());
+
+    //    Create AgentClients
+    if(!gcm->init_agent_connections()) {
+        SPDLOG_CRITICAL("[ERROR Server] not all agents connected to server_id: {}! Exiting...");
+        exit(EXIT_FAILURE);
+    }
     
     gcm->run(app_name, gcm_ip);
 

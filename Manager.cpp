@@ -7,6 +7,7 @@
 ec::Manager::Manager(int _manager_id, ec::ip4_addr gcm_ip, ec::ports_t controller_ports, std::vector<Agent *> &agents)
         : Server(_manager_id, gcm_ip, controller_ports, agents), ECAPI(_manager_id), manager_id(_manager_id),
           syscall_sequence_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {
+    grpc_port = BASE_GRPC_PORT + _manager_id - 1; //4447 for manager_id 1, 4448 for manager_id, etc
     //init server
     initialize_tcp();
     initialize_udp();
@@ -506,7 +507,7 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
 
 
 void ec::Manager::serveGrpcDeployExport() {
-    std::string server_addr(deploy_service_ip + ":4447");
+    std::string server_addr(deploy_service_ip + ":" + std::to_string(grpc_port));
     grpc::ServerBuilder builder;
 
     builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
@@ -519,22 +520,6 @@ void ec::Manager::serveGrpcDeployExport() {
 
 //TODO: this should be separated out into own file
 void ec::Manager::run() {
-    //ec::SubContainer::ContainerId x ;
-//    std::cout << "[dbg] In Manager Run function" << std::endl;
-//    std::cout << "EC Map Size: " << _ec->get_subcontainers().size() << std::endl;
-//    while(true){
-////        for(auto sc_ : _ec->get_subcontainers()){
-////            std::cout << "=================================================================================================" << std::endl;
-////            std::cout << "[READ API]: the memory limit and max_usage in bytes of the container with cgroup id: " << sc_.second->get_c_id()->cgroup_id << std::endl;
-////            std::cout << " on the node with ip address: " << sc_.first.server_ip  << " is: " << sc_get_memory_limit_in_bytes(sc_.first) << "---" << sc_get_memory_usage_in_bytes(sc_.first) << std::endl;
-////            std::cout << "[READ API]: machine free: " << get_machine_free_memory(sc_.first) << std::endl;
-////            std::cout << "=================================================================================================\n";
-////            std::cout << "quota is: " << get_cpu_quota_in_us(sc_.first) << "###" << std::endl;
-////            sleep(1);
-//        }
-//        std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << std::endl;
-//        sleep(10);
-//    }
 }
 
 #ifndef NDEBUG

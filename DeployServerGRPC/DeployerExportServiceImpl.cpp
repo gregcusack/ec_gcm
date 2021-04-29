@@ -5,6 +5,39 @@
 #include "DeployerExportServiceImpl.h"
 
 grpc::Status
+ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, const ec::rpc::ExportAppSpec *appSpec,
+                                                  ec::rpc::AppSpecReply *reply) {
+    if(!reply || !appSpec) {
+        SPDLOG_ERROR("ReportAppSpec reply or appSpec is NULL");
+        return grpc::Status::CANCELLED;
+    }
+
+    // Set Application Global limits here:
+    if (!ec){
+        SPDLOG_ERROR("EC is NULL in ReportAppSpec");
+        return grpc::Status::CANCELLED;
+    }
+    // Passed in value is in mi but set_total_cpu takes ns
+    ec->set_total_cpu(appSpec->cpu_limit()*100000);
+    ec->set_unallocated_rt(ec->get_total_cpu());
+    // Passed in value is in MiB but set_memory_limit_in_pages takes in number of pages
+    ec->set_memory_limit_in_pages((appSpec->mem_limit() * 1048576) / 4000);
+    ec->set_unalloc_memory_in_pages((appSpec->mem_limit() * 1048576) / 4000);
+    ec->set_alloc_memory_in_pages(0);
+
+    SPDLOG_DEBUG("Set CPU Limit: {}", ec->get_total_cpu());
+    SPDLOG_DEBUG("Set Mem Limit {}", ec->get_mem_limit_in_pages());
+
+    // Set response here
+    reply->set_app_name(appSpec->app_name());
+    reply->set_cpu_limit(appSpec->cpu_limit());
+    reply->set_mem_limit(appSpec->mem_limit());
+    reply->set_thanks(success);
+
+    return grpc::Status::OK;
+}
+
+grpc::Status
 ec::rpc::DeployerExportServiceImpl::ReportPodSpec(grpc::ServerContext *context, const ec::rpc::ExportPodSpec *pod,
                                                   ec::rpc::PodSpecReply *reply) {
     std::string status;
@@ -107,38 +140,6 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
 }
 
 
-grpc::Status
-ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, const ec::rpc::ExportAppSpec *appSpec,
-                                                  ec::rpc::AppSpecReply *reply) {
-    if(!reply || !appSpec) {
-        SPDLOG_ERROR("ReportAppSpec reply or appSpec is NULL");
-        return grpc::Status::CANCELLED;
-    }
-
-    // Set Application Global limits here:
-    if (!ec){
-        SPDLOG_ERROR("EC is NULL in ReportAppSpec");
-        return grpc::Status::CANCELLED;
-    }
-    // Passed in value is in mi but set_total_cpu takes ns
-    ec->set_total_cpu(appSpec->cpu_limit()*100000);
-    ec->set_unallocated_rt(ec->get_total_cpu());
-    // Passed in value is in MiB but set_memory_limit_in_pages takes in number of pages
-    ec->set_memory_limit_in_pages((appSpec->mem_limit() * 1048576) / 4000);
-    ec->set_unalloc_memory_in_pages((appSpec->mem_limit() * 1048576) / 4000);
-    ec->set_alloc_memory_in_pages(0);
-
-    SPDLOG_DEBUG("Set CPU Limit: {}", ec->get_total_cpu());
-    SPDLOG_DEBUG("Set Mem Limit {}", ec->get_mem_limit_in_pages());
-
-    // Set response here
-    reply->set_app_name(appSpec->app_name());
-    reply->set_cpu_limit(appSpec->cpu_limit());
-    reply->set_mem_limit(appSpec->mem_limit());
-    reply->set_thanks(success);
-
-    return grpc::Status::OK;
-}
 
 
 

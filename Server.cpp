@@ -45,11 +45,11 @@ void ec::Server::initialize_tcp() {
     }
     SPDLOG_DEBUG("EC Server id: {}. socket successfully created!", server_id);
 
-//    Create AgentClients
-    if(!init_agent_connections()) {
-        SPDLOG_CRITICAL("[ERROR Server] not all agents connected to server_id: {}! Exiting...", server_id);
-        exit(EXIT_FAILURE);
-    }
+////    Create AgentClients
+//    if(!init_agent_connections()) {
+//        SPDLOG_CRITICAL("[ERROR Server] not all agents connected to server_id: {}! Exiting...", server_id);
+//        exit(EXIT_FAILURE);
+//    }
 
     server_initialized += 1; //server setup can run now
     
@@ -214,6 +214,7 @@ void ec::Server::handle_client_reqs_udp(void *args) {
     auto *arguments = reinterpret_cast<serv_thread_args*>(args);
     int client_fd = arguments->clifd;
     auto client_ip = arguments->cliaddr->sin_addr.s_addr;
+    auto port = ntohs(arguments->cliaddr->sin_port);
     auto cliaddr = &arguments->cliaddr;
     int len = sizeof(cliaddr);
     delete arguments;
@@ -229,6 +230,7 @@ void ec::Server::handle_client_reqs_udp(void *args) {
     auto *req = reinterpret_cast<msg_t*>(buff_in);
     req->set_ip_from_host(req->client_ip.to_uint32()); //this needs to be removed eventually
     auto *res = new msg_t(*req);
+//    SPDLOG_INFO("req from server_id: {} w/ port: {} is: {}", server_id, port, *req);
     ret = handle_req(req, res, om::net::ip4_addr::from_net(client_ip).to_uint32(), client_fd);
 
     if(!res->request && ret == __ALLOC_SUCCESS__) {
@@ -246,39 +248,39 @@ void ec::Server::handle_client_reqs_udp(void *args) {
     delete res;
 }
 
-bool ec::Server::init_agent_connections() {
-    int sockfd, i;
-    struct sockaddr_in servaddr;
-    uint32_t num_connections = 0;
-
-    AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
-    for(const auto &ag : agents) {
-        if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-            SPDLOG_CRITICAL("GCM Socket creation failed. Agent is not up!");
-            exit(EXIT_FAILURE);
-        }
-
-        memset(&servaddr, 0, sizeof(servaddr));
-
-        servaddr.sin_family = AF_INET;
-        servaddr.sin_port = htons(ag->get_port());
-        servaddr.sin_addr.s_addr = inet_addr((ag->get_ip()).to_string().c_str());
-        SPDLOG_DEBUG("ag->ip: {}", ag->get_ip());
-
-        if(connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
-            SPDLOG_ERROR("[ERROR] GCM: Connection to agent_clients failed. Agent on ip: {} is not connected", ag->get_ip());
-            SPDLOG_ERROR("Are the agents up?");
-        }
-        else {
-            num_connections++;
-        }
-        auto* ac = new AgentClient(ag, sockfd);
-        agent_clients_db->add_agent_client(ac);
-
-        SPDLOG_TRACE("[dbg] Agent client added to db and agent_clients sockfd: {}, {} agent db size is: {}", sockfd, \
-        agent_clients_db->get_agent_client_by_ip(ag->get_ip())->get_socket(), agent_clients_db->get_agent_clients_db_size());
-
-    }
-    return num_connections == agent_clients_db->get_agent_clients_db_size();
-
-}
+//bool ec::Server::init_agent_connections() {
+//    int sockfd, i;
+//    struct sockaddr_in servaddr;
+//    uint32_t num_connections = 0;
+//
+//    AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
+//    for(const auto &ag : agents) {
+//        if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+//            SPDLOG_CRITICAL("GCM Socket creation failed. Agent is not up!");
+//            exit(EXIT_FAILURE);
+//        }
+//
+//        memset(&servaddr, 0, sizeof(servaddr));
+//
+//        servaddr.sin_family = AF_INET;
+//        servaddr.sin_port = htons(ag->get_port());
+//        servaddr.sin_addr.s_addr = inet_addr((ag->get_ip()).to_string().c_str());
+//        SPDLOG_DEBUG("ag->ip: {}", ag->get_ip());
+//
+//        if(connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
+//            SPDLOG_ERROR("[ERROR] GCM: Connection to agent_clients failed. Agent on ip: {} is not connected", ag->get_ip());
+//            SPDLOG_ERROR("Are the agents up?");
+//        }
+//        else {
+//            num_connections++;
+//        }
+//        auto* ac = new AgentClient(ag, sockfd);
+//        agent_clients_db->add_agent_client(ac);
+//
+//        SPDLOG_TRACE("[dbg] Agent client added to db and agent_clients sockfd: {}, {} agent db size is: {}", sockfd, \
+//        agent_clients_db->get_agent_client_by_ip(ag->get_ip())->get_socket(), agent_clients_db->get_agent_clients_db_size());
+//
+//    }
+//    return num_connections == agent_clients_db->get_agent_clients_db_size();
+//
+//}
