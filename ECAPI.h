@@ -22,6 +22,7 @@
 #include "Agents/AgentClientDB.h"
 
 #define __FAILED__ -1
+#define __PAGE_SIZE__ 4096
 
 namespace ec {
     class ECAPI {
