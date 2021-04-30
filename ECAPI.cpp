@@ -266,7 +266,7 @@ uint64_t ec::ECAPI::__syscall_get_memory_usage_in_bytes(const ec::SubContainer::
     msg_req.set_req_type(6); //MEM_usage_IN_PAGES 
     msg_req.set_cgroup_id(container_id.cgroup_id);
     msg_req.set_payload_string("test");
-    std::cerr << "[dbg] get_memory_usage_in_bytes: get the corresponding agent\n";
+    //std::cerr << "[dbg] get_memory_usage_in_bytes: get the corresponding agent\n";
     auto agent = _ec->get_corres_agent(container_id);
     if(!agent) {
         std::cerr << "[dbg] agent is NULL" << std::endl;

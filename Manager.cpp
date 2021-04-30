@@ -23,7 +23,7 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     ec::ECAPI::create_ec();
     grpcServer = new rpc::DeployerExportServiceImpl(_ec, cv, cv_dock, cv_mtx, cv_mtx_dock,sc_map_lock);
     std::thread grpc_handler_thread(&ec::Manager::serveGrpcDeployExport, this);
-    sleep(10);
+    sleep(120);
 
     std::cerr<<"[dbg] manager::just before running the app thread\n";
     std::thread application_thread(&ec::Manager::run, this);
@@ -528,7 +528,7 @@ void ec::Manager::run() {
         std::vector<uint64_t> reclaim_amounts;
         uint64_t ret = 0;
 
-        SPDLOG_DEBUG("Periodic reclaim started!");
+        SPDLOG_INFO("Periodic reclaim started!");
         for (const auto &sc_map : ec_get_subcontainers()) {
             std::future<uint64_t> reclaimed = std::async(std::launch::async, &ec::Manager::reclaim, this, sc_map.first, sc_map.second->back());
             futures.push_back(std::move(reclaimed));
@@ -539,7 +539,7 @@ void ec::Manager::run() {
             ret += rec.get();   //TODO: get blocks. do we need a timeout if reclaim() never returns??
         }
 
-        SPDLOG_DEBUG("Recalimed memory at the end of the periodic reclaim function: {}", ret);
+        SPDLOG_INFO("Recalimed memory at the end of the periodic reclaim function: {}", ret);
         if(ret > 0){
             memlock.lock();
             ec_update_reclaim_memory_in_pages(ret);
