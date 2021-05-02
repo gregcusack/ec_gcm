@@ -2,6 +2,7 @@ cmake-build-debug/
 .idea/
 old_Server/
 cmake-build-release/
+cmake-build-trace/
 CMakeFiles/
 CMakeCache.txt
 Makefile

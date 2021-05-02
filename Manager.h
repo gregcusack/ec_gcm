@@ -44,7 +44,7 @@ namespace ec {
         virtual void run();
         int handle_add_cgroup_to_ec(const msg_t *req, msg_t *res, uint32_t ip, int fd) override;
 
-	uint64_t reclaim(SubContainer::ContainerId containerId, SubContainer* subContainer);
+	uint64_t reclaim(const SubContainer::ContainerId& containerId, SubContainer* subContainer);
         // Need to remove this when Agent code gets merged with the correct codebase version
         struct reclaim_msg {
             uint16_t cgroup_id;

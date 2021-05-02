@@ -92,16 +92,16 @@ uint64_t ec::ECAPI::sc_get_memory_usage_in_bytes(const ec::SubContainer::Contain
         SPDLOG_ERROR("NO AgentClient found for container id: {}", container_id);
         return 0;
     }
-//    ec::SubContainer sc = _ec->get_subcontainer_front(container_id);
+    auto sc = _ec->get_sc_for_update_back(container_id);
 
-//    if(sc.get_docker_id().empty()) {
-//        SPDLOG_ERROR("docker_id is 0!");
-//        return 0;
-//    }
-    if(container_id.docker_id.empty()) {
+    if(sc->get_docker_id().empty()) {
         SPDLOG_ERROR("docker_id is 0!");
         return 0;
     }
+//    if(container_id.docker_id.empty()) {
+//        SPDLOG_ERROR("docker_id is 0!");
+//        return 0;
+//    }
     ret = ec::Facade::MonitorFacade::CAdvisor::getContMemUsage(ac->get_agent_ip().to_string(), container_id.docker_id);
     return ret;
 }

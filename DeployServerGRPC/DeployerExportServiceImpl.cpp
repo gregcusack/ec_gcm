@@ -54,7 +54,8 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     SPDLOG_TRACE("deleted container quota, mem_in_pages: {}, {}", quota, sc_mem_limit);
     uint64_t mem_alloced_in_pages = 0;
     for (const auto &i : ec->get_subcontainers()) {
-        mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
+//        mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
+        mem_alloced_in_pages += i.second->front()->get_mem_limit_in_pages();
     }
     SPDLOG_TRACE("tot mem in sys pre delete pod: {}", mem_alloced_in_pages + ec->get_unallocated_memory_in_pages());
     SPDLOG_TRACE("tot alloc, unalloc mem pre delete pod: {}, {}", ec->get_allocated_memory_in_pages(), ec->get_unallocated_memory_in_pages());
@@ -90,7 +91,8 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
 
     mem_alloced_in_pages = 0;
     for (const auto &i : ec->get_subcontainers()) {
-        mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
+        mem_alloced_in_pages += i.second->front()->get_mem_limit_in_pages();
+//        mem_alloced_in_pages += i.second->get_mem_limit_in_pages();
     }
     SPDLOG_TRACE("tot mem in sys post delete pod: {}", mem_alloced_in_pages + ec->get_unallocated_memory_in_pages());
     SPDLOG_TRACE("tot alloc, unalloc mem post delete pod: {}, {}", ec->get_allocated_memory_in_pages(), ec->get_unallocated_memory_in_pages());
@@ -209,16 +211,13 @@ void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* argum
     });
 
     std::lock_guard<std::mutex> lk_dock(cv_mtx_dock);
-//    ec->get_subcontainer_front(threadArgs->sc_id).set_docker_id(threadArgs->docker_id);
-    threadArgs->sc_id.docker_id = threadArgs->docker_id;
-//    ec->get_subcontainer_front(threadArgs->sc_id).set_docker_id(threadArgs->docker_id);
-//    if(unlikely(ec->get_subcontainer_front(threadArgs->sc_id).get_docker_id().empty())) {
-//        SPDLOG_ERROR("docker_id set failed in grpcDockerIdMatcher()!");
-//    }
-    if(unlikely(threadArgs->sc_id.docker_id.empty())) {
+    ec->get_sc_for_update_back(threadArgs->sc_id)->set_docker_id(threadArgs->docker_id);
+
+    if(ec->get_subcontainer_back(threadArgs->sc_id).get_c_id()->docker_id.empty()) {
         SPDLOG_ERROR("docker_id set failed in grpcDockerIdMatcher()!");
     }
     cv_dock.notify_one();
+    SPDLOG_TRACE("successfuly matched scId to DockerId. sc_id {}, d_id: {}", threadArgs->sc_id, threadArgs->docker_id);
 //    delete (matchingThreadArgs*)arguments;
     delete threadArgs;
 }

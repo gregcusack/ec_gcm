@@ -298,8 +298,8 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
 
     ec_update_alloc_memory_in_pages(ret);
 
-    SPDLOG_TRACE("successfully decrease unallocated mem to: {}", ec_get_unalloc_memory_in_pages());
-    SPDLOG_TRACE("successfully increased allocated mem to: {}", ec_get_alloc_memory_in_pages());
+    SPDLOG_DEBUG("successfully decrease unallocated mem to: {}", ec_get_unalloc_memory_in_pages());
+    SPDLOG_DEBUG("successfully increased allocated mem to: {}", ec_get_alloc_memory_in_pages());
 
 
     res->rsrc_amnt = req->rsrc_amnt + ret;   //give back "ret" pages
@@ -307,12 +307,14 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
     auto sc = ec_get_sc_for_update(sc_id);
     sc->set_mem_limit_in_pages(res->rsrc_amnt);
 
+    SPDLOG_TRACE("pre mem unlock: {}", SubContainer::ContainerId(req->cgroup_id, req->client_ip));
     memlock.unlock();
     res->request = 0;       //give back
+    SPDLOG_TRACE("returning mem back to container. sc_id: {}", SubContainer::ContainerId(req->cgroup_id, req->client_ip));
     return __ALLOC_SUCCESS__;
 }
 
-uint64_t ec::Manager::reclaim(SubContainer::ContainerId containerId, SubContainer* subContainer){
+uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubContainer* subContainer){
 
 	uint64_t ret = 0;
 	auto mem_limit_pages = subContainer->get_mem_limit_in_pages();
@@ -330,7 +332,7 @@ uint64_t ec::Manager::reclaim(SubContainer::ContainerId containerId, SubContaine
         }
     }
 	else {
-        SPDLOG_DEBUG("mem usage to close to mem_limit_bytes to resize! --> limit - usage: {}", mem_limit_bytes - mem_usage_bytes);
+        SPDLOG_DEBUG("mem usage too close to mem_limit_bytes to resize! --> limit - usage: {}", mem_limit_bytes - mem_usage_bytes);
         SPDLOG_DEBUG("safe margin: {}", _SAFE_MARGIN_BYTES_);
     }
 	return ret;
@@ -461,15 +463,17 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
         return;
     }
 
+    SPDLOG_TRACE("in determine_new_limit_for_new_pod. sc_id: {}", *sc->get_c_id());
     std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
     cv_dock.wait(lk_dock, [this, sc] {
+        SPDLOG_TRACE("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
         return !sc->get_c_id()->docker_id.empty();
 //        return !sc->get_docker_id().empty();
     });
     auto sc_mem_limit_in_pages = byte_to_page(sc_get_memory_limit_in_bytes(*sc->get_c_id()));
 
-    SPDLOG_TRACE("ec_get_unalloc_mem rn: {}", ec_get_unalloc_memory_in_pages());
-    SPDLOG_TRACE("sc_mem_limit_in_pages on deploy: {}", sc_mem_limit_in_pages);
+    SPDLOG_DEBUG("ec_get_unalloc_mem rn: {}", ec_get_unalloc_memory_in_pages());
+    SPDLOG_DEBUG("sc_mem_limit_in_pages on deploy: {}", sc_mem_limit_in_pages);
 
     if(sc_mem_limit_in_pages <= ec_get_unalloc_memory_in_pages()) {
         ec_update_alloc_memory_in_pages(sc_mem_limit_in_pages);

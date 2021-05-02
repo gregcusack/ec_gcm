@@ -52,6 +52,9 @@ namespace ec {
         void set_quota(uint64_t _quota);
         void set_throttled(uint32_t _throttled) { cpu.set_throttled(_throttled); }
 
+        void set_docker_id(std::string dock_id) { c_id.docker_id = std::move(dock_id); }
+        [[nodiscard]] std::string get_docker_id() const { return c_id.docker_id; }
+
         uint32_t get_throttle_increase(uint32_t _throttled) { return cpu.get_throttle_increase(_throttled); }
         uint32_t get_thr_incr_and_set_thr(uint32_t _throttled);
 
