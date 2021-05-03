@@ -65,8 +65,9 @@ namespace ec {
         const int get_num_subcontainers() { return subcontainers.size(); }
         subcontainer_map *get_subcontainers_map_for_update() { return &subcontainers; }
         SubContainer &get_subcontainer_front(const SubContainer::ContainerId &container_id);
+        SubContainer &get_subcontainer_back(const SubContainer::ContainerId &container_id);
         AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_ac_map[container_id];}
-        SubContainer *get_sc_for_update_back(SubContainer::ContainerId &container_id);
+        SubContainer *get_sc_for_update_back(const SubContainer::ContainerId &container_id);
         const subcontainer_agentclient_map &get_sc_ac_map() {return sc_ac_map;}
         subcontainer_agentclient_map *get_sc_ac_map_for_update() {return &sc_ac_map; }
         void get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res);
