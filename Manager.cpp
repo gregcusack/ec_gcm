@@ -327,9 +327,10 @@ uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubC
                                                                   byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
         SPDLOG_INFO("memory limit before converting byte_to_page: {}", mem_limit_bytes);
         SPDLOG_INFO("memory usage before converting byte_to_page: {}", mem_usage_bytes);
-        SPDLOG_INFO("byte to page macro output: {}", byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_)));
+        
         SPDLOG_INFO("is_max_mem_resized: {}", is_max_mem_resized);
         if(!is_max_mem_resized) {
+            SPDLOG_INFO("successfully resized! byte to page macro output: {}", byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_)));
             ret = byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_));
             sc_set_memory_limit_in_pages(*subContainer->get_c_id(), byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
         }
