@@ -133,8 +133,8 @@ ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, 
     ec->set_unalloc_memory_in_pages((appSpec->mem_limit() * 1048576) / 4096);
     ec->set_alloc_memory_in_pages(0);
 
-    SPDLOG_DEBUG("Set CPU Limit: {}", ec->get_total_cpu());
-    SPDLOG_DEBUG("Set Mem Limit {}", ec->get_mem_limit_in_pages());
+    SPDLOG_DEBUG("Set CPU Limit (ns): {}", ec->get_total_cpu());
+    SPDLOG_DEBUG("Set Mem Limit (pages) {}", ec->get_mem_limit_in_pages());
 
     // Set response here
     reply->set_app_name(appSpec->app_name());
