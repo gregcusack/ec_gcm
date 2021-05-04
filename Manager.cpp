@@ -327,7 +327,7 @@ uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubC
         return pages_reclaimed;
     }
 
-    SPDLOG_INFO("pre reclaim. mem usage, limit (bytes): {}, {}", mem_usage_bytes, mem_limit_bytes);
+    SPDLOG_DEBUG("pre reclaim. mem usage, limit (bytes): {}, {}", mem_usage_bytes, mem_limit_bytes);
 
     if(mem_limit_bytes - mem_usage_bytes > _SAFE_MARGIN_BYTES_) {
         auto resize_target_bytes = mem_usage_bytes + _SAFE_MARGIN_BYTES_;
@@ -337,7 +337,7 @@ uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubC
         auto is_max_mem_resized = sc_resize_memory_limit_in_pages(containerId,
                                                                   byte_to_page(resize_target_bytes));
         if(!is_max_mem_resized) {
-            SPDLOG_INFO("max mem WAS resized");
+            SPDLOG_DEBUG("max mem WAS resized");
             pages_reclaimed = byte_to_page(mem_limit_bytes - (resize_target_bytes));
             sc_set_memory_limit_in_pages(*subContainer->get_c_id(), byte_to_page(resize_target_bytes));
         } else {
