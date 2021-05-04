@@ -77,18 +77,13 @@ namespace ec {
         uint64_t ec_get_memory_slice() { return _ec->get_memory_slice(); }
         uint64_t ec_get_mem_limit_in_pages() { return _ec->get_mem_limit_in_pages(); }
 
-        uint64_t sc_get_memory_limit_in_bytes(const SubContainer::ContainerId &sc_id);
-        uint64_t sc_get_memory_usage_in_bytes(const SubContainer::ContainerId &container_id);
-
-
         // Machine Stats
         uint64_t get_machine_free_memory(const SubContainer::ContainerId &container_id);
 
         //AGENTS
-        //uint32_t get_num_agent_clients() { return _ec->get_num_agent_clients(); }
-        // [[nodiscard]] const std::vector<AgentClient*> &get_agent_clients() const {return _ec->get_agent_clients(); }
         int64_t get_sc_quota(ec::SubContainer *sc);
-        uint64_t __syscall_get_memory_usage_in_bytes(const SubContainer::ContainerId &container_id);
+        uint64_t __syscall_get_memory_usage_in_bytes(const SubContainer::ContainerId &sc_id);
+        uint64_t __syscall_get_memory_limit_in_bytes(const SubContainer::ContainerId &sc_id);
 
         /**
          *******************************************************

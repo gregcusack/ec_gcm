@@ -443,14 +443,6 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
         std::lock_guard<std::mutex> lk(cv_mtx);
         _ec->add_to_sc_ac_map(*sc->get_c_id(), target_agent);
         sc->set_sc_inserted(true);
-        /////
-//        if(!_ec->get_corres_agent(*sc->get_c_id())) {
-//            std::cout << "Bad! agent not found in sc_ac map" << std::endl;
-//        }
-//        else {
-//            std::cout << "sc found in sc_ac map!" << std::endl;
-//        }
-//        /////
         cv.notify_one();
     } else {
         SPDLOG_ERROR("SubContainer's node IP or Agent IP not found!");
@@ -484,7 +476,7 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
         return !sc->get_c_id()->docker_id.empty();
 //        return !sc->get_docker_id().empty();
     });
-    auto sc_mem_limit_in_pages = byte_to_page(sc_get_memory_limit_in_bytes(*sc->get_c_id()));
+    auto sc_mem_limit_in_pages = byte_to_page(__syscall_get_memory_limit_in_bytes(*sc->get_c_id()));
 
     SPDLOG_DEBUG("ec_get_unalloc_mem rn: {}", ec_get_unalloc_memory_in_pages());
     SPDLOG_DEBUG("sc_mem_limit_in_pages on deploy: {}", sc_mem_limit_in_pages);
@@ -519,7 +511,6 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
         }
     }
     SPDLOG_TRACE("ec_get_unalloc_mem after mem alloc: {}", ec_get_unalloc_memory_in_pages());
-    SPDLOG_TRACE("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
     sc->set_mem_limit_in_pages(sc_mem_limit_in_pages);
 }
 

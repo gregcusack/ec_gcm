@@ -80,32 +80,6 @@ void ec::ECAPI::ec_incr_unalloc_memory_in_pages(uint64_t mem_to_incr) {
     _ec->incr_unalloc_memory_in_pages(mem_to_incr);
 }
 
-
-uint64_t ec::ECAPI::sc_get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
-    return _ec->get_sc_memory_limit_in_bytes(sc_id);
-}
-
-uint64_t ec::ECAPI::sc_get_memory_usage_in_bytes(const ec::SubContainer::ContainerId &container_id) {
-    uint64_t ret = 0;
-    AgentClient* ac = _ec->get_corres_agent(container_id);
-    if(!ac) {
-        SPDLOG_ERROR("NO AgentClient found for container id: {}", container_id);
-        return 0;
-    }
-    auto sc = _ec->get_sc_for_update_back(container_id);
-
-    if(sc->get_docker_id().empty()) {
-        SPDLOG_ERROR("docker_id is 0!");
-        return 0;
-    }
-//    if(container_id.docker_id.empty()) {
-//        SPDLOG_ERROR("docker_id is 0!");
-//        return 0;
-//    }
-    ret = ec::Facade::MonitorFacade::CAdvisor::getContMemUsage(ac->get_agent_ip().to_string(), container_id.docker_id);
-    return ret;
-}
-
 uint64_t ec::ECAPI::get_machine_free_memory(const ec::SubContainer::ContainerId &container_id) {
     uint64_t ret = 0;
      // This is where we'll use cAdvisor instead of the agent comm to get the mem limit
@@ -257,16 +231,15 @@ void ec::ECAPI::sc_set_memory_limit_in_pages(ec::SubContainer::ContainerId sc_id
     sc->set_mem_limit_in_pages(new_mem_limit);
 }
 
-uint64_t ec::ECAPI::__syscall_get_memory_usage_in_bytes(const ec::SubContainer::ContainerId &container_id) {
-
+uint64_t ec::ECAPI::__syscall_get_memory_usage_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
     uint64_t ret = 0;
     //initialize request body
     msg_struct::ECMessage msg_req;
     msg_req.set_req_type(6); //MEM_usage_IN_PAGES 
-    msg_req.set_cgroup_id(container_id.cgroup_id);
+    msg_req.set_cgroup_id(sc_id.cgroup_id);
     msg_req.set_payload_string("test");
     //std::cerr << "[dbg] get_memory_usage_in_bytes: get the corresponding agent\n";
-    auto agent = _ec->get_corres_agent(container_id);
+    auto agent = _ec->get_corres_agent(sc_id);
     if(!agent) {
         std::cerr << "[dbg] agent is NULL" << std::endl;
         std::exit(EXIT_FAILURE);
@@ -277,5 +250,21 @@ uint64_t ec::ECAPI::__syscall_get_memory_usage_in_bytes(const ec::SubContainer::
     return ret * __PAGE_SIZE__ ;
 }
 
+uint64_t ec::ECAPI::__syscall_get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
+    uint64_t ret = 0;
+    //initialize request body
+    msg_struct::ECMessage msg_req;
+    msg_req.set_req_type(7); //MEM_limit_IN_PAGES 
+    msg_req.set_cgroup_id(sc_id.cgroup_id);
+    msg_req.set_payload_string("test");
+//    std::cerr << "[dbg] __syscall_get_memory_limit_in_bytes: get the corresponding agent\n";
+    auto agent = _ec->get_corres_agent(sc_id);
+    if(!agent) {
+        std::cerr << "[dbg] agent is NULL" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
 
+    ret = agent->send_request(msg_req);
+    return ret * __PAGE_SIZE__ ;
+}
 
