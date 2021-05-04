@@ -197,7 +197,6 @@ int64_t ec::ECAPI::get_sc_quota(ec::SubContainer *sc) {
     return ret;
 }
 
-
 int64_t ec::ECAPI::sc_resize_memory_limit_in_pages(const ec::SubContainer::ContainerId& container_id, uint64_t new_mem_limit) {
     uint64_t ret = 0;
     msg_struct::ECMessage msg_req;
