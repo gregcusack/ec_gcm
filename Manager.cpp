@@ -321,6 +321,11 @@ uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubC
 	auto mem_limit_pages = subContainer->get_mem_limit_in_pages();
     auto mem_limit_bytes = page_to_byte(mem_limit_pages);
     auto mem_usage_bytes = __syscall_get_memory_usage_in_bytes(containerId);
+    if(mem_usage_bytes == (unsigned long)-1 * __PAGE_SIZE__) {
+        SPDLOG_ERROR("failed to read mem usage! returned -1");
+        return pages_reclaimed;
+    }
+
     SPDLOG_INFO("pre reclaim. mem usage, limit (bytes): {}, {}", mem_usage_bytes, mem_limit_bytes);
 
     if(mem_limit_bytes - mem_usage_bytes > _SAFE_MARGIN_BYTES_) {
@@ -534,7 +539,7 @@ void ec::Manager::serveGrpcDeployExport() {
 //TODO: this should be separated out into own file
 [[noreturn]] void ec::Manager::run() {
 
-    while(ec_get_num_subcontainers() < 2) {
+    while(ec_get_num_subcontainers() < 1) {
         sleep(5);
     }
     sleep(5);
