@@ -321,7 +321,7 @@ uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubC
 	auto mem_limit_pages = subContainer->get_mem_limit_in_pages();
     auto mem_limit_bytes = page_to_byte(mem_limit_pages);
     auto mem_usage_bytes = __syscall_get_memory_usage_in_bytes(containerId);
-
+    
 	if(mem_limit_bytes - mem_usage_bytes > _SAFE_MARGIN_BYTES_) {
         auto is_max_mem_resized = sc_resize_memory_limit_in_pages(containerId,
                                                                   byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
@@ -531,12 +531,12 @@ void ec::Manager::run() {
     while (true)
     {
 
-        std::vector<std::future<uint64_t>> futures;
-        std::vector<uint64_t> reclaim_amounts;
+        // std::vector<std::future<uint64_t>> futures;
+        // std::vector<uint64_t> reclaim_amounts;
         uint64_t ret = 0;
 
         SPDLOG_INFO("Periodic reclaim started!");
-        for (const auto &sc_map : ec_get_subcontainers()) {
+        /*for (const auto &sc_map : ec_get_subcontainers()) {
             std::future<uint64_t> reclaimed = std::async(std::launch::async, &ec::Manager::reclaim, this, sc_map.first, sc_map.second->back());
             futures.push_back(std::move(reclaimed));
         }
@@ -553,8 +553,18 @@ void ec::Manager::run() {
             memlock.lock();
             ec_update_reclaim_memory_in_pages(ret);
             memlock.unlock();
+        }*/
+
+        for (const auto &sc_map : ec_get_subcontainers()) {
+            std::uint64_t reclaimed = this->reclaim(sc_map.first, sc_map.second->back());
+            ret += reclaimed;
         }
-        
+        SPDLOG_INFO("Recalimed memory at the end of the periodic reclaim function: {}", ret);
+        if(ret > 0){
+            memlock.lock();
+            ec_update_reclaim_memory_in_pages(ret);
+            memlock.unlock();
+        }
         sleep(5);
         
     }
