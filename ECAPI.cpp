@@ -274,6 +274,7 @@ uint64_t ec::ECAPI::__syscall_get_memory_usage_in_bytes(const ec::SubContainer::
     }
 
     ret = agent->send_request(msg_req);
+    SPDLOG_INFO("memory usage in pages reported from the agent: {}", ret);
     return ret * __PAGE_SIZE__ ;
 }
 
