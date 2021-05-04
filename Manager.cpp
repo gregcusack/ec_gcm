@@ -323,7 +323,7 @@ uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubC
     auto mem_usage_bytes = __syscall_get_memory_usage_in_bytes(containerId);
     
     if(mem_usage_bytes == (unsigned long)-1 * __PAGE_SIZE__) {
-        SPDLOG_ERROR("failed to read mem usage! returned -1");
+        SPDLOG_ERROR("failed to read mem usage for cg_id: {}", containerId);
         return pages_reclaimed;
     }
 
@@ -343,9 +343,9 @@ uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubC
         } else {
             SPDLOG_INFO("resizing of max mem failed!");
         }
-        SPDLOG_INFO("mem limit resized from -> to: {} -> {} (bytes)", mem_limit_bytes, resize_target_bytes);
-        SPDLOG_INFO("mem limit resized from -> to: {} -> {} (pages)", byte_to_page(mem_limit_bytes), byte_to_page(resize_target_bytes));
-        SPDLOG_INFO("limit - (usage + safe margin) (bytes): {}", mem_limit_bytes - (resize_target_bytes));
+        SPDLOG_DEBUG("mem limit resized from -> to: {} -> {} (bytes)", mem_limit_bytes, resize_target_bytes);
+        SPDLOG_TRACE("mem limit resized from -> to: {} -> {} (pages)", byte_to_page(mem_limit_bytes), byte_to_page(resize_target_bytes));
+        SPDLOG_TRACE("limit - (usage + safe margin) (bytes): {}", mem_limit_bytes - (resize_target_bytes));
     } else {
         SPDLOG_DEBUG("mem usage too close to mem_limit_bytes to resize! --> limit - usage: {}", mem_limit_bytes - mem_usage_bytes);
         SPDLOG_DEBUG("safe margin: {}", _SAFE_MARGIN_BYTES_);
@@ -530,7 +530,7 @@ void ec::Manager::serveGrpcDeployExport() {
 //TODO: this should be separated out into own file
 [[noreturn]] void ec::Manager::run() {
 
-    while(ec_get_num_subcontainers() < 1) {
+    while(ec_get_num_subcontainers() < 32) {
         sleep(5);
     }
     sleep(5);
@@ -538,12 +538,11 @@ void ec::Manager::serveGrpcDeployExport() {
     while (true)
     {
 
-        // std::vector<std::future<uint64_t>> futures;
-        // std::vector<uint64_t> reclaim_amounts;
+
         uint64_t ret = 0;
 
         SPDLOG_TRACE("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-        SPDLOG_INFO("Periodic reclaim started!");
+        SPDLOG_INFO("Periodic reclaim started from {} containers!", ec_get_num_subcontainers());
 
         for (const auto &sc_map : ec_get_subcontainers()) {
             ret += this->reclaim(sc_map.first, sc_map.second->back());
