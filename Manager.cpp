@@ -23,7 +23,7 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     ec::ECAPI::create_ec();
     grpcServer = new rpc::DeployerExportServiceImpl(_ec, cv, cv_dock, cv_mtx, cv_mtx_dock,sc_map_lock);
     std::thread grpc_handler_thread(&ec::Manager::serveGrpcDeployExport, this);
-    sleep(10);
+    sleep(30);
 
     std::cerr<<"[dbg] manager::just before running the app thread\n";
     std::thread application_thread(&ec::Manager::run, this);
@@ -530,14 +530,13 @@ void ec::Manager::serveGrpcDeployExport() {
 //TODO: this should be separated out into own file
 [[noreturn]] void ec::Manager::run() {
 
-    while(ec_get_num_subcontainers() < 32) {
+    while(ec_get_num_subcontainers() < 1) {
         sleep(5);
     }
-    sleep(5);
+//    sleep(5);
 
     while (true)
     {
-
 
         uint64_t ret = 0;
 
