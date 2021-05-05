@@ -129,8 +129,8 @@ ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, 
     // 1048576 bytes in 1 MiB
     // e.g. 5000 MiB * 1048576 = 5,242,880,000 Bytes -> 5.2e9 bytes to pages (4096 bytes/page) = 1,280,000 pages
     // 5000 MiB to GiB = 5000 / 1024 = 4.882813 GiB
-    ec->set_memory_limit_in_pages((appSpec->mem_limit() * 1048576) / 4096);
-    ec->set_unalloc_memory_in_pages((appSpec->mem_limit() * 1048576) / 4096);
+    ec->set_memory_limit_in_pages((appSpec->mem_limit() * 1024 * 1024) / 4096);
+    ec->set_unalloc_memory_in_pages((appSpec->mem_limit() * 1024 * 1024) / 4096);
     ec->set_alloc_memory_in_pages(0);
 
     SPDLOG_DEBUG("Set CPU Limit (ns): {}", ec->get_total_cpu());
