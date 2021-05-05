@@ -547,7 +547,8 @@ void ec::Manager::serveGrpcDeployExport() {
             ret += this->reclaim(sc_map.first, sc_map.second->back());
         }
 
-        SPDLOG_INFO("Recalimed memory at the end of the periodic reclaim function: {}", ret);
+        SPDLOG_INFO("Recalimed memory at the end of the periodic reclaim function (pages): {}", ret);
+        SPDLOG_TRACE("Recalimed memory at the end of the periodic reclaim function (MiB): {}", ret * 4096 / 1024 / 1024);
         if(ret > 0){
             ec_update_reclaim_memory_in_pages(ret); //no need to lock here. already locked in mem_h.cpp
         }
