@@ -80,6 +80,10 @@ namespace ec {
         void set_cpustat_seq_num(uint64_t val);
         uint64_t get_seq_num();
 
+        int incr_quota_mismatch_counter();
+        int get_quota_mismatch_counter();
+        void reset_quota_mismatch_counter();
+
     private:
         ContainerId c_id;
         int fd;
@@ -87,7 +91,8 @@ namespace ec {
 
         local::stats::cpu cpu;
         local::stats::mem mem;
-        std::mutex lockcpu, lock_seqnum;
+        std::mutex lockcpu, lock_seqnum, lock_mismatch;
+        int quota_mismatch_counter;
 
         int counter;
 

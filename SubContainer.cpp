@@ -6,13 +6,13 @@
 
 
 ec::SubContainer::SubContainer(uint32_t cgroup_id, uint32_t ip, int _fd)
-    : fd(_fd), cpu(local::stats::cpu()), mem(local::stats::mem()), inserted(false) {
+    : fd(_fd), cpu(local::stats::cpu()), mem(local::stats::mem()), inserted(false), quota_mismatch_counter(0) {
     c_id = ContainerId(cgroup_id, ip4_addr::from_net(ip));
     counter = 0;
 }
 
 ec::SubContainer::SubContainer(uint32_t cgroup_id, uint32_t ip, int _fd, uint64_t _quota, uint32_t _nr_throttled)
-    : fd(_fd), mem(local::stats::mem()), inserted(false) {
+    : fd(_fd), mem(local::stats::mem()), inserted(false), quota_mismatch_counter(0) {
 
     SPDLOG_TRACE("creating sc with cg_id, quota, throttle: {}, {}, {}", cgroup_id, _quota, _nr_throttled);
     c_id = ContainerId(cgroup_id, ip4_addr::from_net(ip));
@@ -56,6 +56,21 @@ void ec::SubContainer::set_cpustat_seq_num(uint64_t val) {
 uint64_t ec::SubContainer::get_seq_num() {
     std::unique_lock<std::mutex> lk(lock_seqnum);
     return cpu.get_seq_num();
+}
+
+int ec::SubContainer::incr_quota_mismatch_counter() {
+    std::unique_lock<std::mutex> lk(lock_mismatch);
+    return quota_mismatch_counter++;
+}
+
+int ec::SubContainer::get_quota_mismatch_counter() {
+    std::unique_lock<std::mutex> lk(lock_mismatch);
+    return quota_mismatch_counter;
+}
+
+void ec::SubContainer::reset_quota_mismatch_counter() {
+    std::unique_lock<std::mutex> lk(lock_mismatch);
+    quota_mismatch_counter = 0;
 }
 
 bool ec::SubContainer::ContainerId::operator==(const ec::SubContainer::ContainerId &other_) const {

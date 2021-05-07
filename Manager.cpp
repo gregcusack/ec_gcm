@@ -69,12 +69,26 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 
     if(rx_quota / 1000 != sc->get_quota() / 1000) {
         SPDLOG_ERROR("quotas do not match (ip, cgid, rx, sc->get): ({}, {}, {}, {})", sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_quota, sc->get_quota());
-        /// TEST. DELETE LATER!
-//        sc->set_quota(rx_quota);
-        /// END TEST
-//        cpulock.unlock();
-        res->request = 1;
-        return __ALLOC_SUCCESS__;
+        if(sc->incr_quota_mismatch_counter() > 2) { //mistmatch stuck
+            if(rx_quota < sc->get_quota()) {        //didn't set incr quota properly
+                auto diff = sc->get_quota() - rx_quota;
+                sc->set_quota(rx_quota);
+                sc->get_cpu_stats()->flush();
+                ec_decr_alloc_rt(diff);
+                ec_incr_unallocated_rt(diff);
+            } else {                                //rx_quota > sc->get_quota -> didn't set decr quota properly
+                auto diff = rx_quota - sc->get_quota();
+                ec_decr_unallocated_rt(diff);
+                sc->set_quota(rx_quota);
+                sc->get_cpu_stats()->flush();
+                ec_incr_alloc_rt(diff);
+            }
+            sc->reset_quota_mismatch_counter();
+
+        } else {
+            res->request = 1;
+            return __ALLOC_SUCCESS__;
+        }
     }
 
     total_rt_in_sys = ec_get_alloc_rt() + ec_get_cpu_unallocated_rt(); //alloc, overrun, unalloc
