@@ -460,6 +460,10 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
 
         SPDLOG_DEBUG("adding to sc_ac map");
         _ec->add_to_sc_ac_map(*sc->get_c_id(), target_agent);
+        auto itr = _ec->get_sc_ac_map_for_update()->find(*sc->get_c_id());
+        if(itr == _ec->get_sc_ac_map_for_update()->end()) {
+            SPDLOG_ERROR("ahhh we inserted into sc_ac map but failed!");
+        }
         SPDLOG_DEBUG("Added to sc_ac map!");
         sc->set_sc_inserted(true);
         SPDLOG_DEBUG("set inserted flag!");
