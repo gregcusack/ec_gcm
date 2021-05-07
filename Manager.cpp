@@ -452,16 +452,23 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
     // we can now create a map to link the container_id and agent_client
     AgentClientDB* acdb = AgentClientDB::get_agent_client_db_instance();
     auto agent_ip = sc->get_c_id()->server_ip;
-//    std::cout << "add container. cg_id: " << *sc->get_c_id() << std::endl;
+    SPDLOG_DEBUG("adding sc_id to sc_ac map. getting agent client by ip");
     auto target_agent = acdb->get_agent_client_by_ip(agent_ip);
     if ( target_agent ){
+        SPDLOG_DEBUG("target_agent found");
         std::lock_guard<std::mutex> lk(cv_mtx);
+
+        SPDLOG_DEBUG("adding to sc_ac map");
         _ec->add_to_sc_ac_map(*sc->get_c_id(), target_agent);
+        SPDLOG_DEBUG("Added to sc_ac map!");
         sc->set_sc_inserted(true);
+        SPDLOG_DEBUG("set inserted flag!");
         cv.notify_one();
+        SPDLOG_DEBUG("finished notifying");
     } else {
         SPDLOG_ERROR("SubContainer's node IP or Agent IP not found!");
     }
+    SPDLOG_DEBUG("ready to update quota!");
 
     //Update pod quota
     if(update_quota) {
