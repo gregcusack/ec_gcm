@@ -27,12 +27,12 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     sleep(30);
 
     std::cerr<<"[dbg] manager::just before running the app thread\n";
-    std::thread application_thread(&ec::Manager::run, this);
+//    std::thread application_thread(&ec::Manager::run, this);
     
     grpc_handler_thread.join();
     event_handler_thread_tcp.join();
     event_handler_thread_udp.join();
-    application_thread.join();
+//    application_thread.join();
 
     delete getGrpcServer();
 }
