@@ -545,7 +545,7 @@ void ec::Manager::serveGrpcDeployExport() {
 //TODO: this should be separated out into own file
 [[noreturn]] void ec::Manager::run() {
 
-    while(ec_get_num_subcontainers() < 1) {
+    while(ec_get_num_subcontainers() < 32) {
         sleep(5);
     }
 
