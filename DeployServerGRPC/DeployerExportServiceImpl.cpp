@@ -205,10 +205,11 @@ void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* argum
     std::unique_lock<std::mutex> lk(cv_mtx);
     cv.wait(lk, [this, threadArgs] {
         auto itr = ec->get_sc_ac_map_for_update()->find(threadArgs->sc_id);
-        SPDLOG_TRACE("wait for sc_id to exist in sc_ac_map: {}, d_id: {}", threadArgs->sc_id, threadArgs->docker_id);
+        SPDLOG_DEBUG("wait for sc_id to exist in sc_ac_map: {}, d_id: {}", threadArgs->sc_id, threadArgs->docker_id);
         return itr != ec->get_sc_ac_map_for_update()->end();
     });
 
+    SPDLOG_DEBUG("out of match part!");
     std::lock_guard<std::mutex> lk_dock(cv_mtx_dock);
     ec->get_sc_for_update_back(threadArgs->sc_id)->set_docker_id(threadArgs->docker_id);
 
@@ -216,7 +217,7 @@ void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* argum
         SPDLOG_ERROR("docker_id set failed in grpcDockerIdMatcher()!");
     }
     cv_dock.notify_one();
-    SPDLOG_TRACE("successfuly matched scId to DockerId. sc_id {}, d_id: {}", threadArgs->sc_id, threadArgs->docker_id);
+    SPDLOG_DEBUG("successfuly matched scId to DockerId. sc_id {}, d_id: {}", threadArgs->sc_id, threadArgs->docker_id);
 //    delete (matchingThreadArgs*)arguments;
     delete threadArgs;
 }
