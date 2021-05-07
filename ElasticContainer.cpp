@@ -35,7 +35,7 @@ ec::SubContainer &ec::ElasticContainer::get_subcontainer_front(const ec::SubCont
 }
 
 ////// Get most recent container (current)
-ec::SubContainer *ec::ElasticContainer::get_sc_for_update_back(ec::SubContainer::ContainerId &container_id) {
+ec::SubContainer *ec::ElasticContainer::get_sc_for_update_back(const ec::SubContainer::ContainerId &container_id) {
     auto itr = subcontainers.find(container_id);
     if(itr == subcontainers.end()) {
         SPDLOG_CRITICAL("For EC: {}, no subcontainer with container_id: {}. Exiting...(sc for update).", ec_id, container_id);
@@ -132,5 +132,14 @@ uint64_t ec::ElasticContainer::get_tot_mem_alloc_in_pages() {
         tot_mem_alloc += tmp;
     }
     return ceil(tot_mem_alloc/4096);
+}
+
+ec::SubContainer &ec::ElasticContainer::get_subcontainer_back(const ec::SubContainer::ContainerId &container_id) {
+    auto itr = subcontainers.find(container_id);
+    if(itr == subcontainers.end()) {
+        SPDLOG_CRITICAL("No EC with manager_id: {}. Exiting....", ec_id);
+        std::exit(EXIT_FAILURE);
+    }
+    return *itr->second->back();
 }
 

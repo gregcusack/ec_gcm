@@ -24,7 +24,8 @@
 #define byte_to_page(x) ceil((x)/4096)
 #define page_to_byte(x) (x*4096)
 //#define _SAFE_MARGIN_BYTES_ 81920*250 //20 * 250 pages = 20MB
-#define _SAFE_MARGIN_BYTES_ 81920*1250 //20 * 1250 pages = 100MB
+//#define _SAFE_MARGIN_BYTES_ 4096*1250 //10 * 1250 pages = 50MB
+#define _SAFE_MARGIN_BYTES_ 52428800 //50MiB = 50 * 1024 * 1024 = 12800 pages
 #define _MAX_CPU_LOSS_IN_NS_ 1000
 #define _MAX_UNUSED_RT_IN_NS_ 5000000
 #define BASE_GRPC_PORT 4447
@@ -42,10 +43,11 @@ namespace ec {
 
         int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) override;
         void start(const std::string &app_name, const std::string &gcm_ip);
-        virtual void run();
+
+        [[noreturn]] virtual void run();
         int handle_add_cgroup_to_ec(const msg_t *req, msg_t *res, uint32_t ip, int fd) override;
 
-	uint64_t reclaim(SubContainer::ContainerId containerId, SubContainer* subContainer);
+	    uint64_t reclaim(const SubContainer::ContainerId& containerId, SubContainer* subContainer);
         // Need to remove this when Agent code gets merged with the correct codebase version
         struct reclaim_msg {
             uint16_t cgroup_id;

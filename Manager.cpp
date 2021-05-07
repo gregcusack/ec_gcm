@@ -24,14 +24,15 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     ec::ECAPI::create_ec();
     grpcServer = new rpc::DeployerExportServiceImpl(_ec, cv, cv_dock, cv_mtx, cv_mtx_dock,sc_map_lock);
     std::thread grpc_handler_thread(&ec::Manager::serveGrpcDeployExport, this);
-    sleep(10);
+    sleep(30);
 
     std::cerr<<"[dbg] manager::just before running the app thread\n";
-//    std::thread application_thread(&ec::Manager::run, this);
-//    application_thread.join();
+    std::thread application_thread(&ec::Manager::run, this);
+    
     grpc_handler_thread.join();
     event_handler_thread_tcp.join();
     event_handler_thread_udp.join();
+    application_thread.join();
 
     delete getGrpcServer();
 }
@@ -299,8 +300,8 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
 
     ec_update_alloc_memory_in_pages(ret);
 
-    SPDLOG_TRACE("successfully decrease unallocated mem to: {}", ec_get_unalloc_memory_in_pages());
-    SPDLOG_TRACE("successfully increased allocated mem to: {}", ec_get_alloc_memory_in_pages());
+    SPDLOG_DEBUG("successfully decrease unallocated mem to: {}", ec_get_unalloc_memory_in_pages());
+    SPDLOG_DEBUG("successfully increased allocated mem to: {}", ec_get_alloc_memory_in_pages());
 
 
     res->rsrc_amnt = req->rsrc_amnt + ret;   //give back "ret" pages
@@ -308,33 +309,49 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
     auto sc = ec_get_sc_for_update(sc_id);
     sc->set_mem_limit_in_pages(res->rsrc_amnt);
 
+    SPDLOG_TRACE("pre mem unlock: {}", SubContainer::ContainerId(req->cgroup_id, req->client_ip));
     memlock.unlock();
     res->request = 0;       //give back
+    SPDLOG_TRACE("returning mem back to container. sc_id: {}", SubContainer::ContainerId(req->cgroup_id, req->client_ip));
     return __ALLOC_SUCCESS__;
 }
 
-uint64_t ec::Manager::reclaim(SubContainer::ContainerId containerId, SubContainer* subContainer){
+uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubContainer* subContainer){
 
-	uint64_t ret = 0;
+	uint64_t pages_reclaimed = 0;
 	auto mem_limit_pages = subContainer->get_mem_limit_in_pages();
     auto mem_limit_bytes = page_to_byte(mem_limit_pages);
-    auto mem_usage_bytes = sc_get_memory_usage_in_bytes(containerId);
-
-	if(mem_limit_bytes - mem_usage_bytes > _SAFE_MARGIN_BYTES_) {
-        auto is_max_mem_resized = sc_resize_memory_limit_in_pages(containerId,
-                                                                  byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
-        SPDLOG_TRACE("byte to page macro output: {}", byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_)));
-        SPDLOG_TRACE("is_max_mem_resized: {}", is_max_mem_resized);
-        if(!is_max_mem_resized) {
-            ret = byte_to_page(mem_limit_bytes - (mem_usage_bytes + _SAFE_MARGIN_BYTES_));
-            sc_set_memory_limit_in_pages(*subContainer->get_c_id(), byte_to_page(mem_usage_bytes + _SAFE_MARGIN_BYTES_));
-        }
+    auto mem_usage_bytes = __syscall_get_memory_usage_in_bytes(containerId);
+    
+    if(mem_usage_bytes == (unsigned long)-1 * __PAGE_SIZE__) {
+        SPDLOG_ERROR("failed to read mem usage for cg_id: {}", containerId);
+        return pages_reclaimed;
     }
-	else {
-        SPDLOG_DEBUG("mem usage to close to mem_limit_bytes to resize! --> limit - usage: {}", mem_limit_bytes - mem_usage_bytes);
+
+    SPDLOG_DEBUG("pre reclaim. mem usage, limit (bytes): {}, {}", mem_usage_bytes, mem_limit_bytes);
+
+    if(mem_limit_bytes - mem_usage_bytes > _SAFE_MARGIN_BYTES_) {
+        auto resize_target_bytes = mem_usage_bytes + _SAFE_MARGIN_BYTES_;
+
+        SPDLOG_DEBUG("limit - usage > safe margin. going to resize max mem of cgid: {} to {} pages",
+                     containerId, byte_to_page(resize_target_bytes));
+        auto is_max_mem_resized = sc_resize_memory_limit_in_pages(containerId,
+                                                                  byte_to_page(resize_target_bytes));
+        if(!is_max_mem_resized) {
+            SPDLOG_DEBUG("max mem WAS resized");
+            pages_reclaimed = byte_to_page(mem_limit_bytes - (resize_target_bytes));
+            sc_set_memory_limit_in_pages(*subContainer->get_c_id(), byte_to_page(resize_target_bytes));
+        } else {
+            SPDLOG_INFO("resizing of max mem failed!");
+        }
+        SPDLOG_DEBUG("mem limit resized from -> to: {} -> {} (bytes)", mem_limit_bytes, resize_target_bytes);
+        SPDLOG_TRACE("mem limit resized from -> to: {} -> {} (pages)", byte_to_page(mem_limit_bytes), byte_to_page(resize_target_bytes));
+        SPDLOG_TRACE("limit - (usage + safe margin) (bytes): {}", mem_limit_bytes - (resize_target_bytes));
+    } else {
+        SPDLOG_DEBUG("mem usage too close to mem_limit_bytes to resize! --> limit - usage: {}", mem_limit_bytes - mem_usage_bytes);
         SPDLOG_DEBUG("safe margin: {}", _SAFE_MARGIN_BYTES_);
     }
-	return ret;
+	return pages_reclaimed;
 
 }
 
@@ -385,7 +402,6 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
 #endif
             SPDLOG_ERROR("Handling memory/cpu request failed! manager_id: {}", manager_id);
     }
-//    std::cout << "22222222222222222222222222222222222222222222222222222222222222222222" << std::endl;
     return ret;
 }
 
@@ -428,14 +444,6 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
         std::lock_guard<std::mutex> lk(cv_mtx);
         _ec->add_to_sc_ac_map(*sc->get_c_id(), target_agent);
         sc->set_sc_inserted(true);
-        /////
-//        if(!_ec->get_corres_agent(*sc->get_c_id())) {
-//            std::cout << "Bad! agent not found in sc_ac map" << std::endl;
-//        }
-//        else {
-//            std::cout << "sc found in sc_ac map!" << std::endl;
-//        }
-//        /////
         cv.notify_one();
     } else {
         SPDLOG_ERROR("SubContainer's node IP or Agent IP not found!");
@@ -462,15 +470,17 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
         return;
     }
 
+    SPDLOG_TRACE("in determine_new_limit_for_new_pod. sc_id: {}", *sc->get_c_id());
     std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
     cv_dock.wait(lk_dock, [this, sc] {
+        SPDLOG_TRACE("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
         return !sc->get_c_id()->docker_id.empty();
 //        return !sc->get_docker_id().empty();
     });
-    auto sc_mem_limit_in_pages = byte_to_page(sc_get_memory_limit_in_bytes(*sc->get_c_id()));
+    auto sc_mem_limit_in_pages = byte_to_page(__syscall_get_memory_limit_in_bytes(*sc->get_c_id()));
 
-    SPDLOG_TRACE("ec_get_unalloc_mem rn: {}", ec_get_unalloc_memory_in_pages());
-    SPDLOG_TRACE("sc_mem_limit_in_pages on deploy: {}", sc_mem_limit_in_pages);
+    SPDLOG_DEBUG("ec_get_unalloc_mem rn: {}", ec_get_unalloc_memory_in_pages());
+    SPDLOG_DEBUG("sc_mem_limit_in_pages on deploy: {}", sc_mem_limit_in_pages);
 
     if(sc_mem_limit_in_pages <= ec_get_unalloc_memory_in_pages()) {
         ec_update_alloc_memory_in_pages(sc_mem_limit_in_pages);
@@ -519,7 +529,35 @@ void ec::Manager::serveGrpcDeployExport() {
 }
 
 //TODO: this should be separated out into own file
-void ec::Manager::run() {
+[[noreturn]] void ec::Manager::run() {
+
+    while(ec_get_num_subcontainers() < 1) {
+        sleep(5);
+    }
+
+    while (true)
+    {
+
+        uint64_t ret = 0;
+
+        SPDLOG_TRACE("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+        SPDLOG_INFO("Periodic reclaim started from {} containers!", ec_get_num_subcontainers());
+
+        for (const auto &sc_map : ec_get_subcontainers()) {
+            ret += this->reclaim(sc_map.first, sc_map.second->back());
+        }
+
+        SPDLOG_INFO("Recalimed memory at the end of the periodic reclaim function (pages): {}", ret);
+        SPDLOG_TRACE("Recalimed memory at the end of the periodic reclaim function (MiB): {}", ret * 4096 / 1024 / 1024);
+        if(ret > 0){
+            ec_update_reclaim_memory_in_pages(ret); //no need to lock here. already locked in mem_h.cpp
+        }
+        else {
+            SPDLOG_INFO("No memory reclaimed at end of reclamation process");
+        }
+        sleep(5);
+        
+    }
 }
 
 #ifndef NDEBUG
