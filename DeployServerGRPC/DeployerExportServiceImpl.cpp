@@ -202,11 +202,11 @@ void ec::rpc::DeployerExportServiceImpl::spinUpDockerIdThread(const ec::SubConta
 
 void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* arguments) {
     auto threadArgs = reinterpret_cast<matchingThreadArgs*>(arguments);
+    SPDLOG_DEBUG("sc_ac_map size: {}", ec->get_sc_ac_map().size());
+    SPDLOG_DEBUG("sc_ac_map_for_update_size: {}", ec->get_sc_ac_map_for_update()->size());
     std::unique_lock<std::mutex> lk(cv_mtx);
     cv.wait(lk, [this, threadArgs] {
 //        SPDLOG_DEBUG("wait for sc_id to exist in sc_ac_map: {}, d_id: {}", threadArgs->sc_id, threadArgs->docker_id);
-        SPDLOG_DEBUG("sc_ac_map size: {}", ec->get_sc_ac_map().size());
-        SPDLOG_DEBUG("sc_ac_map_for_update_size: {}", ec->get_sc_ac_map_for_update()->size());
 //        return ec->get_sc_ac_map_for_update()->end() != ec->get_sc_ac_map_for_update()->find(threadArgs->sc_id);
         auto itr = ec->get_sc_ac_map_for_update()->find(threadArgs->sc_id);
         SPDLOG_DEBUG("wait for sc_id to exist in sc_ac_map: {}, d_id: {}", threadArgs->sc_id, threadArgs->docker_id);
