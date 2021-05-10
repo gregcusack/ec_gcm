@@ -44,6 +44,13 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     }
     if (req->req_type != _CPU_) { return __ALLOC_FAILED__; }
 
+    //////////
+    syscall_sequence_number++;
+    res->request = 1;
+//    cpulock.unlock();
+    return __ALLOC_SUCCESS__;
+    ////////////
+    
 //    cpulock.lock();
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
     auto sc = ec_get_sc_for_update(sc_id);
