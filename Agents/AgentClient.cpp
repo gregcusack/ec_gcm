@@ -37,7 +37,7 @@ int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_
     grpc::Status status = stub_->ReqQuotaUpdate(&context, txMsg, &rxMsg);
 
     if(status.ok()) {
-        SPDLOG_DEBUG("updateContainerQuota rx: {}, {}, {}", rxMsg.cgroupid(), rxMsg.updatequota(), rxMsg.errorcode());
+        SPDLOG_TRACE("updateContainerQuota rx: {}, {}, {}", rxMsg.cgroupid(), rxMsg.updatequota(), rxMsg.errorcode());
     }
     else {
         std::cout << "status: " << status.error_message() << std::endl;

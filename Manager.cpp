@@ -27,12 +27,12 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     sleep(30);
 
     std::cerr<<"[dbg] manager::just before running the app thread\n";
-    std::thread application_thread(&ec::Manager::run, this);
+//    std::thread application_thread(&ec::Manager::run, this);
     
     grpc_handler_thread.join();
     event_handler_thread_tcp.join();
     event_handler_thread_udp.join();
-    application_thread.join();
+//    application_thread.join();
 
     delete getGrpcServer();
 }
@@ -501,12 +501,6 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
         sleep(1);
         sc_mem_limit_in_pages = byte_to_page(__syscall_get_memory_limit_in_bytes(*sc->get_c_id()));
     }
-//    if(sc_mem_limit_in_pages == byte_to_page(1.0)) {
-//        SPDLOG_ERROR("Error reading mem limit. Trying again...");
-//        sleep(1);
-//        sc_mem_limit_in_pages = byte_to_page(__syscall_get_memory_limit_in_bytes(*sc->get_c_id()));
-//    }
-
 
     SPDLOG_DEBUG("ec_get_unalloc_mem rn: {}", ec_get_unalloc_memory_in_pages());
     SPDLOG_DEBUG("sc_mem_limit_in_pages on deploy: {}", sc_mem_limit_in_pages);
