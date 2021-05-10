@@ -27,7 +27,7 @@
 namespace ec {
     class ECAPI {
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, std::queue<SubContainer *>*>;
-    using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
+    using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, rpc::AgentClient*>;
 
     public:
 //        ECAPI(uint32_t _ec_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);

@@ -1,0 +1,53 @@
+syntax = "proto3";
+//package containerUpdate;
+package ec.rpc.containerUpdate;
+
+
+// The greeting service definition.
+service ContainerUpdateHandler {
+  // Sends a greeting
+  rpc ReqQuotaUpdate (ContainerQuotaRequest) returns (ContainerQuotaReply) {}
+  rpc ReqResizeMaxMem (ResizeMaxMemRequest) returns (ResizeMaxMemReply) {}
+  rpc ReadMemUsage (CgroupId) returns (ReadMemUsageReply) {}
+  rpc ReadMemLimit (CgroupId) returns (ReadMemLimitReply) {}
+}
+
+// The request message containing the user's name.
+message ContainerQuotaRequest {
+  int32 cgroupId = 1;
+  uint64 newQuota = 2;
+  string resizeFlag = 3; //incr or decr
+  int32 sequenceNum = 4;
+}
+
+// The response message containing the greetings
+message ContainerQuotaReply {
+  int32 cgroupId = 1;
+  uint64 updateQuota = 2;
+  int32 errorCode = 3;
+  int32 sequenceNum = 4;
+}
+
+message ResizeMaxMemRequest {
+  int32 cgroupId = 1;
+  uint64 newMemLimit = 2;
+}
+
+message ResizeMaxMemReply {
+  int32 cgroupId = 1;
+  int32 errorCode = 2; //0 -> resize max mem succeeded
+}
+
+message CgroupId {
+  int32 cgroupId = 1;
+}
+
+message ReadMemUsageReply {
+  int32 cgroupId = 1;
+  int64 memUsage = 2;
+}
+
+message ReadMemLimitReply {
+  int32 cgroupId = 1;
+  int64 memLimit = 3;
+}

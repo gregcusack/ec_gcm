@@ -94,26 +94,32 @@ bool ec::GlobalControlManager::init_agent_connections() {
 
     AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
     for(const auto &ag : agents) {
-        if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-            SPDLOG_CRITICAL("GCM Socket creation failed. Agent is not up!");
-            exit(EXIT_FAILURE);
-        }
 
-        memset(&servaddr, 0, sizeof(servaddr));
 
-        servaddr.sin_family = AF_INET;
-        servaddr.sin_port = htons(ag->get_port());
-        servaddr.sin_addr.s_addr = inet_addr((ag->get_ip()).to_string().c_str());
-        SPDLOG_DEBUG("ag->ip: {}", ag->get_ip());
-
-        if(connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
-            SPDLOG_ERROR("[ERROR] GCM: Connection to agent_clients failed. Agent on ip: {} is not connected", ag->get_ip());
+//        if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+//            SPDLOG_CRITICAL("GCM Socket creation failed. Agent is not up!");
+//            exit(EXIT_FAILURE);
+//        }
+//
+//        memset(&servaddr, 0, sizeof(servaddr));
+//
+//        servaddr.sin_family = AF_INET;
+//        servaddr.sin_port = htons(ag->get_port());
+//        servaddr.sin_addr.s_addr = inet_addr((ag->get_ip()).to_string().c_str());
+//        SPDLOG_DEBUG("ag->ip: {}", ag->get_ip());
+//
+//        if(connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
+//            SPDLOG_ERROR("[ERROR] GCM: Connection to agent_clients failed. Agent on ip: {} is not connected", ag->get_ip());
+//        }
+//        else {
+//            num_connections++;
+//        }
+        auto* ac = new rpc::AgentClient(ag);
+        if(ac->connectAgentGrpc()) {
             SPDLOG_ERROR("Are the agents up?");
+            std::exit(EXIT_FAILURE);
         }
-        else {
-            num_connections++;
-        }
-        auto* ac = new AgentClient(ag, sockfd);
+        num_connections++;
         agent_clients_db->add_agent_client(ac);
 
         SPDLOG_TRACE("[dbg] Agent client added to db and agent_clients sockfd: {}, {} agent db size is: {}", sockfd, \

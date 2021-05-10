@@ -54,10 +54,10 @@ int main(int argc, char* argv[]){
     
 //    ec::ports_t app1_ports(4444, 4447);
     ec::ports_t app1_ports(5000, 6000);
-    ec::ports_t app2_ports(5001, 6001);
+//    ec::ports_t app2_ports(5001, 6001);
 
-    //std::vector<ec::ports_t> controller_ports{app1_ports};
-    std::vector<ec::ports_t> controller_ports{app1_ports, app2_ports};
+    std::vector<ec::ports_t> controller_ports{app1_ports};
+//    std::vector<ec::ports_t> controller_ports{app1_ports, app2_ports};
 
     auto *gcm = new ec::GlobalControlManager(gcm_ip, GCM_PORT, agent_ips, controller_ports);
 

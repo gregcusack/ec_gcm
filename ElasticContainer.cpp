@@ -7,7 +7,7 @@
 
 ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id), fair_cpu_share(0) { }
 
-ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients)
+ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<rpc::AgentClient *> &_agent_clients)
     : ec_id(_ec_id), fair_cpu_share(0) {
 
     SPDLOG_DEBUG("unallocated_memory_in_pages on init: {}", _mem.get_unallocated_memory_in_pages());
@@ -59,7 +59,7 @@ int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
     return __ALLOC_INIT__;
 }
 
-void ec::ElasticContainer::get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res) {
+void ec::ElasticContainer::get_sc_from_agent(const rpc::AgentClient* client, std::vector<SubContainer::ContainerId> &res) {
     if (sc_ac_map.empty()) {
         SPDLOG_CRITICAL("ERROR: SC-AGENT Map is empty");
         std::exit(EXIT_FAILURE);

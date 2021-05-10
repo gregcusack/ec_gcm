@@ -80,41 +80,18 @@ void ec::ECAPI::ec_incr_unalloc_memory_in_pages(uint64_t mem_to_incr) {
     _ec->incr_unalloc_memory_in_pages(mem_to_incr);
 }
 
-uint64_t ec::ECAPI::get_machine_free_memory(const ec::SubContainer::ContainerId &container_id) {
-    uint64_t ret = 0;
-     // This is where we'll use cAdvisor instead of the agent comm to get the mem limit
-    AgentClient* ac = _ec->get_corres_agent(container_id);  
-    if(!ac) {
-        SPDLOG_ERROR("NO AgentClient found for container id: {}", container_id);
-        return 0;
-    }
-//    ec::SubContainer sc = _ec->get_subcontainer_front(container_id);
-    ret = ec::Facade::MonitorFacade::CAdvisor::getMachineFreeMem(ac->get_agent_ip().to_string());
-    return ret;
-}
-
-int64_t ec::ECAPI::get_cpu_quota_in_us(const ec::SubContainer::ContainerId &container_id) {
-    uint64_t ret = 0;
-    // This is where we'll use cAdvisor instead of the agent comm to get the mem limit
-    AgentClient* ac = _ec->get_corres_agent(container_id);
-    if(!ac) {
-        SPDLOG_ERROR("NO AgentClient found for container id: {}", container_id);
-        return 0;
-    }
-//    ec::SubContainer sc = _ec->get_subcontainer_front(container_id);
-
-//    if(sc.get_docker_id().empty()) {
-//        SPDLOG_ERROR("docker_id is 0!");
+//uint64_t ec::ECAPI::get_machine_free_memory(const ec::SubContainer::ContainerId &container_id) {
+//    uint64_t ret = 0;
+//     // This is where we'll use cAdvisor instead of the agent comm to get the mem limit
+//    rpc::AgentClient* ac = _ec->get_corres_agent(container_id);
+//    if(!ac) {
+//        SPDLOG_ERROR("NO AgentClient found for container id: {}", container_id);
 //        return 0;
 //    }
-    if(container_id.docker_id.empty()) {
-        SPDLOG_ERROR("docker_id is 0!");
-        return 0;
-    }
-//    ret = ec::Facade::MonitorFacade::CAdvisor::getContCPUQuota(ac->get_agent_ip().to_string(), sc.get_docker_id());
-    ret = ec::Facade::MonitorFacade::CAdvisor::getContCPUQuota(ac->get_agent_ip().to_string(), container_id.docker_id);
-    return ret;
-}
+////    ec::SubContainer sc = _ec->get_subcontainer_front(container_id);
+//    ret = ec::Facade::MonitorFacade::CAdvisor::getMachineFreeMem(ac->get_agent_ip().to_string());
+//    return ret;
+//}
 
 
 int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, uint32_t seq_number) {
@@ -127,14 +104,14 @@ int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, u
     auto change = diff_quota < 0 ? "decr" : "incr";
 //    SPDLOG_INFO("diff_quota, change: {}, {}", diff_quota, change);
 
-    msg_struct::ECMessage msg_req;
-    msg_req.set_req_type(0); //__CPU__
-    msg_req.set_cgroup_id(sc->get_c_id()->cgroup_id);
-    msg_req.set_request(seq_number);
-    msg_req.set_quota(_quota);
-    msg_req.set_payload_string(change);
-//    msg_req.set_payload_string(sc->get_docker_id());
-//    SPDLOG_INFO("set_quota cgid: {}", *sc->get_c_id());
+//    msg_struct::ECMessage msg_req;
+//    msg_req.set_req_type(0); //__CPU__
+//    msg_req.set_cgroup_id(sc->get_c_id()->cgroup_id);
+//    msg_req.set_request(seq_number);
+//    msg_req.set_quota(_quota);
+//    msg_req.set_payload_string(change);
+////    msg_req.set_payload_string(sc->get_docker_id());
+////    SPDLOG_INFO("set_quota cgid: {}", *sc->get_c_id());
 
     while(unlikely(!sc->sc_inserted())) {
 //        std::cout << "itr incr on sc inserted" << std::endl;
@@ -145,49 +122,30 @@ int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, u
         SPDLOG_CRITICAL("agent for container == NULL. cg_id: {}", *sc->get_c_id());
         std::exit(EXIT_FAILURE);
     }
-    int64_t ret = agent->send_request(msg_req);
+    int64_t ret = agent->updateContainerQuota(sc->get_c_id()->cgroup_id, _quota, change, seq_number);
+
+//    int64_t ret = agent->send_request(msg_req);
     return ret;
 
-}
-
-int64_t ec::ECAPI::get_sc_quota(ec::SubContainer *sc) {
-    if(!sc) {
-        SPDLOG_CRITICAL("sc == NULL in manager get_sc_quota()");
-        std::exit(EXIT_FAILURE);
-    }
-    uint32_t seq_number = 1;
-    msg_struct::ECMessage msg_req;
-    msg_req.set_req_type(7); //__READ_QUOTA__
-    msg_req.set_cgroup_id(sc->get_c_id()->cgroup_id);
-    msg_req.set_request(seq_number);
-    msg_req.set_payload_string("test");
-
-    auto agent = _ec->get_corres_agent(*sc->get_c_id());
-    if(!agent) {
-        SPDLOG_CRITICAL("agent for container == NULL");
-        std::exit(EXIT_FAILURE);
-    }
-    int64_t ret = agent->send_request(msg_req);
-    return ret;
 }
 
 int64_t ec::ECAPI::sc_resize_memory_limit_in_pages(const ec::SubContainer::ContainerId& container_id, uint64_t new_mem_limit) {
-    uint64_t ret = 0;
-    msg_struct::ECMessage msg_req;
-    msg_req.set_req_type(5); //RESIZE_MEM_LIMIT
-    msg_req.set_cgroup_id(container_id.cgroup_id);
-    msg_req.set_payload_string("test");
-    msg_req.set_rsrc_amnt(new_mem_limit);
+//    uint64_t ret;
+//    msg_struct::ECMessage msg_req;
+//    msg_req.set_req_type(5); //RESIZE_MEM_LIMIT
+//    msg_req.set_cgroup_id(container_id.cgroup_id);
+//    msg_req.set_payload_string("test");
+//    msg_req.set_rsrc_amnt(new_mem_limit);
 
     auto agent = _ec->get_corres_agent(container_id);
-
     if(!agent) {
-        SPDLOG_CRITICAL("temp is NULL");
+        SPDLOG_CRITICAL("agent is NULL");
         std::exit(EXIT_FAILURE);
     }
-    
-    ret = agent->send_request(msg_req);
-    return ret;
+
+    return agent->resizeMemoryLimitPages(container_id.cgroup_id, new_mem_limit);
+//    ret = agent->send_request(msg_req);
+//    return ret;
 }
 
 int ec::ECAPI::determine_quota_for_new_pod(uint64_t req_quota, uint64_t &quota) {
@@ -232,39 +190,40 @@ void ec::ECAPI::sc_set_memory_limit_in_pages(ec::SubContainer::ContainerId sc_id
 }
 
 uint64_t ec::ECAPI::__syscall_get_memory_usage_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
-    uint64_t ret = 0;
-    //initialize request body
-    msg_struct::ECMessage msg_req;
-    msg_req.set_req_type(6); //MEM_usage_IN_PAGES 
-    msg_req.set_cgroup_id(sc_id.cgroup_id);
-    msg_req.set_payload_string("test");
-    //std::cerr << "[dbg] get_memory_usage_in_bytes: get the corresponding agent\n";
+//    uint64_t ret = 0;
+//    //initialize request body
+//    msg_struct::ECMessage msg_req;
+//    msg_req.set_req_type(6); //MEM_usage_IN_PAGES
+//    msg_req.set_cgroup_id(sc_id.cgroup_id);
+//    msg_req.set_payload_string("test");
+//    //std::cerr << "[dbg] get_memory_usage_in_bytes: get the corresponding agent\n";
     auto agent = _ec->get_corres_agent(sc_id);
     if(!agent) {
         std::cerr << "[dbg] agent is NULL" << std::endl;
         std::exit(EXIT_FAILURE);
     }
+    return agent->getMemoryUsageBytes(sc_id.cgroup_id) * __PAGE_SIZE__;
 
-    ret = agent->send_request(msg_req);
-    SPDLOG_TRACE("memory usage in pages reported from the agent: {}", ret);
-    return ret * __PAGE_SIZE__ ;
+//    ret = agent->send_request(msg_req);
+//    SPDLOG_TRACE("memory usage in pages reported from the agent: {}", ret);
+//    return ret * __PAGE_SIZE__ ;
 }
 
 uint64_t ec::ECAPI::__syscall_get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
-    uint64_t ret = 0;
-    //initialize request body
-    msg_struct::ECMessage msg_req;
-    msg_req.set_req_type(7); //MEM_limit_IN_PAGES 
-    msg_req.set_cgroup_id(sc_id.cgroup_id);
-    msg_req.set_payload_string("test");
+//    uint64_t ret = 0;
+//    //initialize request body
+//    msg_struct::ECMessage msg_req;
+//    msg_req.set_req_type(7); //MEM_limit_IN_PAGES
+//    msg_req.set_cgroup_id(sc_id.cgroup_id);
+//    msg_req.set_payload_string("test");
 //    std::cerr << "[dbg] __syscall_get_memory_limit_in_bytes: get the corresponding agent\n";
     auto agent = _ec->get_corres_agent(sc_id);
     if(!agent) {
         std::cerr << "[dbg] agent is NULL" << std::endl;
         std::exit(EXIT_FAILURE);
     }
-
-    ret = agent->send_request(msg_req);
-    return ret * __PAGE_SIZE__ ;
+    return agent->getMemoryLimitBytes(sc_id.cgroup_id) * __PAGE_SIZE__;
+//    ret = agent->send_request(msg_req);
+//    return ret * __PAGE_SIZE__ ;
 }
 
