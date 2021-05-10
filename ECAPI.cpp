@@ -80,6 +80,10 @@ void ec::ECAPI::ec_incr_unalloc_memory_in_pages(uint64_t mem_to_incr) {
     _ec->incr_unalloc_memory_in_pages(mem_to_incr);
 }
 
+uint64_t ec::ECAPI::sc_get_memory_limit_in_bytes_cadvisor(const ec::SubContainer::ContainerId &sc_id) {
+    return _ec->get_sc_memory_limit_in_bytes(sc_id);
+}
+
 //uint64_t ec::ECAPI::get_machine_free_memory(const ec::SubContainer::ContainerId &container_id) {
 //    uint64_t ret = 0;
 //     // This is where we'll use cAdvisor instead of the agent comm to get the mem limit

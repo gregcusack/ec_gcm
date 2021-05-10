@@ -76,9 +76,11 @@ namespace ec {
         uint64_t ec_get_alloc_memory_in_pages() { return _ec->get_allocated_memory_in_pages(); }
         uint64_t ec_get_memory_slice() { return _ec->get_memory_slice(); }
         uint64_t ec_get_mem_limit_in_pages() { return _ec->get_mem_limit_in_pages(); }
+        uint64_t sc_get_memory_limit_in_bytes_cadvisor(const ec::SubContainer::ContainerId &sc_id);
 
         // Machine Stats
         uint64_t get_machine_free_memory(const SubContainer::ContainerId &container_id);
+
 
         //AGENTS
         int64_t get_sc_quota(ec::SubContainer *sc);
