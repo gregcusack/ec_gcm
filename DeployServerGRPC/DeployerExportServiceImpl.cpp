@@ -213,6 +213,8 @@ void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* argum
         if(itr == ec->get_sc_ac_map_for_update()->end()) {
             SPDLOG_DEBUG("bruvvvv");
         }
+        SPDLOG_DEBUG("Deployerthread: map for update, ref sizes: {}, {}",
+                     ec->get_sc_ac_map_for_update()->size(), ec->get_sc_ac_map().size());
         return itr != ec->get_sc_ac_map_for_update()->end();
     });
 

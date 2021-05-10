@@ -464,7 +464,8 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
         if(itr == _ec->get_sc_ac_map_for_update()->end()) {
             SPDLOG_ERROR("ahhh we inserted into sc_ac map but failed!");
         }
-        SPDLOG_DEBUG("Added to sc_ac map!");
+        SPDLOG_DEBUG("manager thread: map for update, ref sizes: {}, {}",
+                     _ec->get_sc_ac_map_for_update()->size(), _ec->get_sc_ac_map().size());
         sc->set_sc_inserted(true);
         SPDLOG_DEBUG("set inserted flag!");
         cv.notify_one();
