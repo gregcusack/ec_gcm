@@ -30,6 +30,7 @@ int main () {
         std::cout << "status: " << status.error_message() << std::endl;
         std::cout << "error code: " << status.error_code() << std::endl;
         std::cout << "details: " << status.error_details() << std::endl;
+    }
 }
 
 //class DeployerExportClient {
