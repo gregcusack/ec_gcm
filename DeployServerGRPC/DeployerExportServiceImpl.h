@@ -30,7 +30,11 @@ namespace ec {
             DeployerExportServiceImpl(ElasticContainer *_ec, std::condition_variable &_cv,
                 std::condition_variable &_cv_dock, std::mutex &_cv_mtx, std::mutex &_cv_mtx_dock, std::mutex &_sc_lock)
                 : success("thx"), fail("fail"), ec(_ec), cv(_cv), cv_dock(_cv_dock), cv_mtx(_cv_mtx),
-                  cv_mtx_dock(_cv_mtx_dock), sc_lock(_sc_lock) {}
+                  cv_mtx_dock(_cv_mtx_dock), sc_lock(_sc_lock) {
+
+                SPDLOG_DEBUG("creating DESI. ec_id: {}", ec->get_ec_id());
+                SPDLOG_DEBUG("sc_ac map size: {}", ec->get_sc_ac_map().size());
+            }
 
             grpc::Status ReportPodSpec(grpc::ServerContext* context,
                     const ExportPodSpec* pod, PodSpecReply* reply) override;
