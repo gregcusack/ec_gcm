@@ -65,7 +65,6 @@ int main(int argc, char* argv[]){
     auto *gcm = new ec::GlobalControlManager(gcm_ip, GCM_PORT, agent_ips, controller_ports);
 
     for(const auto &i : controller_ports) {
-        std::cout << "controller ports: " << i << std::endl;
         gcm->create_manager();
     }
     SPDLOG_INFO("[dbg] num managers: {}", gcm->get_managers().size());
