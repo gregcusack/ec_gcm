@@ -72,6 +72,8 @@ int64_t ec::rpc::AgentClient::resizeMemoryLimitPages(uint32_t cgroup_id, uint64_
 
 int64_t ec::rpc::AgentClient::getMemoryUsageBytes(uint32_t cgroup_id) {
     grpc::ClientContext context;
+    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(1000); //wait max 1 second
+    context.set_deadline(deadline);
     ec::rpc::containerUpdate::CgroupId txMsg;
     txMsg.set_cgroupid(int32_t(cgroup_id));
     ec::rpc::containerUpdate::ReadMemUsageReply rxMsg;
