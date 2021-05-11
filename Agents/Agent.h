@@ -13,7 +13,7 @@ namespace ec {
     public:
         Agent(std::string ip_addr_)
             : ip(om::net::ip4_addr::from_string(std::move(ip_addr_))),
-            port(4445), sockfd(0) {}
+            port(4448), sockfd(0) {}
 
         [[nodiscard]] om::net::ip4_addr get_ip() const { return ip; };
         [[nodiscard]] uint16_t get_port() const { return port; };

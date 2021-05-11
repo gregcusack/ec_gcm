@@ -43,6 +43,19 @@ add_custom_command(
         ARGS --proto_path=. --grpc_out=. --plugin=protoc-gen-grpc=${GRPC_CPP_GEN} deploy.proto
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/DeployServerGRPC)
 
+add_custom_command(
+        OUTPUT
+        ${CMAKE_CURRENT_LIST_DIR}/Agents/containerUpdateGrpc.pb.h
+        ${CMAKE_CURRENT_LIST_DIR}/Agents/containerUpdateGrpc.pb.cc
+        ${CMAKE_CURRENT_LIST_DIR}/Agents/containerUpdateGrpc.grpc.pb.h
+        ${CMAKE_CURRENT_LIST_DIR}/Agents/containerUpdateGrpc.grpc.pb.cc
+        MAIN_DEPENDENCY ${CMAKE_CURRENT_LIST_DIR}/Agents/containerUpdateGrpc.proto
+        COMMAND ${PROTOBUF_PROTOC}
+        ARGS --proto_path=. --cpp_out=. containerUpdateGrpc.proto
+        COMMAND ${PROTOBUF_PROTOC}
+        ARGS --proto_path=. --grpc_out=. --plugin=protoc-gen-grpc=${GRPC_CPP_GEN} containerUpdateGrpc.proto
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/Agents)
+
 set(GCM_PROTO_SRC
         protoBufSDK/msg.pb.h
         protoBufSDK/msg.pb.cc)
@@ -52,7 +65,15 @@ set(GCM_GRPC_SRC
         DeployServerGRPC/deploy.grpc.pb.cc
         DeployServerGRPC/deploy.pb.h
         DeployServerGRPC/deploy.pb.cc
-        DeployServerGRPC/DeployerExportServiceImpl.cpp DeployServerGRPC/DeployerExportServiceImpl.h)
+        DeployServerGRPC/DeployerExportServiceImpl.cpp DeployServerGRPC/DeployerExportServiceImpl.h
+
+        Agents/containerUpdateGrpc.grpc.pb.h
+        Agents/containerUpdateGrpc.grpc.pb.cc
+        Agents/containerUpdateGrpc.pb.h
+        Agents/containerUpdateGrpc.pb.cc
+
+        )
+
 
 set(AGENTS
         Agents/Agent.h                          Agents/Agent.cpp

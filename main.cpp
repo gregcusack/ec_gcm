@@ -13,6 +13,8 @@
 
 #include "spdlog/spdlog.h"
 #define GCM_PORT        8888             //Not sure if we need a port here tbh
+#define BASE_TCP_PORT   5000
+#define BASE_UDP_PORT   6000
 
 /* LOG LEVELS
  *  SPDLOG_TRACE("Some trace message with param {}", 42);
@@ -51,22 +53,27 @@ int main(int argc, char* argv[]){
     auto app_name = jsonFacade.getAppName();
     auto agent_ips = jsonFacade.getAgentIPs();
     auto gcm_ip = jsonFacade.getGCMIP();
-    
-//    std::vector<uint16_t>       server_ports{4444};
-    ec::ports_t ports(4444, 4447);
+    auto num_tenants = jsonFacade.getNumTenants();
+    std::vector<ec::ports_t> controller_ports;
 
-    std::vector<ec::ports_t> controller_ports{ports};
+    for(int i=0; i < num_tenants; i++) {
+        auto tcp_port = BASE_TCP_PORT + i;
+        auto udp_port = BASE_UDP_PORT + i;
+        controller_ports.emplace_back(tcp_port, udp_port);
+    }
 
-//    auto *gcm = new ec::GlobalControlManager(gcm_ip, GCM_PORT, agent_ips, server_ports);
     auto *gcm = new ec::GlobalControlManager(gcm_ip, GCM_PORT, agent_ips, controller_ports);
-//
-//    for(const auto &i : server_ports) {
-//        gcm->create_manager();
-//    }
+
     for(const auto &i : controller_ports) {
         gcm->create_manager();
     }
     SPDLOG_INFO("[dbg] num managers: {}", gcm->get_managers().size());
+
+    //    Create AgentClients
+    if(!gcm->init_agent_connections()) {
+        SPDLOG_CRITICAL("[ERROR Server] not all agents connected to server_id: {}! Exiting...");
+        exit(EXIT_FAILURE);
+    }
     
     gcm->run(app_name, gcm_ip);
 

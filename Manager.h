@@ -28,6 +28,7 @@
 #define _SAFE_MARGIN_BYTES_ 52428800 //50MiB = 50 * 1024 * 1024 = 12800 pages
 #define _MAX_CPU_LOSS_IN_NS_ 1000
 #define _MAX_UNUSED_RT_IN_NS_ 5000000
+#define BASE_GRPC_PORT 4447
 
 namespace ec {
     class Manager : public ECAPI, public Server {
@@ -71,13 +72,14 @@ namespace ec {
 
         ec::rpc::DeployerExportServiceImpl *grpcServer;
         std::string deploy_service_ip;
+        int grpc_port;
 
         void determine_mem_limit_for_new_pod(SubContainer *sc, int clifd);
 
         /* HOTOS LOGGING */
 #ifndef NDEBUG
         std::unordered_map<SubContainer::ContainerId, std::ofstream*> hotos_logs;
-        std::string get_current_dir();
+        static std::string get_current_dir();
 #endif
 
 

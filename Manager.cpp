@@ -7,6 +7,7 @@
 ec::Manager::Manager(int _manager_id, ec::ip4_addr gcm_ip, ec::ports_t controller_ports, std::vector<Agent *> &agents)
         : Server(_manager_id, gcm_ip, controller_ports, agents), ECAPI(_manager_id), manager_id(_manager_id),
           syscall_sequence_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {
+    grpc_port = BASE_GRPC_PORT + _manager_id - 1; //4447 for manager_id 1, 4448 for manager_id, etc
     //init server
     initialize_tcp();
     initialize_udp();
@@ -68,12 +69,26 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 
     if(rx_quota / 1000 != sc->get_quota() / 1000) {
         SPDLOG_ERROR("quotas do not match (ip, cgid, rx, sc->get): ({}, {}, {}, {})", sc->get_c_id()->server_ip, sc->get_c_id()->cgroup_id, rx_quota, sc->get_quota());
-        /// TEST. DELETE LATER!
-//        sc->set_quota(rx_quota);
-        /// END TEST
-//        cpulock.unlock();
-        res->request = 1;
-        return __ALLOC_SUCCESS__;
+        if(sc->incr_quota_mismatch_counter() > 2) { //mistmatch stuck
+            if(rx_quota < sc->get_quota()) {        //didn't set incr quota properly
+                auto diff = sc->get_quota() - rx_quota;
+                sc->set_quota(rx_quota);
+                sc->get_cpu_stats()->flush();
+                ec_decr_alloc_rt(diff);
+                ec_incr_unallocated_rt(diff);
+            } else {                                //rx_quota > sc->get_quota -> didn't set decr quota properly
+                auto diff = rx_quota - sc->get_quota();
+                ec_decr_unallocated_rt(diff);
+                sc->set_quota(rx_quota);
+                sc->get_cpu_stats()->flush();
+                ec_incr_alloc_rt(diff);
+            }
+            sc->reset_quota_mismatch_counter();
+
+        } else {
+            res->request = 1;
+            return __ALLOC_SUCCESS__;
+        }
     }
 
     total_rt_in_sys = ec_get_alloc_rt() + ec_get_cpu_unallocated_rt(); //alloc, overrun, unalloc
@@ -317,11 +332,13 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
 
 uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubContainer* subContainer){
 
+//    SPDLOG_TRACE("docker id: {}, {}, {}", containerId.docker_id, subContainer->get_docker_id(), subContainer->get_c_id()->docker_id);
 	uint64_t pages_reclaimed = 0;
 	auto mem_limit_pages = subContainer->get_mem_limit_in_pages();
     auto mem_limit_bytes = page_to_byte(mem_limit_pages);
-    auto mem_usage_bytes = __syscall_get_memory_usage_in_bytes(containerId);
-    
+//    auto mem_usage_bytes = __syscall_get_memory_usage_in_bytes(containerId);
+    auto mem_usage_bytes = sc_get_memory_usage_in_bytes_cadvisor(containerId, subContainer->get_docker_id());
+
     if(mem_usage_bytes == (unsigned long)-1 * __PAGE_SIZE__) {
         SPDLOG_ERROR("failed to read mem usage for cg_id: {}", containerId);
         return pages_reclaimed;
@@ -437,11 +454,12 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
     // we can now create a map to link the container_id and agent_client
     AgentClientDB* acdb = AgentClientDB::get_agent_client_db_instance();
     auto agent_ip = sc->get_c_id()->server_ip;
-//    std::cout << "add container. cg_id: " << *sc->get_c_id() << std::endl;
     auto target_agent = acdb->get_agent_client_by_ip(agent_ip);
     if ( target_agent ){
         std::lock_guard<std::mutex> lk(cv_mtx);
         _ec->add_to_sc_ac_map(*sc->get_c_id(), target_agent);
+        SPDLOG_DEBUG("manager thread: map for update, ref sizes: {}, {}",
+                     _ec->get_sc_ac_map_for_update()->size(), _ec->get_sc_ac_map().size());
         sc->set_sc_inserted(true);
         cv.notify_one();
     } else {
@@ -469,6 +487,7 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
         return;
     }
 
+    int count = 0;
     SPDLOG_TRACE("in determine_new_limit_for_new_pod. sc_id: {}", *sc->get_c_id());
     std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
     cv_dock.wait(lk_dock, [this, sc] {
@@ -476,7 +495,10 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
         return !sc->get_c_id()->docker_id.empty();
 //        return !sc->get_docker_id().empty();
     });
-    auto sc_mem_limit_in_pages = byte_to_page(__syscall_get_memory_limit_in_bytes(*sc->get_c_id()));
+//    auto mem_lim_bytes = __syscall_get_memory_limit_in_bytes(*sc->get_c_id());
+    auto mem_lim_bytes = sc_get_memory_limit_in_bytes_cadvisor(*sc->get_c_id());
+    auto sc_mem_limit_in_pages = byte_to_page(mem_lim_bytes);
+    SPDLOG_INFO("mem_lim_bytes, pages: {}, {}", mem_lim_bytes, sc_mem_limit_in_pages);
 
     SPDLOG_DEBUG("ec_get_unalloc_mem rn: {}", ec_get_unalloc_memory_in_pages());
     SPDLOG_DEBUG("sc_mem_limit_in_pages on deploy: {}", sc_mem_limit_in_pages);
@@ -516,7 +538,7 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
 
 
 void ec::Manager::serveGrpcDeployExport() {
-    std::string server_addr(deploy_service_ip + ":4447");
+    std::string server_addr(deploy_service_ip + ":" + std::to_string(grpc_port));
     grpc::ServerBuilder builder;
 
     builder.AddListeningPort(server_addr, grpc::InsecureServerCredentials());
@@ -530,10 +552,9 @@ void ec::Manager::serveGrpcDeployExport() {
 //TODO: this should be separated out into own file
 [[noreturn]] void ec::Manager::run() {
 
-    while(ec_get_num_subcontainers() < 1) {
+    while(ec_get_num_subcontainers() < 32) {
         sleep(5);
     }
-//    sleep(5);
 
     while (true)
     {
@@ -541,13 +562,13 @@ void ec::Manager::serveGrpcDeployExport() {
         uint64_t ret = 0;
 
         SPDLOG_TRACE("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-        SPDLOG_INFO("Periodic reclaim started from {} containers!", ec_get_num_subcontainers());
+        SPDLOG_INFO("Periodic reclaim started for manager_id: {} from {} containers! ", manager_id, ec_get_num_subcontainers());
 
         for (const auto &sc_map : ec_get_subcontainers()) {
             ret += this->reclaim(sc_map.first, sc_map.second->back());
         }
 
-        SPDLOG_INFO("Recalimed memory at the end of the periodic reclaim function (pages): {}", ret);
+        SPDLOG_INFO("Recalimed memory for manager_id: {} at the end of the periodic reclaim function (pages): {}", manager_id, ret);
         SPDLOG_TRACE("Recalimed memory at the end of the periodic reclaim function (MiB): {}", ret * 4096 / 1024 / 1024);
         if(ret > 0){
             ec_update_reclaim_memory_in_pages(ret); //no need to lock here. already locked in mem_h.cpp

@@ -66,7 +66,7 @@ namespace ec {
         uint32_t get_server_id() const { return server_id; }
         std::mutex mtx;
 
-        bool init_agent_connections();
+//        bool init_agent_connections();
     
     private:
 

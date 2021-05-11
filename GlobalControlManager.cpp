@@ -39,10 +39,6 @@ uint32_t ec::GlobalControlManager::create_manager() {
 
     auto ports = controller_ports[manager_counts - 1];
     mngr = new Manager(manager_counts, gcm_ip, ports, agents);
-
-//    uint16_t server_port = server_ports[manager_counts - 1]; //Give new EC, the next available port in the list
-//    mngr = new Manager(manager_counts, gcm_ip, server_port, agents);
-
     managers.insert({manager_counts, mngr});
 
     manager_counts++;
@@ -85,5 +81,24 @@ void ec::GlobalControlManager::run(const std::string &app_name, const std::strin
     for(const auto &i : managers) {
         wait(nullptr);
     }
+}
+
+bool ec::GlobalControlManager::init_agent_connections() {
+    int sockfd, i;
+    struct sockaddr_in servaddr;
+    uint32_t num_connections = 0;
+
+    AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
+    for(const auto &ag : agents) {
+        auto* ac = new rpc::AgentClient(ag);
+        if(ac->connectAgentGrpc()) {
+            SPDLOG_ERROR("Are the agents up?");
+            std::exit(EXIT_FAILURE);
+        }
+        num_connections++;
+        agent_clients_db->add_agent_client(ac);
+    }
+    return num_connections == agent_clients_db->get_agent_clients_db_size();
+
 }
 

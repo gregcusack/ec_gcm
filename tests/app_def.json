@@ -4,6 +4,7 @@
 	"agentIPs": [
 		"10.0.2.15"
 	],
+	"tenants": 2,
 	"yaml_path" : [
 		"k8-yaml/"
 	]

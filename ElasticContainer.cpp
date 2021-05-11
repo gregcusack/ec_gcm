@@ -7,7 +7,7 @@
 
 ec::ElasticContainer::ElasticContainer(uint32_t _ec_id) : ec_id(_ec_id), fair_cpu_share(0) { }
 
-ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<AgentClient *> &_agent_clients)
+ec::ElasticContainer::ElasticContainer(uint32_t _ec_id, std::vector<rpc::AgentClient *> &_agent_clients)
     : ec_id(_ec_id), fair_cpu_share(0) {
 
     SPDLOG_DEBUG("unallocated_memory_in_pages on init: {}", _mem.get_unallocated_memory_in_pages());
@@ -59,7 +59,7 @@ int ec::ElasticContainer::insert_sc(ec::SubContainer &_sc) {
     return __ALLOC_INIT__;
 }
 
-void ec::ElasticContainer::get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res) {
+void ec::ElasticContainer::get_sc_from_agent(const rpc::AgentClient* client, std::vector<SubContainer::ContainerId> &res) {
     if (sc_ac_map.empty()) {
         SPDLOG_CRITICAL("ERROR: SC-AGENT Map is empty");
         std::exit(EXIT_FAILURE);
@@ -123,6 +123,24 @@ uint64_t ec::ElasticContainer::get_sc_memory_limit_in_bytes(const ec::SubContain
     ret = ec::Facade::MonitorFacade::CAdvisor::getContMemLimit(ac->get_agent_ip().to_string(), sc_id.docker_id);
     return ret;
 }
+
+uint64_t ec::ElasticContainer::get_sc_memory_usage_in_bytes(const ec::SubContainer::ContainerId &sc_id,
+                                                            const std::string &docker_id) {
+    uint64_t ret = 0;
+    auto *ac = get_corres_agent(sc_id);
+    if(!ac) {
+        SPDLOG_ERROR("NO AgentClient found for container id: {}", sc_id);
+        return 0;
+    }
+
+    if(docker_id.empty()) {
+        SPDLOG_ERROR("docker_id is 0!");
+        return 0;
+    }
+    ret = ec::Facade::MonitorFacade::CAdvisor::getContMemUsage(ac->get_agent_ip().to_string(), docker_id);
+    return ret;
+}
+
 
 uint64_t ec::ElasticContainer::get_tot_mem_alloc_in_pages() {
     uint64_t tot_mem_alloc = 0;

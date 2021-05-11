@@ -48,10 +48,10 @@ namespace ec {
     class ElasticContainer {
 //    using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, std::queue<SubContainer *>*>;
-    using subcontainer_agentclient_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
+    using subcontainer_agentclient_map = std::unordered_map<SubContainer::ContainerId, rpc::AgentClient*>;
     public:
         explicit ElasticContainer(uint32_t _ec_id);
-        ElasticContainer(uint32_t _ec_id, std::vector<AgentClient*> &_agent_clients);
+        ElasticContainer(uint32_t _ec_id, std::vector<rpc::AgentClient*> &_agent_clients);
         ~ElasticContainer();
 
         /**
@@ -66,11 +66,11 @@ namespace ec {
         subcontainer_map *get_subcontainers_map_for_update() { return &subcontainers; }
         SubContainer &get_subcontainer_front(const SubContainer::ContainerId &container_id);
         SubContainer &get_subcontainer_back(const SubContainer::ContainerId &container_id);
-        AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_ac_map[container_id];}
+        rpc::AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id){return sc_ac_map[container_id];}
         SubContainer *get_sc_for_update_back(const SubContainer::ContainerId &container_id);
         const subcontainer_agentclient_map &get_sc_ac_map() {return sc_ac_map;}
         subcontainer_agentclient_map *get_sc_ac_map_for_update() {return &sc_ac_map; }
-        void get_sc_from_agent(const AgentClient* client, std::vector<SubContainer::ContainerId> &res);
+        void get_sc_from_agent(const rpc::AgentClient* client, std::vector<SubContainer::ContainerId> &res);
 
         //CPU
         uint64_t get_cpu_unallocated_rt() { return _cpu.get_unallocated_rt(); }
@@ -88,6 +88,7 @@ namespace ec {
         uint64_t get_mem_limit_in_pages() { return _mem.get_mem_limit_in_pages(); }
 
         uint64_t get_sc_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id);
+        uint64_t get_sc_memory_usage_in_bytes(const ec::SubContainer::ContainerId &sc_id, const std::string &docker_id);
         uint64_t get_tot_mem_alloc_in_pages();
 
         /**
@@ -97,7 +98,7 @@ namespace ec {
          **/
 
         //MISC
-        void add_to_sc_ac_map(SubContainer::ContainerId &id, AgentClient* client) { sc_ac_map.insert({id, client}); }
+        void add_to_sc_ac_map(SubContainer::ContainerId &id, rpc::AgentClient* client) { sc_ac_map.insert({id, client}); }
 
         //CPU
         void set_slice_size(uint64_t _slice_size) { _cpu.set_slice_size(_slice_size); }

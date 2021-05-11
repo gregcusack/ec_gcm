@@ -5,11 +5,46 @@
 #include "DeployerExportServiceImpl.h"
 
 grpc::Status
+ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, const ec::rpc::ExportAppSpec *appSpec,
+                                                  ec::rpc::AppSpecReply *reply) {
+    if(!reply || !appSpec) {
+        SPDLOG_ERROR("ReportAppSpec reply or appSpec is NULL");
+        return grpc::Status::CANCELLED;
+    }
+
+    // Set Application Global limits here:
+    if (!ec){
+        SPDLOG_ERROR("EC is NULL in ReportAppSpec");
+        return grpc::Status::CANCELLED;
+    }
+    // Passed in value is in mi but set_total_cpu takes ns
+    ec->set_total_cpu(appSpec->cpu_limit()*100000);
+    ec->set_unallocated_rt(ec->get_total_cpu());
+    // Passed in value is in MiB but set_memory_limit_in_pages takes in number of pages
+    // 1048576 bytes in 1 MiB
+    // e.g. 5000 MiB * 1048576 = 5,242,880,000 Bytes -> 5.2e9 bytes to pages (4096 bytes/page) = 1,280,000 pages
+    // 5000 MiB to GiB = 5000 / 1024 = 4.882813 GiB
+    ec->set_memory_limit_in_pages((appSpec->mem_limit() * 1024 * 1024) / 4096);
+    ec->set_unalloc_memory_in_pages((appSpec->mem_limit() * 1024 * 1024) / 4096);
+    ec->set_alloc_memory_in_pages(0);
+
+    SPDLOG_DEBUG("Set CPU Limit (ns): {}", ec->get_total_cpu());
+    SPDLOG_DEBUG("Set Mem Limit (pages) {}", ec->get_mem_limit_in_pages());
+
+    // Set response here
+    reply->set_app_name(appSpec->app_name());
+    reply->set_cpu_limit(appSpec->cpu_limit());
+    reply->set_mem_limit(appSpec->mem_limit());
+    reply->set_thanks(success);
+
+    return grpc::Status::OK;
+}
+grpc::Status
 ec::rpc::DeployerExportServiceImpl::ReportPodSpec(grpc::ServerContext *context, const ec::rpc::ExportPodSpec *pod,
                                                   ec::rpc::PodSpecReply *reply) {
     std::string status;
     int ret = insertPodSpec(pod);
-    SPDLOG_TRACE("Insert Pod Spec ret: {}", ret);
+    SPDLOG_DEBUG("Insert Pod Spec ret: {}", ret);
 
     status = ret ? fail : success;
     if(status =="thx") {
@@ -108,45 +143,6 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     return grpc::Status::OK;
 }
 
-
-grpc::Status
-ec::rpc::DeployerExportServiceImpl::ReportAppSpec(grpc::ServerContext *context, const ec::rpc::ExportAppSpec *appSpec,
-                                                  ec::rpc::AppSpecReply *reply) {
-    if(!reply || !appSpec) {
-        SPDLOG_ERROR("ReportAppSpec reply or appSpec is NULL");
-        return grpc::Status::CANCELLED;
-    }
-
-    // Set Application Global limits here:
-    if (!ec){
-        SPDLOG_ERROR("EC is NULL in ReportAppSpec");
-        return grpc::Status::CANCELLED;
-    }
-    // Passed in value is in mi but set_total_cpu takes ns
-    ec->set_total_cpu(appSpec->cpu_limit()*100000);
-    ec->set_unallocated_rt(ec->get_total_cpu());
-    // Passed in value is in MiB but set_memory_limit_in_pages takes in number of pages
-    // 1048576 bytes in 1 MiB
-    // e.g. 5000 MiB * 1048576 = 5,242,880,000 Bytes -> 5.2e9 bytes to pages (4096 bytes/page) = 1,280,000 pages
-    // 5000 MiB to GiB = 5000 / 1024 = 4.882813 GiB
-    ec->set_memory_limit_in_pages((appSpec->mem_limit() * 1024 * 1024) / 4096);
-    ec->set_unalloc_memory_in_pages((appSpec->mem_limit() * 1024 * 1024) / 4096);
-    ec->set_alloc_memory_in_pages(0);
-
-    SPDLOG_DEBUG("Set CPU Limit (ns): {}", ec->get_total_cpu());
-    SPDLOG_DEBUG("Set Mem Limit (pages) {}", ec->get_mem_limit_in_pages());
-
-    // Set response here
-    reply->set_app_name(appSpec->app_name());
-    reply->set_cpu_limit(appSpec->cpu_limit());
-    reply->set_mem_limit(appSpec->mem_limit());
-    reply->set_thanks(success);
-
-    return grpc::Status::OK;
-}
-
-
-
 int ec::rpc::DeployerExportServiceImpl::insertPodSpec(const ec::rpc::ExportPodSpec *pod) {
     if(!pod) { SPDLOG_ERROR("ExportPodSpec *pod is NULL"); }
 
@@ -208,8 +204,11 @@ void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* argum
     auto threadArgs = reinterpret_cast<matchingThreadArgs*>(arguments);
     std::unique_lock<std::mutex> lk(cv_mtx);
     cv.wait(lk, [this, threadArgs] {
+//        SPDLOG_DEBUG("wait for sc_id to exist in sc_ac_map: {}, d_id: {}", threadArgs->sc_id, threadArgs->docker_id);
+//        return ec->get_sc_ac_map_for_update()->end() != ec->get_sc_ac_map_for_update()->find(threadArgs->sc_id);
         auto itr = ec->get_sc_ac_map_for_update()->find(threadArgs->sc_id);
-        SPDLOG_TRACE("wait for sc_id to exist in sc_ac_map: {}, d_id: {}", threadArgs->sc_id, threadArgs->docker_id);
+        SPDLOG_DEBUG("Deployerthread: map for update, ref sizes: {}, {}",
+                     ec->get_sc_ac_map_for_update()->size(), ec->get_sc_ac_map().size());
         return itr != ec->get_sc_ac_map_for_update()->end();
     });
 
@@ -220,7 +219,7 @@ void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* argum
         SPDLOG_ERROR("docker_id set failed in grpcDockerIdMatcher()!");
     }
     cv_dock.notify_one();
-    SPDLOG_TRACE("successfuly matched scId to DockerId. sc_id {}, d_id: {}", threadArgs->sc_id, threadArgs->docker_id);
+    SPDLOG_DEBUG("successfuly matched scId to DockerId. sc_id {}, d_id: {}", threadArgs->sc_id, threadArgs->docker_id);
 //    delete (matchingThreadArgs*)arguments;
     delete threadArgs;
 }

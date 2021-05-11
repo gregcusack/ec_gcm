@@ -16,23 +16,23 @@ namespace ec{
     class AgentClientDB {
     private:
 
-        std::unordered_map<om::net::ip4_addr , AgentClient*> agents_db;
+        std::unordered_map<om::net::ip4_addr, rpc::AgentClient*> agents_db;
 
         static AgentClientDB* agent_clients_db_instance;
 
         AgentClientDB() {
-            agents_db = std::unordered_map<om::net::ip4_addr, AgentClient*>();
+            agents_db = std::unordered_map<om::net::ip4_addr, rpc::AgentClient*>();
         }
 
     public:
 
         static AgentClientDB* get_agent_client_db_instance();
 
-        void add_agent_client(AgentClient* new_agent_client);
+        void add_agent_client(rpc::AgentClient* new_agent_client);
 
-        void remove_agent_client(const AgentClient& target_agent_client);
+        void remove_agent_client(const rpc::AgentClient& target_agent_client);
 
-        AgentClient* get_agent_client_by_ip(const om::net::ip4_addr& req);
+        rpc::AgentClient* get_agent_client_by_ip(const om::net::ip4_addr& req);
 
         uint32_t get_agent_clients_db_size() {return agents_db.size();}
 

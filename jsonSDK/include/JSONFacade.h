@@ -22,6 +22,7 @@ namespace ec {
                 void parsePodNames();
                 void parseGCMIPAddress();
                 void parseSpecs();
+                void parseNumTenants();
                 int parseFile(const std::string &fileName);
 
                 // Getters
@@ -30,6 +31,7 @@ namespace ec {
                 const std::vector<std::string> &getAgentIPs() {return _agent_ips;}
                 const std::vector<std::string> &getPodNames() {return _pod_names;}
                 const std::string &getGCMIP() {return _gcm_ip;}
+                const int getNumTenants() { return _num_tenants; }
 
                 uint64_t get_mem();
                 uint64_t get_cpu();
@@ -59,6 +61,7 @@ namespace ec {
                 std::vector<std::string> _agent_ips;
                 std::vector<std::string> _pod_names;
                 std::string _gcm_ip;
+                int _num_tenants;
                 static std::unordered_map<std::string, uint64_t> _specs;
 
                 static void set_pod_limits(web::json::value &cont);

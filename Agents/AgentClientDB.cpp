@@ -11,7 +11,7 @@ ec::AgentClientDB * ec::AgentClientDB::get_agent_client_db_instance() {
     return agent_clients_db_instance;
 }
 
-void ec::AgentClientDB::add_agent_client(AgentClient* new_agent_client) {
+void ec::AgentClientDB::add_agent_client(rpc::AgentClient* new_agent_client) {
     if(agents_db.find(new_agent_client->get_agent_ip()) != agents_db.end()) {
         SPDLOG_ERROR("This agent has been already added! it cannot be added again.");
         return;
@@ -19,11 +19,11 @@ void ec::AgentClientDB::add_agent_client(AgentClient* new_agent_client) {
     agents_db.insert({new_agent_client->get_agent_ip(), new_agent_client});
 }
 
-void ec::AgentClientDB::remove_agent_client(const AgentClient& target_agent_client) {
+void ec::AgentClientDB::remove_agent_client(const rpc::AgentClient& target_agent_client) {
     agents_db.erase(target_agent_client.get_agent_ip());
 }
 
-ec::AgentClient *ec::AgentClientDB::get_agent_client_by_ip(const om::net::ip4_addr &req) {
+ec::rpc::AgentClient *ec::AgentClientDB::get_agent_client_by_ip(const om::net::ip4_addr &req) {
     auto itr = agents_db.find(req);
     if(itr != agents_db.end()) {
         return itr->second;
