@@ -332,12 +332,12 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
 
 uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubContainer* subContainer){
 
-    SPDLOG_TRACE("docker id: {}, {}, {}", containerId.docker_id, subContainer->get_docker_id(), subContainer->get_c_id()->docker_id);
+//    SPDLOG_TRACE("docker id: {}, {}, {}", containerId.docker_id, subContainer->get_docker_id(), subContainer->get_c_id()->docker_id);
 	uint64_t pages_reclaimed = 0;
 	auto mem_limit_pages = subContainer->get_mem_limit_in_pages();
     auto mem_limit_bytes = page_to_byte(mem_limit_pages);
 //    auto mem_usage_bytes = __syscall_get_memory_usage_in_bytes(containerId);
-    auto mem_usage_bytes = sc_get_memory_usage_in_bytes_cadvisor(containerId);
+    auto mem_usage_bytes = sc_get_memory_usage_in_bytes_cadvisor(containerId, subContainer->get_docker_id());
 
     if(mem_usage_bytes == (unsigned long)-1 * __PAGE_SIZE__) {
         SPDLOG_ERROR("failed to read mem usage for cg_id: {}", containerId);

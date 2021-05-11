@@ -84,8 +84,9 @@ uint64_t ec::ECAPI::sc_get_memory_limit_in_bytes_cadvisor(const ec::SubContainer
     return _ec->get_sc_memory_limit_in_bytes(sc_id);
 }
 
-uint64_t ec::ECAPI::sc_get_memory_usage_in_bytes_cadvisor(const ec::SubContainer::ContainerId &sc_id) {
-    return _ec->get_sc_memory_usage_in_bytes(sc_id);
+uint64_t ec::ECAPI::sc_get_memory_usage_in_bytes_cadvisor(const ec::SubContainer::ContainerId &sc_id,
+                                                          const std::string& docker_id) {
+    return _ec->get_sc_memory_usage_in_bytes(sc_id, docker_id);
 }
 
 
