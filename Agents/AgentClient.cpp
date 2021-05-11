@@ -36,14 +36,12 @@ int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_
     ec::rpc::containerUpdate::ContainerQuotaReply rxMsg;
     grpc::Status status = stub_->ReqQuotaUpdate(&context, txMsg, &rxMsg);
 
-    if(status.ok()) {
-        SPDLOG_TRACE("updateContainerQuota rx: {}, {}, {}", rxMsg.cgroupid(), rxMsg.updatequota(), rxMsg.errorcode());
-    }
-    else {
+    if(!status.ok()) {
         std::cout << "status: " << status.error_message() << std::endl;
         std::cout << "error code: " << status.error_code() << std::endl;
         std::cout << "details: " << status.error_details() << std::endl;
     }
+//    SPDLOG_TRACE("updateContainerQuota rx: {}, {}, {}", rxMsg.cgroupid(), rxMsg.updatequota(), rxMsg.errorcode());
 
     if(txMsg.sequencenum() != rxMsg.sequencenum()) {
         SPDLOG_ERROR("seq nums don't match in updateConatiner quota! tx, rx: {}, {}", txMsg.sequencenum(), rxMsg.sequencenum());
