@@ -57,14 +57,15 @@ int main(int argc, char* argv[]){
     std::vector<ec::ports_t> controller_ports;
 
     for(int i=0; i < num_tenants; i++) {
-        auto tcp_port = BASE_TCP_PORT + i - 1;
-        auto udp_port = BASE_UDP_PORT + i - 1;
+        auto tcp_port = BASE_TCP_PORT + i;
+        auto udp_port = BASE_UDP_PORT + i;
         controller_ports.emplace_back(tcp_port, udp_port);
     }
-    
+
     auto *gcm = new ec::GlobalControlManager(gcm_ip, GCM_PORT, agent_ips, controller_ports);
 
     for(const auto &i : controller_ports) {
+        std::cout << "controller ports: " << i << std::endl;
         gcm->create_manager();
     }
     SPDLOG_INFO("[dbg] num managers: {}", gcm->get_managers().size());
