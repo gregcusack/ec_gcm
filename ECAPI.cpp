@@ -84,6 +84,11 @@ uint64_t ec::ECAPI::sc_get_memory_limit_in_bytes_cadvisor(const ec::SubContainer
     return _ec->get_sc_memory_limit_in_bytes(sc_id);
 }
 
+uint64_t ec::ECAPI::sc_get_memory_usage_in_bytes_cadvisor(const ec::SubContainer::ContainerId &sc_id) {
+    return _ec->get_sc_memory_usage_in_bytes(sc_id);
+}
+
+
 //uint64_t ec::ECAPI::get_machine_free_memory(const ec::SubContainer::ContainerId &container_id) {
 //    uint64_t ret = 0;
 //     // This is where we'll use cAdvisor instead of the agent comm to get the mem limit
@@ -213,6 +218,7 @@ uint64_t ec::ECAPI::__syscall_get_memory_usage_in_bytes(const ec::SubContainer::
 //    SPDLOG_TRACE("memory usage in pages reported from the agent: {}", ret);
 //    return ret * __PAGE_SIZE__ ;
 }
+
 
 uint64_t ec::ECAPI::__syscall_get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
 //    uint64_t ret = 0;

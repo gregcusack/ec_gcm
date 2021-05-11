@@ -335,8 +335,9 @@ uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubC
 	uint64_t pages_reclaimed = 0;
 	auto mem_limit_pages = subContainer->get_mem_limit_in_pages();
     auto mem_limit_bytes = page_to_byte(mem_limit_pages);
-    auto mem_usage_bytes = __syscall_get_memory_usage_in_bytes(containerId);
-    
+//    auto mem_usage_bytes = __syscall_get_memory_usage_in_bytes(containerId);
+    auto mem_usage_bytes = sc_get_memory_usage_in_bytes_cadvisor(containerId);
+
     if(mem_usage_bytes == (unsigned long)-1 * __PAGE_SIZE__) {
         SPDLOG_ERROR("failed to read mem usage for cg_id: {}", containerId);
         return pages_reclaimed;

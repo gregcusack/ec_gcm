@@ -124,6 +124,23 @@ uint64_t ec::ElasticContainer::get_sc_memory_limit_in_bytes(const ec::SubContain
     return ret;
 }
 
+uint64_t ec::ElasticContainer::get_sc_memory_usage_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
+    uint64_t ret = 0;
+    auto *ac = get_corres_agent(sc_id);
+    if(!ac) {
+        SPDLOG_ERROR("NO AgentClient found for container id: {}", sc_id);
+        return 0;
+    }
+
+    if(sc_id.docker_id.empty()) {
+        SPDLOG_ERROR("docker_id is 0!");
+        return 0;
+    }
+    ret = ec::Facade::MonitorFacade::CAdvisor::getContMemUsage(ac->get_agent_ip().to_string(), sc_id.docker_id);
+    return ret;
+}
+
+
 uint64_t ec::ElasticContainer::get_tot_mem_alloc_in_pages() {
     uint64_t tot_mem_alloc = 0;
     uint64_t tmp;

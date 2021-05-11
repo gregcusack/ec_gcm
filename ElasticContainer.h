@@ -88,6 +88,7 @@ namespace ec {
         uint64_t get_mem_limit_in_pages() { return _mem.get_mem_limit_in_pages(); }
 
         uint64_t get_sc_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id);
+        uint64_t get_sc_memory_usage_in_bytes(const ec::SubContainer::ContainerId &sc_id);
         uint64_t get_tot_mem_alloc_in_pages();
 
         /**
