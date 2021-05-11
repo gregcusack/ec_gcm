@@ -27,7 +27,7 @@
 namespace ec {
     class ECAPI {
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, std::queue<SubContainer *>*>;
-    using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, AgentClient*>;
+    using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, rpc::AgentClient*>;
 
     public:
 //        ECAPI(uint32_t _ec_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
@@ -76,9 +76,13 @@ namespace ec {
         uint64_t ec_get_alloc_memory_in_pages() { return _ec->get_allocated_memory_in_pages(); }
         uint64_t ec_get_memory_slice() { return _ec->get_memory_slice(); }
         uint64_t ec_get_mem_limit_in_pages() { return _ec->get_mem_limit_in_pages(); }
+        uint64_t sc_get_memory_limit_in_bytes_cadvisor(const ec::SubContainer::ContainerId &sc_id);
+        uint64_t sc_get_memory_usage_in_bytes_cadvisor(const ec::SubContainer::ContainerId &sc_id,
+                                                       const std::string& docker_id);
 
         // Machine Stats
         uint64_t get_machine_free_memory(const SubContainer::ContainerId &container_id);
+
 
         //AGENTS
         int64_t get_sc_quota(ec::SubContainer *sc);

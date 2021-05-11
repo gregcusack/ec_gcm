@@ -332,11 +332,13 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
 
 uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubContainer* subContainer){
 
+//    SPDLOG_TRACE("docker id: {}, {}, {}", containerId.docker_id, subContainer->get_docker_id(), subContainer->get_c_id()->docker_id);
 	uint64_t pages_reclaimed = 0;
 	auto mem_limit_pages = subContainer->get_mem_limit_in_pages();
     auto mem_limit_bytes = page_to_byte(mem_limit_pages);
-    auto mem_usage_bytes = __syscall_get_memory_usage_in_bytes(containerId);
-    
+//    auto mem_usage_bytes = __syscall_get_memory_usage_in_bytes(containerId);
+    auto mem_usage_bytes = sc_get_memory_usage_in_bytes_cadvisor(containerId, subContainer->get_docker_id());
+
     if(mem_usage_bytes == (unsigned long)-1 * __PAGE_SIZE__) {
         SPDLOG_ERROR("failed to read mem usage for cg_id: {}", containerId);
         return pages_reclaimed;
@@ -493,20 +495,15 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
         return !sc->get_c_id()->docker_id.empty();
 //        return !sc->get_docker_id().empty();
     });
-    auto mem_lim_bytes = __syscall_get_memory_limit_in_bytes(*sc->get_c_id());
+//    auto mem_lim_bytes = __syscall_get_memory_limit_in_bytes(*sc->get_c_id());
+    auto mem_lim_bytes = sc_get_memory_limit_in_bytes_cadvisor(*sc->get_c_id());
     auto sc_mem_limit_in_pages = byte_to_page(mem_lim_bytes);
     SPDLOG_INFO("mem_lim_bytes, pages: {}, {}", mem_lim_bytes, sc_mem_limit_in_pages);
-    while(sc_mem_limit_in_pages == byte_to_page(1.0) && count++ < 10) {
-        SPDLOG_ERROR("Error reading mem limit. Trying again for sc_id: {}", *sc->get_c_id());
-        sleep(1);
-        sc_mem_limit_in_pages = byte_to_page(__syscall_get_memory_limit_in_bytes(*sc->get_c_id()));
-    }
-//    if(sc_mem_limit_in_pages == byte_to_page(1.0)) {
-//        SPDLOG_ERROR("Error reading mem limit. Trying again...");
+//    while(sc_mem_limit_in_pages == byte_to_page(1.0) && count++ < 10) {
+//        SPDLOG_ERROR("Error reading mem limit. Trying again for sc_id: {}", *sc->get_c_id());
 //        sleep(1);
 //        sc_mem_limit_in_pages = byte_to_page(__syscall_get_memory_limit_in_bytes(*sc->get_c_id()));
 //    }
-
 
     SPDLOG_DEBUG("ec_get_unalloc_mem rn: {}", ec_get_unalloc_memory_in_pages());
     SPDLOG_DEBUG("sc_mem_limit_in_pages on deploy: {}", sc_mem_limit_in_pages);

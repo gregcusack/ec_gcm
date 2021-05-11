@@ -39,10 +39,6 @@ uint32_t ec::GlobalControlManager::create_manager() {
 
     auto ports = controller_ports[manager_counts - 1];
     mngr = new Manager(manager_counts, gcm_ip, ports, agents);
-
-//    uint16_t server_port = server_ports[manager_counts - 1]; //Give new EC, the next available port in the list
-//    mngr = new Manager(manager_counts, gcm_ip, server_port, agents);
-
     managers.insert({manager_counts, mngr});
 
     manager_counts++;
@@ -94,31 +90,13 @@ bool ec::GlobalControlManager::init_agent_connections() {
 
     AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
     for(const auto &ag : agents) {
-        if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-            SPDLOG_CRITICAL("GCM Socket creation failed. Agent is not up!");
-            exit(EXIT_FAILURE);
-        }
-
-        memset(&servaddr, 0, sizeof(servaddr));
-
-        servaddr.sin_family = AF_INET;
-        servaddr.sin_port = htons(ag->get_port());
-        servaddr.sin_addr.s_addr = inet_addr((ag->get_ip()).to_string().c_str());
-        SPDLOG_DEBUG("ag->ip: {}", ag->get_ip());
-
-        if(connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
-            SPDLOG_ERROR("[ERROR] GCM: Connection to agent_clients failed. Agent on ip: {} is not connected", ag->get_ip());
+        auto* ac = new rpc::AgentClient(ag);
+        if(ac->connectAgentGrpc()) {
             SPDLOG_ERROR("Are the agents up?");
+            std::exit(EXIT_FAILURE);
         }
-        else {
-            num_connections++;
-        }
-        auto* ac = new AgentClient(ag, sockfd);
+        num_connections++;
         agent_clients_db->add_agent_client(ac);
-
-        SPDLOG_TRACE("[dbg] Agent client added to db and agent_clients sockfd: {}, {} agent db size is: {}", sockfd, \
-        agent_clients_db->get_agent_client_by_ip(ag->get_ip())->get_socket(), agent_clients_db->get_agent_clients_db_size());
-
     }
     return num_connections == agent_clients_db->get_agent_clients_db_size();
 
