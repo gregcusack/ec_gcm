@@ -332,6 +332,7 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
 
 uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubContainer* subContainer){
 
+    SPDLOG_TRACE("docker id: {}, {}, {}", containerId.docker_id, subContainer->get_docker_id(), subContainer->get_c_id()->docker_id);
 	uint64_t pages_reclaimed = 0;
 	auto mem_limit_pages = subContainer->get_mem_limit_in_pages();
     auto mem_limit_bytes = page_to_byte(mem_limit_pages);
