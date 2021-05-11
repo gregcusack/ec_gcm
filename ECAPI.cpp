@@ -201,6 +201,7 @@ uint64_t ec::ECAPI::__syscall_get_memory_usage_in_bytes(const ec::SubContainer::
 //    msg_req.set_cgroup_id(sc_id.cgroup_id);
 //    msg_req.set_payload_string("test");
 //    //std::cerr << "[dbg] get_memory_usage_in_bytes: get the corresponding agent\n";
+    SPDLOG_TRACE("getting memory usage in bytes from sc_id: {}", sc_id);
     auto agent = _ec->get_corres_agent(sc_id);
     if(!agent) {
         std::cerr << "[dbg] agent is NULL" << std::endl;

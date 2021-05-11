@@ -74,9 +74,11 @@ int64_t ec::rpc::AgentClient::getMemoryUsageBytes(uint32_t cgroup_id) {
     grpc::ClientContext context;
     ec::rpc::containerUpdate::CgroupId txMsg;
     txMsg.set_cgroupid(int32_t(cgroup_id));
-
     ec::rpc::containerUpdate::ReadMemUsageReply rxMsg;
+
+    SPDLOG_TRACE("getting memory usage in bytes from cg_id: {}", cgroup_id);
     grpc::Status status = stub_->ReadMemUsage(&context, txMsg, &rxMsg);
+    SPDLOG_TRACE("got memory usage in bytes from cg_id: {}", cgroup_id);
 
     if (status.ok()) {
         SPDLOG_DEBUG("getMemoryUsageBytes rx: {}, {}", rxMsg.cgroupid(), rxMsg.memusage());
