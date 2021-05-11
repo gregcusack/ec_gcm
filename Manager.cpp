@@ -499,11 +499,6 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
     auto mem_lim_bytes = sc_get_memory_limit_in_bytes_cadvisor(*sc->get_c_id());
     auto sc_mem_limit_in_pages = byte_to_page(mem_lim_bytes);
     SPDLOG_INFO("mem_lim_bytes, pages: {}, {}", mem_lim_bytes, sc_mem_limit_in_pages);
-//    while(sc_mem_limit_in_pages == byte_to_page(1.0) && count++ < 10) {
-//        SPDLOG_ERROR("Error reading mem limit. Trying again for sc_id: {}", *sc->get_c_id());
-//        sleep(1);
-//        sc_mem_limit_in_pages = byte_to_page(__syscall_get_memory_limit_in_bytes(*sc->get_c_id()));
-//    }
 
     SPDLOG_DEBUG("ec_get_unalloc_mem rn: {}", ec_get_unalloc_memory_in_pages());
     SPDLOG_DEBUG("sc_mem_limit_in_pages on deploy: {}", sc_mem_limit_in_pages);
