@@ -29,6 +29,14 @@ void ec::Facade::JSONFacade::json::parseIPAddresses() {
     }
 }
 
+void ec::Facade::JSONFacade::json::parseNumTenants() {
+    if(_val.is_null()) {
+        return;
+    }
+    _num_tenants = _val.at(U("tenants")).as_integer();
+}
+
+
 void ec::Facade::JSONFacade::json::parsePodNames() {
     if(_val.is_null()){
         return;
@@ -67,6 +75,7 @@ int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
 //        parsePodNames();
         parseGCMIPAddress();
 //        parseSpecs();
+        parseNumTenants();
     }
     catch (const web::json::json_exception& excep) {
         SPDLOG_ERROR("ERROR Parsing JSON file: {}", excep.what());
