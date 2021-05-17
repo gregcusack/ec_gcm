@@ -25,7 +25,7 @@
 #define page_to_byte(x) (x*4096)
 //#define _SAFE_MARGIN_BYTES_ 81920*250 //20 * 250 pages = 20MB
 //#define _SAFE_MARGIN_BYTES_ 4096*1250 //10 * 1250 pages = 50MB
-#define _SAFE_MARGIN_BYTES_ 52428800 //50MiB = 50 * 1024 * 1024 = 12800 pages
+#define _SAFE_MARGIN_BYTES_ 52428800 //50MiB = 20 * 1024 * 1024 = 12800 pages
 #define _MAX_CPU_LOSS_IN_NS_ 1000
 #define _MAX_UNUSED_RT_IN_NS_ 5000000
 #define BASE_GRPC_PORT 4447
