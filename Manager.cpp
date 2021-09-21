@@ -401,7 +401,7 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
     }
     uint64_t ret = __FAILED__;
 
-    SPDLOG_TRACE("rx: {}", *req)
+    SPDLOG_TRACE("rx: {}", *req);
 
     switch(req -> req_type) {
         case _MEM_:
