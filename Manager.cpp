@@ -512,7 +512,11 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
 ////        return !sc->get_docker_id().empty();
 //    });
 //    auto mem_lim_bytes = __syscall_get_memory_limit_in_bytes(*sc->get_c_id());
+    if(!sc) {
+        SPDLOG_DEBUG("sc not right here!");
+    }
     auto mem_lim_bytes = sc_get_memory_limit_in_bytes_cadvisor(*sc->get_c_id());
+    SPDLOG_DEBUG("post sc_get mem limit bytes cadvisor");
     auto sc_mem_limit_in_pages = byte_to_page(mem_lim_bytes);
     SPDLOG_INFO("mem_lim_bytes, pages: {}, {}", mem_lim_bytes, sc_mem_limit_in_pages);
 

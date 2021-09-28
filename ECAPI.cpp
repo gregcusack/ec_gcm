@@ -81,6 +81,9 @@ void ec::ECAPI::ec_incr_unalloc_memory_in_pages(uint64_t mem_to_incr) {
 }
 
 uint64_t ec::ECAPI::sc_get_memory_limit_in_bytes_cadvisor(const ec::SubContainer::ContainerId &sc_id) {
+    if(!_ec) {
+        SPDLOG_ERROR("_ec is null! why??? bad news");
+    }
     return _ec->get_sc_memory_limit_in_bytes(sc_id);
 }
 
