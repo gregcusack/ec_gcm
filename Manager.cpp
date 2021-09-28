@@ -541,7 +541,11 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
         }
     }
     SPDLOG_DEBUG("ec_get_unalloc_mem after mem alloc: {}", ec_get_unalloc_memory_in_pages());
+    if(!sc) {
+        SPDLOG_ERROR("ahhh sc is bad! in memory!");
+    }
     sc->set_mem_limit_in_pages(sc_mem_limit_in_pages);
+    SPDLOG_DEBUG("post set_mem_limit_in_pages() in memory on startup");
 }
 
 
