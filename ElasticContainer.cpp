@@ -173,7 +173,7 @@ ec::rpc::AgentClient *ec::ElasticContainer::get_corres_agent(const ec::SubContai
     if(container_id.docker_id.empty()) {
         SPDLOG_ERROR("container_id is empty!");
     }
-    SPDLOG_DEBUG("returning sc_ac_map[container_id]");
+    SPDLOG_DEBUG("returning sc_ac_map[container_id]. sc_id: {}", container_id);
     return sc_ac_map[container_id];
 }
 
