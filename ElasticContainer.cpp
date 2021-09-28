@@ -122,9 +122,9 @@ uint64_t ec::ElasticContainer::get_sc_memory_limit_in_bytes(const ec::SubContain
         SPDLOG_ERROR("docker_id is 0!");
         return 0;
     }
-    SPDLOG_DEBUG("post check if empty")
+    SPDLOG_DEBUG("post check if empty");
     ret = ec::Facade::MonitorFacade::CAdvisor::getContMemLimit(ac->get_agent_ip().to_string(), sc_id.docker_id);
-    SPDLOG_DEBUG("return from facade check container mem limit")
+    SPDLOG_DEBUG("return from facade check container mem limit");
     return ret;
 }
 
@@ -170,8 +170,8 @@ ec::rpc::AgentClient *ec::ElasticContainer::get_corres_agent(const ec::SubContai
     if(sc_ac_map.empty()) {
         SPDLOG_ERROR("sc_ac_map is empty! badddd");
     }
-    if(!container_id) {
-        SPDLOG_ERROR("container_id is null");
+    if(container_id.docker_id.empty()) {
+        SPDLOG_ERROR("container_id is empty!");
     }
     SPDLOG_DEBUG("returning sc_ac_map[container_id]");
     return sc_ac_map[container_id];
