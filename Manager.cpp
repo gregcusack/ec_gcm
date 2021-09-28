@@ -493,8 +493,16 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
     SPDLOG_DEBUG("in determine_new_limit_for_new_pod. sc_id: {}", *sc->get_c_id());
     std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
     cv_dock.wait(lk_dock, [this, sc] {
-        SPDLOG_DEBUG("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
-        return !sc->get_c_id()->docker_id.empty();
+        if(!sc) {
+            SPDLOG_DEBUG("sc not right here!")
+        }
+        if(!*sc) {
+            SPDLOG_DEBUG("*sc not right here!")
+        }
+        else {
+            SPDLOG_DEBUG("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
+            return !sc->get_c_id()->docker_id.empty();
+        }
 //        return !sc->get_docker_id().empty();
     });
 //    auto mem_lim_bytes = __syscall_get_memory_limit_in_bytes(*sc->get_c_id());
