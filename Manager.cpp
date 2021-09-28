@@ -490,10 +490,10 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
     }
 
     int count = 0;
-    SPDLOG_TRACE("in determine_new_limit_for_new_pod. sc_id: {}", *sc->get_c_id());
+    SPDLOG_DEBUG("in determine_new_limit_for_new_pod. sc_id: {}", *sc->get_c_id());
     std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
     cv_dock.wait(lk_dock, [this, sc] {
-        SPDLOG_TRACE("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
+        SPDLOG_DEBUG("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
         return !sc->get_c_id()->docker_id.empty();
 //        return !sc->get_docker_id().empty();
     });
@@ -506,6 +506,7 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
     SPDLOG_DEBUG("sc_mem_limit_in_pages on deploy: {}", sc_mem_limit_in_pages);
 
     if(sc_mem_limit_in_pages <= ec_get_unalloc_memory_in_pages()) {
+        SPDLOG_DEBUG("mem lim in pages <= unalloc mem limit. let's update alloc mem");
         ec_update_alloc_memory_in_pages(sc_mem_limit_in_pages);
     }
     else if(!ec_get_unalloc_memory_in_pages()) {
@@ -534,7 +535,7 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
             }
         }
     }
-    SPDLOG_TRACE("ec_get_unalloc_mem after mem alloc: {}", ec_get_unalloc_memory_in_pages());
+    SPDLOG_DEBUG("ec_get_unalloc_mem after mem alloc: {}", ec_get_unalloc_memory_in_pages());
     sc->set_mem_limit_in_pages(sc_mem_limit_in_pages);
 }
 
