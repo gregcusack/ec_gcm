@@ -494,23 +494,23 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
 
     int count = 0;
     SPDLOG_DEBUG("in determine_new_limit_for_new_pod. sc_id: {}", *sc->get_c_id());
-//    while(sc->get_docker_id().empty()) {
-//        SPDLOG_DEBUG("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
-//        sleep(1);
-//    }
-//    SPDLOG_DEBUG("docker_id not empty! sc_id: {}", *sc->get_c_id());
+    while(sc->get_docker_id().empty()) {
+        SPDLOG_DEBUG("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
+        sleep(1);
+    }
+    SPDLOG_DEBUG("docker_id not empty! sc_id: {}", *sc->get_c_id());
 
-    std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
-    cv_dock.wait(lk_dock, [this, sc] {
-        if(!sc) {
-            SPDLOG_DEBUG("sc not right here!");
-        }
-        else {
-            SPDLOG_DEBUG("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
-            return !sc->get_c_id()->docker_id.empty();
-        }
-//        return !sc->get_docker_id().empty();
-    });
+//    std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
+//    cv_dock.wait(lk_dock, [this, sc] {
+//        if(!sc) {
+//            SPDLOG_DEBUG("sc not right here!");
+//        }
+//        else {
+//            SPDLOG_DEBUG("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
+//            return !sc->get_c_id()->docker_id.empty();
+//        }
+////        return !sc->get_docker_id().empty();
+//    });
 //    auto mem_lim_bytes = __syscall_get_memory_limit_in_bytes(*sc->get_c_id());
 
     auto mem_lim_bytes = sc_get_memory_limit_in_bytes_cadvisor(*sc->get_c_id());
