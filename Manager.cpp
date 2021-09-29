@@ -496,9 +496,14 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
     SPDLOG_DEBUG("in determine_new_limit_for_new_pod. sc_id: {}", *sc->get_c_id());
     while(sc->get_docker_id().empty()) {
         SPDLOG_DEBUG("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
-        sleep(1);
+        count++;
+        if(count % 1000 == 0) {
+            sleep(1);
+            SPDLOG_DEBUG("count for waiting for dockid: {}", count);
+        }
+
     }
-    SPDLOG_DEBUG("docker_id not empty! sc_id: {}", *sc->get_c_id());
+    SPDLOG_DEBUG("docker_id not empty! count: {}, sc_id: {}", count, *sc->get_c_id());
 
 //    std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
 //    cv_dock.wait(lk_dock, [this, sc] {
