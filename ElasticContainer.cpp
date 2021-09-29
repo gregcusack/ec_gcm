@@ -166,14 +166,14 @@ ec::SubContainer &ec::ElasticContainer::get_subcontainer_back(const ec::SubConta
 }
 
 ec::rpc::AgentClient *ec::ElasticContainer::get_corres_agent(const ec::SubContainer::ContainerId &container_id) {
-    SPDLOG_DEBUG("in get_corres_agent");
-    if(sc_ac_map.empty()) {
-        SPDLOG_ERROR("sc_ac_map is empty! badddd");
-    }
-    if(container_id.docker_id.empty()) {
-        SPDLOG_ERROR("container_id is empty!");
-    }
-    SPDLOG_DEBUG("returning sc_ac_map[container_id]. sc_id: {}", container_id);
+//    SPDLOG_DEBUG("in get_corres_agent");
+//    if(sc_ac_map.empty()) {
+//        SPDLOG_ERROR("sc_ac_map is empty! badddd");
+//    }
+//    if(container_id.docker_id.empty()) {
+//        SPDLOG_ERROR("container_id is empty!");
+//    }
+//    SPDLOG_DEBUG("returning sc_ac_map[container_id]. sc_id: {}", container_id);
     return sc_ac_map[container_id];
 }
 
