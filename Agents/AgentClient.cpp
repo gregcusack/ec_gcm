@@ -34,7 +34,9 @@ int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_
     txMsg.set_sequencenum(int32_t(seq_num));
 
     ec::rpc::containerUpdate::ContainerQuotaReply rxMsg;
+    SPDLOG_DEBUG("here");
     grpc::Status status = stub_->ReqQuotaUpdate(&context, txMsg, &rxMsg);
+    SPDLOG_DEBUG("here");
 
     if(!status.ok()) {
         std::cout << "status: " << status.error_message() << std::endl;
@@ -57,8 +59,9 @@ int64_t ec::rpc::AgentClient::resizeMemoryLimitPages(uint32_t cgroup_id, uint64_
     txMsg.set_newmemlimit(new_mem_limit);
 
     ec::rpc::containerUpdate::ResizeMaxMemReply rxMsg;
+    SPDLOG_DEBUG("here");
     grpc::Status status = stub_->ReqResizeMaxMem(&context, txMsg, &rxMsg);
-
+    SPDLOG_DEBUG("here");
     if(status.ok()) {
         SPDLOG_DEBUG("resizeMemoryLimitPages rx: {}, {}", rxMsg.cgroupid(), rxMsg.errorcode());
     }
@@ -79,7 +82,9 @@ int64_t ec::rpc::AgentClient::getMemoryUsageBytes(uint32_t cgroup_id) {
     ec::rpc::containerUpdate::ReadMemUsageReply rxMsg;
 
     SPDLOG_TRACE("getting memory usage in bytes from cg_id: {}", cgroup_id);
+    SPDLOG_DEBUG("here");
     grpc::Status status = stub_->ReadMemUsage(&context, txMsg, &rxMsg);
+    SPDLOG_DEBUG("here");
     SPDLOG_TRACE("got memory usage in bytes from cg_id: {}", cgroup_id);
 
     if (status.ok()) {
@@ -98,7 +103,9 @@ int64_t ec::rpc::AgentClient::getMemoryLimitBytes(uint32_t cgroup_id) {
     txMsg.set_cgroupid(int32_t(cgroup_id));
 
     ec::rpc::containerUpdate::ReadMemLimitReply rxMsg;
+    SPDLOG_DEBUG("here");
     grpc::Status status = stub_->ReadMemLimit(&context, txMsg, &rxMsg);
+    SPDLOG_DEBUG("here");
 
     if (status.ok()) {
         SPDLOG_DEBUG("getMemoryUsageLimit rx: {}, {}", rxMsg.cgroupid(), rxMsg.memlimit());
