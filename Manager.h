@@ -16,6 +16,7 @@
 #include <vector>
 #include <fstream> //For HotOS Logging
 #include <chrono>
+#include <thread>
 #include <unistd.h>
 #include "types/ports.h"
 
