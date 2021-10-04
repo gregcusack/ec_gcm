@@ -48,6 +48,7 @@ int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_
     if(txMsg.sequencenum() != rxMsg.sequencenum()) {
         SPDLOG_ERROR("seq nums don't match in updateConatiner quota! tx, rx: {}, {}", txMsg.sequencenum(), rxMsg.sequencenum());
     }
+    SPDLOG_DEBUG("here");
 
     return rxMsg.errorcode();
 }
@@ -70,6 +71,7 @@ int64_t ec::rpc::AgentClient::resizeMemoryLimitPages(uint32_t cgroup_id, uint64_
         std::cout << "error code: " << status.error_code() << std::endl;
         std::cout << "details: " << status.error_details() << std::endl;
     }
+    SPDLOG_DEBUG("here");
     return rxMsg.errorcode();
 }
 
@@ -94,6 +96,7 @@ int64_t ec::rpc::AgentClient::getMemoryUsageBytes(uint32_t cgroup_id) {
         std::cout << "error code: " << status.error_code() << std::endl;
         std::cout << "details: " << status.error_details() << std::endl;
     }
+    SPDLOG_DEBUG("here");
     return rxMsg.memusage();
 }
 
@@ -114,6 +117,7 @@ int64_t ec::rpc::AgentClient::getMemoryLimitBytes(uint32_t cgroup_id) {
         std::cout << "error code: " << status.error_code() << std::endl;
         std::cout << "details: " << status.error_details() << std::endl;
     }
+    SPDLOG_DEBUG("here");
     return rxMsg.memlimit();
 }
 
