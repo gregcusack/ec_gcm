@@ -30,6 +30,7 @@ ec::AgentClientDB* ec::AgentClientDB::agent_clients_db_instance = nullptr;
 int main(int argc, char* argv[]){
 #if(SPDLOG_ACTIVE_LEVEL == SPDLOG_LEVEL_DEBUG)
     spdlog::set_level(spdlog::level::debug);
+    spdlog::set_pattern("[%H:%M:%S %@] [thread %t]");
 #elif(SPDLOG_ACTIVE_LEVEL == SPDLOG_LEVEL_TRACE)
     spdlog::set_level(spdlog::level::trace);
 #endif
