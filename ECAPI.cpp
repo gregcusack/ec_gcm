@@ -97,20 +97,23 @@ int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, u
         SPDLOG_CRITICAL("sc == NULL in manager set_sc_quota_syscall()");
         std::exit(EXIT_FAILURE);
     }
-
+    SPDLOG_DEBUG("here");
     auto diff_quota = (int64_t)_quota - (int64_t)sc->get_quota(); //new quota - old
     auto change = diff_quota < 0 ? "decr" : "incr";
+    SPDLOG_DEBUG("here");
 
     while(unlikely(!sc->sc_inserted())) {
 //        std::cout << "itr incr on sc inserted" << std::endl;
     }
-
+    SPDLOG_DEBUG("here");
     auto agent = _ec->get_corres_agent(*sc->get_c_id());
     if(!agent) {
         SPDLOG_CRITICAL("agent for container == NULL. cg_id: {}", *sc->get_c_id());
         std::exit(EXIT_FAILURE);
     }
+    SPDLOG_DEBUG("here");
     int64_t ret = agent->updateContainerQuota(sc->get_c_id()->cgroup_id, _quota, change, seq_number);
+    SPDLOG_DEBUG("here");
 
     return ret;
 }
