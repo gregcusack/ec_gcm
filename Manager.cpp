@@ -498,7 +498,7 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
 //        SPDLOG_DEBUG("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
         count++;
         if(count % 1000 == 0) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
             SPDLOG_DEBUG("count for waiting for dockid to not be empty: {}, sc_id: {}", count, *sc->get_c_id());
         }
 
