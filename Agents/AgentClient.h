@@ -94,7 +94,6 @@ namespace ec {
             std::shared_ptr<grpc_impl::Channel> channel_;
 
             grpc::CompletionQueue cq_quota_, cq_resize_mem_, cq_get_mem_lim_, cq_get_mem_usage_;
-            std::thread thr_quota_, thr_resize_mem_, thr_get_mem_lim_, thr_get_mem_usage_;
 
         };
     }

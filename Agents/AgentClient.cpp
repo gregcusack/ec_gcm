@@ -23,11 +23,6 @@ int ec::rpc::AgentClient::connectAgentGrpc() {
 
     stub_ = ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel_);
 
-    thr_quota_ = std::thread(&AgentClient::AsyncCompleteRpcQuota, this);
-    thr_resize_mem_ = std::thread(&AgentClient::AsyncCompleteRpcResizeMemLimitPages, this);
-    thr_get_mem_lim_ = std::thread(&AgentClient::AsyncCompleteRpcGetMemLimitBytes, this);
-    thr_get_mem_usage_ = std::thread(&AgentClient::AsyncCompleteRpcGetMemUsageBytes, this);
-
     return 0;
 }
 

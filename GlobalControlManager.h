@@ -63,6 +63,7 @@ namespace ec {
 
         //API
         Manager* mngr;
+        std::thread thr_quota_, thr_resize_mem_, thr_get_mem_lim_, thr_get_mem_usage_;
 
     };
 
