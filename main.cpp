@@ -79,10 +79,10 @@ int main(int argc, char* argv[]){
     
     gcm->run(app_name, gcm_ip);
 
-    gcm->thr_quota_.join();
-    gcm->thr_resize_mem_.join();
-    gcm->thr_get_mem_usage_.join();
-    gcm->thr_get_mem_lim_.join();
+//    gcm->thr_quota_.join();
+//    gcm->thr_resize_mem_.join();
+//    gcm->thr_get_mem_usage_.join();
+//    gcm->thr_get_mem_lim_.join();
 
     delete gcm;
 
