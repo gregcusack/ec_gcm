@@ -96,7 +96,7 @@ void ec::rpc::AgentClient::AsyncCompleteRpcQuota() {
     while(cq_quota_.Next(&got_tag, &ok)) {
         auto *call = static_cast<AsyncClientCallQuota*>(got_tag);
 
-        GPR_ASSERT(ok);
+//        GPR_ASSERT(ok);
 
         if(call->status.ok()) {
             SPDLOG_DEBUG("rx: {}", call->reply.cgroupid());
@@ -122,7 +122,7 @@ void ec::rpc::AgentClient::AsyncCompleteRpcResizeMemLimitPages() {
     while(cq_resize_mem_.Next(&got_tag, &ok)) {
         auto *call = static_cast<AsyncClientCallResizeMemLimitPages*>(got_tag);
 
-        GPR_ASSERT(ok);
+//        GPR_ASSERT(ok);
 
         if(call->status.ok()) {
 //            SPDLOG_DEBUG("rx: {}", call->reply.message());
@@ -144,7 +144,7 @@ void ec::rpc::AgentClient::AsyncCompleteRpcGetMemUsageBytes() {
     while(cq_get_mem_usage_.Next(&got_tag, &ok)) {
         auto *call = static_cast<AsyncClientCallGetMemUsageBytes*>(got_tag);
 
-        GPR_ASSERT(ok);
+//        GPR_ASSERT(ok);
 
         if(call->status.ok()) {
             SPDLOG_DEBUG("getMemoryUsageBytes rx: {}, {}", call->reply.cgroupid(), call->reply.memusage());
@@ -165,7 +165,7 @@ void ec::rpc::AgentClient::AsyncCompleteRpcGetMemLimitBytes() {
     while(cq_get_mem_lim_.Next(&got_tag, &ok)) {
         auto *call = static_cast<AsyncClientCallGetMemLimitBytes*>(got_tag);
 
-        GPR_ASSERT(ok);
+//        GPR_ASSERT(ok);
 
         if(call->status.ok()) {
             SPDLOG_DEBUG("getMemoryUsageLimit rx: {}, {}", call->reply.cgroupid(), call->reply.memlimit());
