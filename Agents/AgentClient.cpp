@@ -40,7 +40,8 @@ int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_
     call->response_reader = stub_->PrepareAsyncReqQuotaUpdate(&call->context, txMsg, &cq_quota_);
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
-    return call->reply.errorcode();
+    return 0;
+//    return call->reply.errorcode();
 
 }
 
@@ -53,7 +54,8 @@ int64_t ec::rpc::AgentClient::resizeMemoryLimitPages(uint32_t cgroup_id, uint64_
     call->response_reader = stub_->PrepareAsyncReqResizeMaxMem(&call->context, txMsg, &cq_resize_mem_);
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
-    return call->reply.errorcode();
+    return 0;
+//    return call->reply.errorcode();
 }
 
 int64_t ec::rpc::AgentClient::getMemoryUsageBytes(uint32_t cgroup_id) {
@@ -69,7 +71,8 @@ int64_t ec::rpc::AgentClient::getMemoryUsageBytes(uint32_t cgroup_id) {
     call->response_reader = stub_->PrepareAsyncReadMemUsage(&call->context, txMsg, &cq_get_mem_usage_);
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
-    return call->reply.memusage();
+    return 0;
+//    return call->reply.memusage();
 }
 
 int64_t ec::rpc::AgentClient::getMemoryLimitBytes(uint32_t cgroup_id) {
@@ -81,7 +84,8 @@ int64_t ec::rpc::AgentClient::getMemoryLimitBytes(uint32_t cgroup_id) {
     call->response_reader = stub_->PrepareAsyncReadMemLimit(&call->context, txMsg, &cq_get_mem_lim_);
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
-    return call->reply.memlimit();
+    return 0;
+//    return call->reply.memlimit();
 }
 
 void ec::rpc::AgentClient::AsyncCompleteRpcQuota() {
