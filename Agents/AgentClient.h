@@ -19,6 +19,7 @@
 #include "containerUpdateGrpc.pb.h"
 #include "containerUpdateGrpc.grpc.pb.h"
 #include <exception>
+#include <grpc/support/log.h>
 
 
 using namespace google::protobuf::io;
