@@ -29,17 +29,21 @@ int ec::rpc::AgentClient::connectAgentGrpc() {
 
 
 int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_quota, const std::string& change, uint32_t seq_num) {
-
+    SPDLOG_DEBUG("suh");
     ec::rpc::containerUpdate::ContainerQuotaRequest txMsg;
     txMsg.set_cgroupid(int32_t(cgroup_id));
     txMsg.set_newquota(new_quota);
     txMsg.set_resizeflag(change);
     txMsg.set_sequencenum(int32_t(seq_num));
+    SPDLOG_DEBUG("suh");
+
 
     auto *call = new AsyncClientCallQuota;
+    SPDLOG_DEBUG("suh");
     call->response_reader = stub_->PrepareAsyncReqQuotaUpdate(&call->context, txMsg, &cq_quota_);
+    SPDLOG_DEBUG("suh");
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
-
+    SPDLOG_DEBUG("suh");
     return 0;
 //    return call->reply.errorcode();
 
