@@ -93,11 +93,14 @@ void ec::rpc::AgentClient::AsyncCompleteRpcQuota() {
     bool ok = false;
 
     while(cq_quota_.Next(&got_tag, &ok)) {
+        SPDLOG_DEBUG("suh");
         auto *call = static_cast<AsyncClientCallQuota*>(got_tag);
+        SPDLOG_DEBUG("suh");
 
 //        GPR_ASSERT(ok);
 
         if(call->status.ok()) {
+            SPDLOG_DEBUG("suh");
             SPDLOG_DEBUG("rx: {}", call->reply.cgroupid());
             if(call->reply.sequencenum() != call->request.sequencenum()) {
                 SPDLOG_ERROR("seq nums don't match in updateConatiner quota! tx, rx: {}, {}",
@@ -110,6 +113,8 @@ void ec::rpc::AgentClient::AsyncCompleteRpcQuota() {
             SPDLOG_ERROR("error code: {}", call->status.error_code());
             SPDLOG_ERROR("details: {}", call->status.error_details());
         }
+        SPDLOG_DEBUG("suh");
+
         delete call;
     }
 }
