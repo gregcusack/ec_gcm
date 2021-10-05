@@ -100,6 +100,7 @@ bool ec::GlobalControlManager::init_agent_connections() {
         thr_get_mem_lim_ = std::thread(&rpc::AgentClient::AsyncCompleteRpcGetMemLimitBytes, ac);
         thr_get_mem_usage_ = std::thread(&rpc::AgentClient::AsyncCompleteRpcGetMemUsageBytes, ac);
 
+        SPDLOG_DEBUG("suhhh");
         num_connections++;
         agent_clients_db->add_agent_client(ac);
     }
