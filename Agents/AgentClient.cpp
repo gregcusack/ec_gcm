@@ -13,6 +13,7 @@ int ec::rpc::AgentClient::connectAgentGrpc() {
 
     try {
         channel_ = grpc::CreateChannel(grpc_addr, grpc::InsecureChannelCredentials());
+
     }
     catch (std::exception &e) {
         SPDLOG_ERROR("[ERROR] AgentClient: Connection to agent_client {} failed. error code: {}", agent->get_ip().to_string(), e.what());
@@ -21,83 +22,59 @@ int ec::rpc::AgentClient::connectAgentGrpc() {
     }
 
     stub_ = ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel_);
+
+    thr_quota_ = std::thread(&AgentClient::AsyncCompleteRpcQuota, this);
+    thr_resize_mem_ = std::thread(&AgentClient::AsyncCompleteRpcResizeMemLimitPages, this);
+    thr_get_mem_lim_ = std::thread(&AgentClient::AsyncCompleteRpcGetMemLimitBytes, this);
+    thr_get_mem_usage_ = std::thread(&AgentClient::AsyncCompleteRpcGetMemUsageBytes, this);
+
     return 0;
 }
 
+
+
 int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_quota, const std::string& change, uint32_t seq_num) {
 
-    grpc::ClientContext context;
     ec::rpc::containerUpdate::ContainerQuotaRequest txMsg;
     txMsg.set_cgroupid(int32_t(cgroup_id));
     txMsg.set_newquota(new_quota);
     txMsg.set_resizeflag(change);
     txMsg.set_sequencenum(int32_t(seq_num));
 
-    ec::rpc::containerUpdate::ContainerQuotaReply rxMsg;
-    SPDLOG_DEBUG("here");
-    grpc::Status status = stub_->ReqQuotaUpdate(&context, txMsg, &rxMsg);
-    SPDLOG_DEBUG("here");
+    auto *call = new AsyncClientCallQuota;
+    call->response_reader = stub_->PrepareAsyncReqQuotaUpdate(&call->context, txMsg, &cq_quota_);
+    call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
-    if(!status.ok()) {
-        std::cout << "status: " << status.error_message() << std::endl;
-        std::cout << "error code: " << status.error_code() << std::endl;
-        std::cout << "details: " << status.error_details() << std::endl;
-    }
-//    SPDLOG_TRACE("updateContainerQuota rx: {}, {}, {}", rxMsg.cgroupid(), rxMsg.updatequota(), rxMsg.errorcode());
+    return call->reply.errorcode();
 
-    if(txMsg.sequencenum() != rxMsg.sequencenum()) {
-        SPDLOG_ERROR("seq nums don't match in updateConatiner quota! tx, rx: {}, {}", txMsg.sequencenum(), rxMsg.sequencenum());
-    }
-    SPDLOG_DEBUG("here");
-
-    return rxMsg.errorcode();
 }
 
 int64_t ec::rpc::AgentClient::resizeMemoryLimitPages(uint32_t cgroup_id, uint64_t new_mem_limit) {
-    grpc::ClientContext context;
     ec::rpc::containerUpdate::ResizeMaxMemRequest txMsg;
     txMsg.set_cgroupid(int32_t(cgroup_id));
     txMsg.set_newmemlimit(new_mem_limit);
 
-    ec::rpc::containerUpdate::ResizeMaxMemReply rxMsg;
-    SPDLOG_DEBUG("here");
-    grpc::Status status = stub_->ReqResizeMaxMem(&context, txMsg, &rxMsg);
-    SPDLOG_DEBUG("here");
-    if(status.ok()) {
-        SPDLOG_DEBUG("resizeMemoryLimitPages rx: {}, {}", rxMsg.cgroupid(), rxMsg.errorcode());
-    }
-    else {
-        std::cout << "status: " << status.error_message() << std::endl;
-        std::cout << "error code: " << status.error_code() << std::endl;
-        std::cout << "details: " << status.error_details() << std::endl;
-    }
-    SPDLOG_DEBUG("here");
-    return rxMsg.errorcode();
+    auto *call = new AsyncClientCallResizeMemLimitPages;
+    call->response_reader = stub_->PrepareAsyncReqResizeMaxMem(&call->context, txMsg, &cq_resize_mem_);
+    call->response_reader->Finish(&call->reply, &call->status, (void*)call);
+
+    return call->reply.errorcode();
 }
 
 int64_t ec::rpc::AgentClient::getMemoryUsageBytes(uint32_t cgroup_id) {
-    grpc::ClientContext context;
     auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(1000); //wait max 1 second
-    context.set_deadline(deadline);
+
+//    context.set_deadline(deadline);
     ec::rpc::containerUpdate::CgroupId txMsg;
     txMsg.set_cgroupid(int32_t(cgroup_id));
     ec::rpc::containerUpdate::ReadMemUsageReply rxMsg;
 
-    SPDLOG_TRACE("getting memory usage in bytes from cg_id: {}", cgroup_id);
-    SPDLOG_DEBUG("here");
-    grpc::Status status = stub_->ReadMemUsage(&context, txMsg, &rxMsg);
-    SPDLOG_DEBUG("here");
-    SPDLOG_TRACE("got memory usage in bytes from cg_id: {}", cgroup_id);
+    auto *call = new AsyncClientCallGetMemUsageBytes;
+    call->context.set_deadline(deadline);
+    call->response_reader = stub_->PrepareAsyncReadMemUsage(&call->context, txMsg, &cq_get_mem_usage_);
+    call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
-    if (status.ok()) {
-        SPDLOG_DEBUG("getMemoryUsageBytes rx: {}, {}", rxMsg.cgroupid(), rxMsg.memusage());
-    } else {
-        std::cout << "status: " << status.error_message() << std::endl;
-        std::cout << "error code: " << status.error_code() << std::endl;
-        std::cout << "details: " << status.error_details() << std::endl;
-    }
-    SPDLOG_DEBUG("here");
-    return rxMsg.memusage();
+    return call->reply.memusage();
 }
 
 int64_t ec::rpc::AgentClient::getMemoryLimitBytes(uint32_t cgroup_id) {
@@ -105,35 +82,100 @@ int64_t ec::rpc::AgentClient::getMemoryLimitBytes(uint32_t cgroup_id) {
     ec::rpc::containerUpdate::CgroupId txMsg;
     txMsg.set_cgroupid(int32_t(cgroup_id));
 
-    ec::rpc::containerUpdate::ReadMemLimitReply rxMsg;
-    SPDLOG_DEBUG("here");
-    grpc::Status status = stub_->ReadMemLimit(&context, txMsg, &rxMsg);
-    SPDLOG_DEBUG("here");
+    auto *call = new AsyncClientCallGetMemLimitBytes;
+    call->response_reader = stub_->PrepareAsyncReadMemLimit(&call->context, txMsg, &cq_get_mem_lim_);
+    call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
-    if (status.ok()) {
-        SPDLOG_DEBUG("getMemoryUsageLimit rx: {}, {}", rxMsg.cgroupid(), rxMsg.memlimit());
-    } else {
-        std::cout << "status: " << status.error_message() << std::endl;
-        std::cout << "error code: " << status.error_code() << std::endl;
-        std::cout << "details: " << status.error_details() << std::endl;
-    }
-    SPDLOG_DEBUG("here");
-    return rxMsg.memlimit();
+    return call->reply.memlimit();
 }
 
+void ec::rpc::AgentClient::AsyncCompleteRpcQuota() {
+    void *got_tag;
+    bool ok = false;
 
+    while(cq_quota_.Next(&got_tag, &ok)) {
+        auto *call = static_cast<AsyncClientCallQuota*>(got_tag);
 
+        GPR_ASSERT(ok);
 
-//int64_t ec::rpc::AgentClient::send_request(const struct msg_struct::ECMessage &msg) { //const {
-//    int64_t ret;
-//    std::unique_lock<std::mutex> lk(sendlock);
-//    ec::Facade::ProtoBufFacade::ProtoBuf::sendMessage(sockfd_new, msg);
-//    msg_struct::ECMessage rx_msg;
-//    ec::Facade::ProtoBufFacade::ProtoBuf::recvMessage(sockfd_new, rx_msg);
-//    ret = rx_msg.rsrc_amnt();
-//    if(msg.request() != rx_msg.request()) {
-//        SPDLOG_ERROR("sequence number mismatch: ({}, {})", msg.request(), rx_msg.request());
-//    }
-//    return ret;
-//}
-//
+        if(call->status.ok()) {
+            SPDLOG_DEBUG("rx: {}", call->reply.message());
+            if(call->reply.sequencenum() != call->request.sequencenum()) {
+                SPDLOG_ERROR("seq nums don't match in updateConatiner quota! tx, rx: {}, {}",
+                             call->request.sequencenum(), call->reply.sequencenum());
+            }
+
+        } else {
+            SPDLOG_ERROR("RPC failed");
+            SPDLOG_ERROR("status: {}", call->status.error_message());
+            SPDLOG_ERROR("error code: {}", call->status.error_code());
+            SPDLOG_ERROR("details: {}", call->status.error_details());
+        }
+        delete call;
+    }
+}
+
+void ec::rpc::AgentClient::AsyncCompleteRpcResizeMemLimitPages() {
+    void *got_tag;
+    bool ok = false;
+
+    while(cq_resize_mem_.Next(&got_tag, &ok)) {
+        auto *call = static_cast<AsyncClientCallResizeMemLimitPages*>(got_tag);
+
+        GPR_ASSERT(ok);
+
+        if(call->status.ok()) {
+//            SPDLOG_DEBUG("rx: {}", call->reply.message());
+            SPDLOG_DEBUG("resizeMemoryLimitPages rx: {}, {}", call->reply.cgroupid(), call->reply.errorcode());
+        } else {
+            SPDLOG_ERROR("RPC failed");
+            SPDLOG_ERROR("status: {}", call->status.error_message());
+            SPDLOG_ERROR("error code: {}", call->status.error_code());
+            SPDLOG_ERROR("details: {}", call->status.error_details());
+        }
+        delete call;
+    }
+}
+
+void ec::rpc::AgentClient::AsyncCompleteRpcGetMemUsageBytes() {
+    void *got_tag;
+    bool ok = false;
+
+    while(cq_get_mem_usage_.Next(&got_tag, &ok)) {
+        auto *call = static_cast<AsyncClientCallGetMemUsageBytes*>(got_tag);
+
+        GPR_ASSERT(ok);
+
+        if(call->status.ok()) {
+            SPDLOG_DEBUG("getMemoryUsageBytes rx: {}, {}", call->reply.cgroupid(), call->reply.memusage());
+        } else {
+            SPDLOG_ERROR("RPC failed");
+            SPDLOG_ERROR("status: {}", call->status.error_message());
+            SPDLOG_ERROR("error code: {}", call->status.error_code());
+            SPDLOG_ERROR("details: {}", call->status.error_details());
+        }
+        delete call;
+    }
+}
+
+void ec::rpc::AgentClient::AsyncCompleteRpcGetMemLimitBytes() {
+    void *got_tag;
+    bool ok = false;
+
+    while(cq_get_mem_lim_.Next(&got_tag, &ok)) {
+        auto *call = static_cast<AsyncClientCallGetMemLimitBytes*>(got_tag);
+
+        GPR_ASSERT(ok);
+
+        if(call->status.ok()) {
+            SPDLOG_DEBUG("getMemoryUsageLimit rx: {}, {}", call->reply.cgroupid(), call->reply.memlimit());
+        } else {
+            SPDLOG_ERROR("RPC failed");
+            SPDLOG_ERROR("status: {}", call->status.error_message());
+            SPDLOG_ERROR("error code: {}", call->status.error_code());
+            SPDLOG_ERROR("details: {}", call->status.error_details());
+        }
+        delete call;
+    }
+}
+

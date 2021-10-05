@@ -6,6 +6,7 @@
 
 int ec::ECAPI::create_ec() {
     _ec = new ElasticContainer(ecapi_id);
+//    thr_quota_ = std::thread(&rpc::AgentClient::AsyncCompleteRpcQuota, &agent);
     return 0;
 }
 
