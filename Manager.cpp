@@ -439,11 +439,11 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
         return __ALLOC_FAILED__;
     }
 
-#ifndef NDEBUG
-    /* HOTOS LOGGING */
-    auto *f = new std::ofstream();
-    hotos_logs.insert({*sc->get_c_id(), f});
-#endif
+//#ifndef NDEBUG
+//    /* HOTOS LOGGING */
+//    auto *f = new std::ofstream();
+//    hotos_logs.insert({*sc->get_c_id(), f});
+//#endif
 
     //todo: possibly lock subcontainers map here
     int ret = _ec->insert_sc(*sc);
@@ -468,6 +468,7 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
         SPDLOG_ERROR("SubContainer's node IP or Agent IP not found!");
     }
 
+    SPDLOG_DEBUG("update_quota_flag: {}", update_quota);
     //Update pod quota
     if(update_quota) {
 //        set_sc_quota_syscall(sc, quota, 13);
@@ -476,8 +477,8 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
     }
 
     //update pod mem limit
-    std::thread update_mem_limit_thread(&ec::Manager::determine_mem_limit_for_new_pod, this, sc, fd);
-    update_mem_limit_thread.detach();
+//    std::thread update_mem_limit_thread(&ec::Manager::determine_mem_limit_for_new_pod, this, sc, fd);
+//    update_mem_limit_thread.detach();
 
 //    determine_mem_limit_for_new_pod(sc, fd);
 
