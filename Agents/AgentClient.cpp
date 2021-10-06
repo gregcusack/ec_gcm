@@ -42,7 +42,7 @@ int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_
     SPDLOG_DEBUG("suh");
     call->response_reader = stub_->PrepareAsyncReqQuotaUpdate(&call->context, txMsg, &cq_quota_);
     SPDLOG_DEBUG("suh");
-//    call->response_reader->Finish(&call->reply, &call->status, (void*)call);
+    call->response_reader->Finish(&call->reply, &call->status, (void*)call);
     SPDLOG_DEBUG("suh");
     return 0;
 //    return call->reply.errorcode();
@@ -95,6 +95,7 @@ int64_t ec::rpc::AgentClient::getMemoryLimitBytes(uint32_t cgroup_id) {
 void ec::rpc::AgentClient::AsyncCompleteRpcQuota() {
     void *got_tag;
     bool ok = false;
+    SPDLOG_DEBUG("suh");
 
     while(cq_quota_.Next(&got_tag, &ok)) {
         SPDLOG_DEBUG("suh");
