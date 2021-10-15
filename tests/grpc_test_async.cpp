@@ -100,7 +100,7 @@ int main () {
 
     greeter.updateContainerQuota(123, 100000001, "incr", 4);
     SPDLOG_DEBUG("suh");
-    thread_.join();
+//    thread_.join();
 //    auto channel = grpc::CreateChannel("192.168.6.7:4448", grpc::InsecureChannelCredentials());
 //    auto stub = ContainerUpdateHandler::NewStub(channel);
 //
