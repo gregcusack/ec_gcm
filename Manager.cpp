@@ -105,24 +105,24 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
      * Quota (this is what we have set)
      * quota - rt_remaining = usage
      */
-#ifndef NDEBUG
-    auto logger = hotos_logs.find(sc_id);
-    if(logger != hotos_logs.end()) {
-        auto fp = logger->second;
-        fp->open(get_current_dir() + "/logs/logger_node_" + req->client_ip.to_string() + "_cgid_" + std::to_string(req->cgroup_id) + ".txt", std::ios_base::app);
-        auto runtime = rx_quota - rt_remaining;
-
-        auto us = std::chrono::duration_cast<std::chrono::microseconds>(
-                std::chrono::system_clock::now().time_since_epoch()
-        ).count();
-
-        *fp << std::to_string(rx_quota) + "," + std::to_string(runtime) + "," + std::to_string(us) + "\n";
-        fp->close();
-    }
-    else {
-        std::cout << "can't find file pointed for sc_id: " << sc_id << std::endl;
-    }
-#endif
+//#ifndef NDEBUG
+//    auto logger = hotos_logs.find(sc_id);
+//    if(logger != hotos_logs.end()) {
+//        auto fp = logger->second;
+//        fp->open(get_current_dir() + "/logs/logger_node_" + req->client_ip.to_string() + "_cgid_" + std::to_string(req->cgroup_id) + ".txt", std::ios_base::app);
+//        auto runtime = rx_quota - rt_remaining;
+//
+//        auto us = std::chrono::duration_cast<std::chrono::microseconds>(
+//                std::chrono::system_clock::now().time_since_epoch()
+//        ).count();
+//
+//        *fp << std::to_string(rx_quota) + "," + std::to_string(runtime) + "," + std::to_string(us) + "\n";
+//        fp->close();
+//    }
+//    else {
+//        std::cout << "can't find file pointed for sc_id: " << sc_id << std::endl;
+//    }
+//#endif
 //    std::cout << "diving into control loop for cpu alloc" << std::endl;
 
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
