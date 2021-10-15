@@ -15,7 +15,7 @@ ec::AgentClientDB* ec::AgentClientDB::agent_clients_db_instance = nullptr;
 
 class AyncGreeterClient {
 public:
-    explicit AyncGreeterClient(std::shared_ptr<grpc::Channel> channel)
+    explicit AyncGreeterClient(const std::shared_ptr<grpc::Channel>& channel)
         : stub_(ContainerUpdateHandler::NewStub(channel)) {}
 
     void updateContainerQuota(uint32_t cgroup_id, uint64_t new_quota, const std::string& change, uint32_t seq_num) {
@@ -24,12 +24,17 @@ public:
         request.set_newquota(new_quota);
         request.set_resizeflag(change);
         request.set_sequencenum(int32_t(seq_num));
+        SPDLOG_DEBUG("suh");
 
         auto *call = new AsyncClientCall;
+        SPDLOG_DEBUG("suh");
         call->response_reader =
                 stub_->PrepareAsyncReqQuotaUpdate(&call->context, request, &cq_);
+        SPDLOG_DEBUG("suh");
         call->response_reader->StartCall();
+        SPDLOG_DEBUG("suh");
         call->response_reader->Finish(&call->reply, &call->status, (void*)call);
+        SPDLOG_DEBUG("suh");
     }
 
     void AsyncCompleteRpc() {
@@ -37,9 +42,12 @@ public:
         bool ok = false;
 
         // Block until the next result is available in the completion queue "cq".
+        SPDLOG_DEBUG("suh");
         while (cq_.Next(&got_tag, &ok)) {
+            SPDLOG_DEBUG("suh");
             // The tag in this example is the memory location of the call object
             auto* call = static_cast<AsyncClientCall*>(got_tag);
+            SPDLOG_DEBUG("suh");
 
             // Verify that the request was completed successfully. Note that "ok"
             // corresponds solely to the request for updates introduced by Finish().
@@ -86,10 +94,13 @@ private:
 int main () {
     AyncGreeterClient greeter(grpc::CreateChannel(
             "192.168.6.7:4448", grpc::InsecureChannelCredentials()));
-
+    SPDLOG_DEBUG("suh");
     std::thread thread_ = std::thread(&AyncGreeterClient::AsyncCompleteRpc, &greeter);
+    SPDLOG_DEBUG("suh");
 
     greeter.updateContainerQuota(123, 100000001, "incr", 4);
+    SPDLOG_DEBUG("suh");
+    thread_.join();
 //    auto channel = grpc::CreateChannel("192.168.6.7:4448", grpc::InsecureChannelCredentials());
 //    auto stub = ContainerUpdateHandler::NewStub(channel);
 //
