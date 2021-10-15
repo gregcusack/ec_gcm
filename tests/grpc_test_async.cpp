@@ -98,9 +98,10 @@ int main () {
     std::thread thread_ = std::thread(&AyncGreeterClient::AsyncCompleteRpc, &greeter);
     SPDLOG_DEBUG("suh");
 
-    greeter.updateContainerQuota(123, 100000001, "incr", 4);
-    SPDLOG_DEBUG("suh");
-//    thread_.join();
+    for (int i = 0; i < 100; i++) {
+        greeter.updateContainerQuota(123, 100000001, "incr", 4);
+    }
+    thread_.join();
 //    auto channel = grpc::CreateChannel("192.168.6.7:4448", grpc::InsecureChannelCredentials());
 //    auto stub = ContainerUpdateHandler::NewStub(channel);
 //
