@@ -78,7 +78,7 @@ int main(int argc, char* argv[]){
     }
     
     gcm->run(app_name, gcm_ip);
-    gcm->get_thread().join();
+    gcm->get_thread()->join();
 
 //    gcm->thr_quota_.join();
 //    gcm->thr_resize_mem_.join();
