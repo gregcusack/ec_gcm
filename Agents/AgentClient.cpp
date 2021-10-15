@@ -11,16 +11,7 @@ int ec::rpc::AgentClient::connectAgentGrpc() {
     auto grpc_addr = agent->get_ip().to_string() + ":" + std::to_string(agent->get_port());
     SPDLOG_DEBUG("agentclient connection ip:port: {}", grpc_addr);
 
-    try {
-        channel_ = grpc::CreateChannel(grpc_addr, grpc::InsecureChannelCredentials());
-
-    }
-    catch (std::exception &e) {
-        SPDLOG_ERROR("[ERROR] AgentClient: Connection to agent_client {} failed. error code: {}", agent->get_ip().to_string(), e.what());
-//        std::cerr << "connectAgentGrpc() Error code: " << e.what() << std::endl;
-        return -1;
-    }
-
+    channel_ = grpc::CreateChannel(grpc_addr, grpc::InsecureChannelCredentials());
     stub_ = ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel_);
 
     return 0;

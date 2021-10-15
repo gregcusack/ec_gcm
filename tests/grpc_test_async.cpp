@@ -16,7 +16,11 @@ ec::AgentClientDB* ec::AgentClientDB::agent_clients_db_instance = nullptr;
 class AyncGreeterClient {
 public:
     explicit AyncGreeterClient(const std::shared_ptr<grpc::Channel>& channel)
-        : stub_(ContainerUpdateHandler::NewStub(channel)) {}
+        : stub_(ContainerUpdateHandler::NewStub(channel)) {
+        thread_test = std::thread(&AyncGreeterClient::AsyncCompleteRpc, this);
+    }
+
+    std::thread *get_thread() {return &thread_test;}
 
     void updateContainerQuota(uint32_t cgroup_id, uint64_t new_quota, const std::string& change, uint32_t seq_num) {
         ec::rpc::containerUpdate::ContainerQuotaRequest request;
@@ -88,6 +92,7 @@ private:
     // The producer-consumer queue we use to communicate asynchronously with the
     // gRPC runtime.
     grpc::CompletionQueue cq_;
+    std::thread thread_test;
 };
 
 
@@ -95,13 +100,14 @@ int main () {
     AyncGreeterClient greeter(grpc::CreateChannel(
             "192.168.6.7:4448", grpc::InsecureChannelCredentials()));
     SPDLOG_DEBUG("suh");
-    std::thread thread_ = std::thread(&AyncGreeterClient::AsyncCompleteRpc, &greeter);
+//    std::thread thread_ = std::thread(&AyncGreeterClient::AsyncCompleteRpc, &greeter);
     SPDLOG_DEBUG("suh");
 
     for (int i = 0; i < 100; i++) {
         greeter.updateContainerQuota(123, 100000001, "incr", 4);
     }
-    thread_.join();
+    greeter.get_thread()->join();
+//    thread_.join();
 //    auto channel = grpc::CreateChannel("192.168.6.7:4448", grpc::InsecureChannelCredentials());
 //    auto stub = ContainerUpdateHandler::NewStub(channel);
 //
