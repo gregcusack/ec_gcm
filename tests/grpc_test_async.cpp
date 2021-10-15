@@ -11,6 +11,8 @@
 #include "../Agents/containerUpdateGrpc.grpc.pb.h"
 #include "../Agents/AgentClientDB.h"
 
+ec::AgentClientDB* ec::AgentClientDB::agent_clients_db_instance = nullptr;
+
 class AyncGreeterClient {
 public:
     explicit AyncGreeterClient(std::shared_ptr<grpc::Channel> channel)
