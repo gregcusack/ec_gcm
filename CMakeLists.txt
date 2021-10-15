@@ -126,7 +126,7 @@ add_executable(loop_test tests/run_continuous.cpp
 
 target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB} spdlog::spdlog)
 target_link_libraries(deploy_test PRIVATE ${PTHREAD_LIB} -lssl -lcrypto  cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB} spdlog::spdlog)
-target_link_libraries(grpc_async_test PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB} spdlog::spdlog)
+target_link_libraries(grpc_async_test PRIVATE ${PTHREAD_LIB} -lssl -lcrypto -lgrpc cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB} spdlog::spdlog)
 
 if(DEFINED WITH_DEBUG)
     if(WITH_DEBUG MATCHES DEBUG OR WITH_DEBUG MATCHES debug)

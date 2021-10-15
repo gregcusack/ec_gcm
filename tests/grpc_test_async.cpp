@@ -84,7 +84,7 @@ private:
 int main () {
     AyncGreeterClient greeter(grpc::CreateChannel(
             "192.168.6.7:4448", grpc::InsecureChannelCredentials()));
-    
+
     std::thread thread_ = std::thread(&AyncGreeterClient::AsyncCompleteRpc, &greeter);
 
     greeter.updateContainerQuota(123, 100000001, "incr", 4);
