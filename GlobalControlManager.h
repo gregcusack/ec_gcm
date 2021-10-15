@@ -40,6 +40,7 @@ namespace ec {
 
         const manager_map& get_managers() {return managers;}
         const Manager& get_manager(int manager_id) const;
+        std::thread* get_thread() {return &grpc_thread;}
 
         struct app_thread_args {
             app_thread_args()              = default;
