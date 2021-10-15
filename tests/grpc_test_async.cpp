@@ -19,7 +19,7 @@ int main () {
     grpc::ClientContext context;
 
     ec::rpc::containerUpdate::ContainerQuotaRequest txMsg;
-    ec::rpc::containerUpdate:ContainerQuotaReply rxMsg;
+    ec::rpc::containerUpdate::ContainerQuotaReply rxMsg;
     txMsg.set_cgroupid(int32_t(123));
     txMsg.set_newquota(100000001);
     txMsg.set_resizeflag("incr");
