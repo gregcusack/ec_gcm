@@ -96,9 +96,9 @@ bool ec::GlobalControlManager::init_agent_connections() {
             std::exit(EXIT_FAILURE);
         }
         grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcQuota, ac);
-        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcResizeMemLimitPages, ac);
-        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcGetMemLimitBytes, ac);
-        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcGetMemUsageBytes, ac);
+//        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcResizeMemLimitPages, ac);
+//        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcGetMemLimitBytes, ac);
+//        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcGetMemUsageBytes, ac);
 //        thr_quota_ = std::thread(&rpc::AgentClient::AsyncCompleteRpcQuota, ac);
 //        thr_resize_mem_ = std::thread(&rpc::AgentClient::AsyncCompleteRpcResizeMemLimitPages, ac);
 //        thr_get_mem_lim_ = std::thread(&rpc::AgentClient::AsyncCompleteRpcGetMemLimitBytes, ac);

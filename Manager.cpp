@@ -471,9 +471,9 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
     SPDLOG_DEBUG("update_quota_flag: {}", update_quota);
     //Update pod quota
     if(update_quota) {
-//        set_sc_quota_syscall(sc, quota, 13);
-        std::thread update_quota_thread(&ec::Manager::set_sc_quota_syscall, this, sc, quota, 13);
-        update_quota_thread.detach();
+        set_sc_quota_syscall(sc, quota, 13);
+//        std::thread update_quota_thread(&ec::Manager::set_sc_quota_syscall, this, sc, quota, 13);
+//        update_quota_thread.detach();
     }
 
     //update pod mem limit
