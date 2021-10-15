@@ -53,6 +53,8 @@ namespace ec {
             void AsyncCompleteRpcGetMemUsageBytes();
             void AsyncCompleteRpcGetMemLimitBytes();
 
+            std::thread *get_thread() {return &thread_test;}
+
 
 
         private:
@@ -95,6 +97,7 @@ namespace ec {
 
             grpc::CompletionQueue cq_quota_, cq_resize_mem_, cq_get_mem_lim_, cq_get_mem_usage_;
 
+            std::thread thread_test;
         };
     }
 }

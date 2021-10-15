@@ -14,6 +14,7 @@ int ec::rpc::AgentClient::connectAgentGrpc() {
     channel_ = grpc::CreateChannel(grpc_addr, grpc::InsecureChannelCredentials());
     stub_ = ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel_);
 
+    thread_test = std::thread(&rpc::AgentClient::AsyncCompleteRpcQuota, this);
     return 0;
 }
 

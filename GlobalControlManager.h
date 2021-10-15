@@ -50,6 +50,8 @@ namespace ec {
 
         bool init_agent_connections();
 
+        void join_grpc_threads();
+
     private:
         ip4_addr                gcm_ip;
         uint16_t                gcm_port;           //unknown if needed

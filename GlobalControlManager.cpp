@@ -95,7 +95,7 @@ bool ec::GlobalControlManager::init_agent_connections() {
             SPDLOG_ERROR("Are the agents up?");
             std::exit(EXIT_FAILURE);
         }
-        grpc_thread = std::thread(&rpc::AgentClient::AsyncCompleteRpcQuota, ac);
+//        grpc_thread = std::thread(&rpc::AgentClient::AsyncCompleteRpcQuota, ac);
 //        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcQuota, ac);
 //        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcResizeMemLimitPages, ac);
 //        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcGetMemLimitBytes, ac);
@@ -110,6 +110,18 @@ bool ec::GlobalControlManager::init_agent_connections() {
         agent_clients_db->add_agent_client(ac);
     }
     return num_connections == agent_clients_db->get_agent_clients_db_size();
+
+}
+
+void ec::GlobalControlManager::join_grpc_threads() {
+    AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
+
+    auto db_map = agent_clients_db->get_db_map();
+
+    for(auto const& [ip, client] : *db_map) {
+        client->get_thread()->join();
+    }
+
 
 }
 

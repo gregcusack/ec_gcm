@@ -78,6 +78,7 @@ int main(int argc, char* argv[]){
     }
     
     gcm->run(app_name, gcm_ip);
+    gcm->join_grpc_threads();
 //    gcm->get_thread()->join();
 
 //    gcm->thr_quota_.join();
