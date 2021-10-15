@@ -41,7 +41,7 @@ public:
 
             // Verify that the request was completed successfully. Note that "ok"
             // corresponds solely to the request for updates introduced by Finish().
-            GPR_ASSERT(ok);
+//            GPR_ASSERT(ok);
 
             if (call->status.ok())
                 std::cout << "rx msg: " << call->reply.cgroupid() << ", " << call->reply.updatequota() << ", "
