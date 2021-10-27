@@ -93,12 +93,12 @@ int64_t ec::rpc::AgentClient::getMemoryLimitBytes(uint32_t cgroup_id) {
 void ec::rpc::AgentClient::AsyncCompleteRpcQuota() {
     void *got_tag;
     bool ok = false;
-    SPDLOG_DEBUG("suh");
+    std::cout << "suh1" << std::endl;
 
     while(cq_quota_.Next(&got_tag, &ok)) {
-        SPDLOG_DEBUG("suh");
+        std::cout << "suh2" << std::endl;
         auto *call = static_cast<AsyncClientCallQuota*>(got_tag);
-        SPDLOG_DEBUG("suh");
+        std::cout << "suh3" << std::endl;
 
 //        GPR_ASSERT(ok);
 
@@ -116,7 +116,7 @@ void ec::rpc::AgentClient::AsyncCompleteRpcQuota() {
             SPDLOG_ERROR("error code: {}", call->status.error_code());
             SPDLOG_ERROR("details: {}", call->status.error_details());
         }
-        SPDLOG_DEBUG("suh");
+        std::cout << "suh4" << std::endl;
 
         delete call;
     }
