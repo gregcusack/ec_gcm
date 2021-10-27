@@ -63,7 +63,7 @@ namespace ec {
             std::mutex sendlock;
 
             struct AsyncClientCallQuota {
-                ContainerQuotaRequest request;
+//                ContainerQuotaRequest request;
                 ContainerQuotaReply reply;
                 grpc::ClientContext context;
                 grpc::Status status;
@@ -95,7 +95,7 @@ namespace ec {
             std::unique_ptr<ContainerUpdateHandler::Stub> stub_;
 //            std::shared_ptr<grpc_impl::Channel> channel_;
 
-            grpc::CompletionQueue cq_quota_, cq_resize_mem_, cq_get_mem_lim_, cq_get_mem_usage_;
+            grpc::CompletionQueue cq_;//quota_, cq_resize_mem_, cq_get_mem_lim_, cq_get_mem_usage_;
 
             std::thread thread_test;
         };
