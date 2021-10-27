@@ -90,7 +90,9 @@ bool ec::GlobalControlManager::init_agent_connections() {
 
     AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
     for(const auto &ag : agents) {
-        auto* ac = new rpc::AgentClient(ag);
+        auto grpc_addr = ag->get_ip().to_string() + ":" + std::to_string(ag->get_port());
+        auto* ac = new rpc::AgentClient(ag, grpc::CreateChannel(
+                grpc_addr, grpc::InsecureChannelCredentials()));
         if(ac->connectAgentGrpc()) {
             SPDLOG_ERROR("Are the agents up?");
             std::exit(EXIT_FAILURE);

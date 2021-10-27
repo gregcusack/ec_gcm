@@ -4,15 +4,16 @@
 
 #include "AgentClient.h"
 
-ec::rpc::AgentClient::AgentClient(const ec::Agent *_agent) : agent(_agent) {}
+ec::rpc::AgentClient::AgentClient(const ec::Agent *_agent, const std::shared_ptr<grpc::Channel>& channel)
+    : stub_(ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel)), agent(_agent) {}
 
 int ec::rpc::AgentClient::connectAgentGrpc() {
 
     auto grpc_addr = agent->get_ip().to_string() + ":" + std::to_string(agent->get_port());
     SPDLOG_DEBUG("agentclient connection ip:port: {}", grpc_addr);
 
-    channel_ = grpc::CreateChannel(grpc_addr, grpc::InsecureChannelCredentials());
-    stub_ = ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel_);
+//    channel_ = grpc::CreateChannel(grpc_addr, grpc::InsecureChannelCredentials());
+//    stub_ = ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel_);
 
     thread_test = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcQuota, this);
     return 0;

@@ -32,7 +32,7 @@ namespace ec {
     namespace rpc {
         class AgentClient {
         public:
-            AgentClient(const Agent *_agent);
+            AgentClient(const Agent *_agent, const std::shared_ptr<grpc::Channel>& channel);
 
             int connectAgentGrpc();
 
@@ -93,7 +93,7 @@ namespace ec {
 
 
             std::unique_ptr<ContainerUpdateHandler::Stub> stub_;
-            std::shared_ptr<grpc_impl::Channel> channel_;
+//            std::shared_ptr<grpc_impl::Channel> channel_;
 
             grpc::CompletionQueue cq_quota_, cq_resize_mem_, cq_get_mem_lim_, cq_get_mem_usage_;
 
