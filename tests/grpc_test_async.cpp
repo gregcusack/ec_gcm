@@ -97,39 +97,4 @@ int main () {
         greeter.updateContainerQuota(123, 100000001, "incr", 4);
     }
     greeter.get_thread()->join();
-//    thread_.join();
-//    auto channel = grpc::CreateChannel("192.168.6.7:4448", grpc::InsecureChannelCredentials());
-//    auto stub = ContainerUpdateHandler::NewStub(channel);
-//
-//    ec::rpc::containerUpdate::ContainerQuotaRequest txMsg;
-//    ec::rpc::containerUpdate::ContainerQuotaReply rxMsg;
-//    txMsg.set_cgroupid(int32_t(123));
-//    txMsg.set_newquota(100000001);
-//    txMsg.set_resizeflag("incr");
-//    txMsg.set_sequencenum(int32_t(4));
-//    grpc::Status status = stub->ReqQuotaUpdate(&context, txMsg, &rxMsg);
-//    ec::rpc::ExportPodSpec txMsg;
-//    txMsg.set_docker_id("this-be-docker-id");
-//    txMsg.set_cgroup_id(123);
-//    txMsg.set_node_ip("123.123.12.1");
-//    ec::rpc::PodSpecReply rxMsg;
-//    grpc::Status status = stub->ReportPodSpec(&context, txMsg, &rxMsg);
-
-
-//    if(status.ok()) {
-//        std::cout << "rx msg: " << rxMsg.cgroupid() << ", " << rxMsg.updatequota() << ", " << rxMsg.errorcode() << ", " << rxMsg.sequencenum() << std::endl;
-//    }
-//    else {
-//        std::cout << "status: " << status.error_message() << std::endl;
-//        std::cout << "error code: " << status.error_code() << std::endl;
-//        std::cout << "details: " << status.error_details() << std::endl;
-//    }
 }
-
-//class DeployerExportClient {
-//public:
-//    DeployerExportClient(std::shared_ptr<grpc::Channel> channel) : stub_(ec::rpc::DeployerExport::NewStub(channel)) {}
-//
-//private:
-//    std::unique_ptr<ec::rpc::DeployerExport::Stub> stub_;
-//};

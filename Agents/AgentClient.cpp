@@ -27,7 +27,7 @@ int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_
     txMsg.set_newquota(new_quota);
     txMsg.set_resizeflag(change);
     txMsg.set_sequencenum(int32_t(seq_num));
-    SPDLOG_DEBUG("suh");
+    SPDLOG_DEBUG("deets: cgid, new_quota, change, seq_num: {}, {}, {}, {}", cgroup_id, new_quota, change, seq_num);
 
 
     auto *call = new AsyncClientCallQuota;
