@@ -39,11 +39,17 @@ public:
     void AsyncCompleteRpc() {
         void* got_tag;
         bool ok = false;
+        SPDLOG_DEBUG("suh");
+
 
         // Block until the next result is available in the completion queue "cq".
         while (cq_.Next(&got_tag, &ok)) {
+            SPDLOG_DEBUG("suh");
+
             // The tag in this example is the memory location of the call object
             auto* call = static_cast<AsyncClientCall*>(got_tag);
+            SPDLOG_DEBUG("suh");
+
 
             // Verify that the request was completed successfully. Note that "ok"
             // corresponds solely to the request for updates introduced by Finish().
@@ -54,6 +60,7 @@ public:
                     << call->reply.errorcode() << ", " << call->reply.sequencenum() << std::endl;
             else
                 std::cout << "RPC failed" << std::endl;
+            SPDLOG_DEBUG("suh");
 
             // Once we're complete, deallocate the call object.
             delete call;
