@@ -55,6 +55,14 @@ namespace ec {
 
             std::thread *get_thread() {return &thread_test;}
 
+            void incr_test_cc() {
+                std::unique_lock<std::mutex> lk(test_cc_lock);
+                int old = test_cc;
+                test_cc++;
+                SPDLOG_DEBUG("test_cc: ({},{})", old, test_cc);
+
+            }
+
 
 
         private:
@@ -98,6 +106,8 @@ namespace ec {
             grpc::CompletionQueue cq_quota_, cq_resize_mem_, cq_get_mem_lim_, cq_get_mem_usage_;
 
             std::thread thread_test;
+            int test_cc;
+            std::mutex test_cc_lock;
         };
     }
 }

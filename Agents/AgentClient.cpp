@@ -5,7 +5,8 @@
 #include "AgentClient.h"
 
 ec::rpc::AgentClient::AgentClient(const ec::Agent *_agent, const std::shared_ptr<grpc::Channel>& channel)
-    : stub_(ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel)), agent(_agent) {}
+    : stub_(ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel)), agent(_agent),
+    test_cc(0) {}
 
 int ec::rpc::AgentClient::connectAgentGrpc() {
 
@@ -30,6 +31,7 @@ int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_
     request.set_sequencenum(int32_t(seq_num));
     SPDLOG_DEBUG("deets: cgid, new_quota, change, seq_num: {}, {}, {}, {}", cgroup_id, new_quota, change, seq_num);
 
+    incr_test_cc();
 
     auto *call = new AsyncClientCallQuota;
     SPDLOG_DEBUG("suh");
@@ -53,8 +55,9 @@ void ec::rpc::AgentClient::AsyncCompleteRpcQuota() {
     void *got_tag;
     bool ok = false;
     std::cout << "suh1" << std::endl;
-
+    incr_test_cc();
     while(cq_quota_.Next(&got_tag, &ok)) {
+        incr_test_cc();
         std::cout << "suh2" << std::endl;
         auto *call = static_cast<AsyncClientCallQuota*>(got_tag);
         std::cout << "suh3" << std::endl;
