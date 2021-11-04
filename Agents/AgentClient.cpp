@@ -5,18 +5,24 @@
 #include "AgentClient.h"
 
 ec::rpc::AgentClient::AgentClient(const ec::Agent *_agent, const std::shared_ptr<grpc::Channel>& channel)
-    : stub_(ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel)), agent(_agent),
-    test_cc(0) {}
+    : stub_(ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel)), agent(_agent), test_cc(0) {
+
+    SPDLOG_DEBUG("agentclient constructor");
+    incr_test_cc();
+    auto grpc_addr = agent->get_ip().to_string() + ":" + std::to_string(agent->get_port());
+    SPDLOG_DEBUG("agentclient connection ip:port: {}", grpc_addr);
+    thread_test = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcQuota, this);
+}
 
 int ec::rpc::AgentClient::connectAgentGrpc() {
 
-    auto grpc_addr = agent->get_ip().to_string() + ":" + std::to_string(agent->get_port());
-    SPDLOG_DEBUG("agentclient connection ip:port: {}", grpc_addr);
+//    auto grpc_addr = agent->get_ip().to_string() + ":" + std::to_string(agent->get_port());
+//    SPDLOG_DEBUG("agentclient connection ip:port: {}", grpc_addr);
 
 //    channel_ = grpc::CreateChannel(grpc_addr, grpc::InsecureChannelCredentials());
 //    stub_ = ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel_);
 
-    thread_test = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcQuota, this);
+//    thread_test = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcQuota, this);
     return 0;
 }
 

@@ -56,12 +56,16 @@ namespace ec {
             std::thread *get_thread() {return &thread_test;}
 
             void incr_test_cc() {
-                std::unique_lock<std::mutex> lk(test_cc_lock);
+//                std::unique_lock<std::mutex> lk(test_cc_lock);
                 int old = test_cc;
                 test_cc++;
                 SPDLOG_DEBUG("test_cc: ({},{})", old, test_cc);
-
             }
+
+            /// COPY CONSTRUCTOR
+//            AgentClient(const AgentClient &p1) {
+//                thread_test = p1.thread_test;
+//            }
 
 
 

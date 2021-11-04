@@ -97,6 +97,9 @@ bool ec::GlobalControlManager::init_agent_connections() {
             SPDLOG_ERROR("Are the agents up?");
             std::exit(EXIT_FAILURE);
         }
+//        SPDLOG_DEBUG("jeah1");
+//        ac->incr_test_cc();
+//        SPDLOG_DEBUG("jeah2");
 //        grpc_thread = std::thread(&rpc::AgentClient::AsyncCompleteRpcQuota, ac);
 //        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcQuota, ac);
 //        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcResizeMemLimitPages, ac);
