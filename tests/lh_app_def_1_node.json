@@ -1,0 +1,11 @@
+{
+	"name": "app1",
+	"gcmIP": "10.0.2.15",
+	"agentIPs": [
+		"10.0.2.15"
+	],
+	"tenants": 1,
+	"yaml_path" : [
+		"k8-yaml/"
+	]
+}
