@@ -5,48 +5,68 @@
 #include "AgentClient.h"
 
 ec::rpc::AgentClient::AgentClient(const ec::Agent *_agent, const std::shared_ptr<grpc::Channel>& channel)
-    : stub_(ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel)), agent(_agent),
-    test_cc(0) {}
+    : stub_(ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel)), agent(_agent), test_cc(0) {
+
+    SPDLOG_DEBUG("agentclient constructor");
+    incr_test_cc();
+    auto grpc_addr = agent->get_ip().to_string() + ":" + std::to_string(agent->get_port());
+    SPDLOG_DEBUG("agentclient connection ip:port: {}", grpc_addr);
+    thread_test = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcQuota, this);
+}
 
 int ec::rpc::AgentClient::connectAgentGrpc() {
 
-    auto grpc_addr = agent->get_ip().to_string() + ":" + std::to_string(agent->get_port());
-    SPDLOG_DEBUG("agentclient connection ip:port: {}", grpc_addr);
+//    auto grpc_addr = agent->get_ip().to_string() + ":" + std::to_string(agent->get_port());
+//    SPDLOG_DEBUG("agentclient connection ip:port: {}", grpc_addr);
 
 //    channel_ = grpc::CreateChannel(grpc_addr, grpc::InsecureChannelCredentials());
 //    stub_ = ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel_);
 
-    thread_test = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcQuota, this);
+//    thread_test = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcQuota, this);
     return 0;
 }
 
 
 
 int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_quota, const std::string& change, uint32_t seq_num) {
-    SPDLOG_DEBUG("suh");
+//    SPDLOG_DEBUG("suh");
+//    ec::rpc::containerUpdate::ContainerQuotaRequest request;
+//    request.set_cgroupid(int32_t(cgroup_id));
+//    request.set_newquota(new_quota);
+//    request.set_resizeflag(change);
+//    request.set_sequencenum(int32_t(seq_num));
+//    SPDLOG_DEBUG("deets: cgid, new_quota, change, seq_num: {}, {}, {}, {}", cgroup_id, new_quota, change, seq_num);
+//
+//    incr_test_cc();
+//
+//    auto *call = new AsyncClientCallQuota;
+//    SPDLOG_DEBUG("suh");
+//    call->response_reader = stub_->PrepareAsyncReqQuotaUpdate(&call->context, request, &cq_quota_);
+//    SPDLOG_DEBUG("suh");
+//    if(!call->response_reader) {
+//        SPDLOG_ERROR("error!");
+//    }
+//
+//    call->response_reader->StartCall();
+//    SPDLOG_DEBUG("suh");
+//    call->response_reader->Finish(&call->reply, &call->status, (void*)call);
+//    SPDLOG_DEBUG("suh");
+//    return 0;
+////    return call->reply.errorcode();
+    sleep(1);
+
     ec::rpc::containerUpdate::ContainerQuotaRequest request;
     request.set_cgroupid(int32_t(cgroup_id));
     request.set_newquota(new_quota);
     request.set_resizeflag(change);
     request.set_sequencenum(int32_t(seq_num));
-    SPDLOG_DEBUG("deets: cgid, new_quota, change, seq_num: {}, {}, {}, {}", cgroup_id, new_quota, change, seq_num);
-
-    incr_test_cc();
 
     auto *call = new AsyncClientCallQuota;
-    SPDLOG_DEBUG("suh");
-    call->response_reader = stub_->PrepareAsyncReqQuotaUpdate(&call->context, request, &cq_quota_);
-    SPDLOG_DEBUG("suh");
-    if(!call->response_reader) {
-        SPDLOG_ERROR("error!");
-    }
-
+    call->response_reader =
+            stub_->PrepareAsyncReqQuotaUpdate(&call->context, request, &cq_quota_);
     call->response_reader->StartCall();
-    SPDLOG_DEBUG("suh");
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
-    SPDLOG_DEBUG("suh");
     return 0;
-//    return call->reply.errorcode();
 
 }
 

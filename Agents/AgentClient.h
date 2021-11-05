@@ -60,8 +60,12 @@ namespace ec {
                 int old = test_cc;
                 test_cc++;
                 SPDLOG_DEBUG("test_cc: ({},{})", old, test_cc);
-
             }
+
+            /// COPY CONSTRUCTOR
+//            AgentClient(const AgentClient &p1) {
+//                thread_test = p1.thread_test;
+//            }
 
 
 
