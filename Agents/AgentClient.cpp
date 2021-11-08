@@ -73,7 +73,9 @@ int64_t ec::rpc::AgentClient::resizeMemoryLimitPages(uint32_t cgroup_id, uint64_
     txMsg.set_newmemlimit(new_mem_limit);
 
     auto *call = new AsyncClientCallResizeMemLimitPages;
-    call->response_reader = stub_->PrepareAsyncReqResizeMaxMem(&call->context, txMsg, &cq_resize_mem_);
+    call->response_reader =
+            stub_->PrepareAsyncReqResizeMaxMem(&call->context, txMsg, &cq_resize_mem_);
+    call->response_reader->StartCall();
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
 //    return 0;
@@ -90,7 +92,9 @@ int64_t ec::rpc::AgentClient::getMemoryUsageBytes(uint32_t cgroup_id) {
 
     auto *call = new AsyncClientCallGetMemUsageBytes;
     call->context.set_deadline(deadline);
-    call->response_reader = stub_->PrepareAsyncReadMemUsage(&call->context, txMsg, &cq_get_mem_usage_);
+    call->response_reader =
+            stub_->PrepareAsyncReadMemUsage(&call->context, txMsg, &cq_get_mem_usage_);
+    call->response_reader->StartCall();
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
 //    return 0;
@@ -103,7 +107,9 @@ int64_t ec::rpc::AgentClient::getMemoryLimitBytes(uint32_t cgroup_id) {
     txMsg.set_cgroupid(int32_t(cgroup_id));
 
     auto *call = new AsyncClientCallGetMemLimitBytes;
-    call->response_reader = stub_->PrepareAsyncReadMemLimit(&call->context, txMsg, &cq_get_mem_lim_);
+    call->response_reader =
+            stub_->PrepareAsyncReadMemLimit(&call->context, txMsg, &cq_get_mem_lim_);
+    call->response_reader->StartCall();
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
 //    return 0;
