@@ -97,6 +97,11 @@ bool ec::GlobalControlManager::init_agent_connections() {
             SPDLOG_ERROR("Are the agents up?");
             std::exit(EXIT_FAILURE);
         }
+//        ac->updateContainerQuota(53, 10000000, "decr", 3);
+//        auto m = managers.find(1)->second;
+//        m->run_quota_update();
+//        m->join_grpc_threads();
+
 //        SPDLOG_DEBUG("jeah1");
 //        ac->incr_test_cc();
 //        SPDLOG_DEBUG("jeah2");

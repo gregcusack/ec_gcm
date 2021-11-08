@@ -66,7 +66,7 @@ namespace ec {
         subcontainer_map *get_subcontainers_map_for_update() { return &subcontainers; }
         SubContainer &get_subcontainer_front(const SubContainer::ContainerId &container_id);
         SubContainer &get_subcontainer_back(const SubContainer::ContainerId &container_id);
-        rpc::AgentClient* get_corres_agent(const SubContainer::ContainerId &container_id);
+        rpc::AgentClient* get_corres_agent_client(const SubContainer::ContainerId &container_id);
         SubContainer *get_sc_for_update_back(const SubContainer::ContainerId &container_id);
         const subcontainer_agentclient_map &get_sc_ac_map() {return sc_ac_map;}
         subcontainer_agentclient_map *get_sc_ac_map_for_update() {return &sc_ac_map; }

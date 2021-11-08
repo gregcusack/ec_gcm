@@ -11,6 +11,16 @@ ec::Manager::Manager(int _manager_id, ec::ip4_addr gcm_ip, ec::ports_t controlle
     //init server
     initialize_tcp();
     initialize_udp();
+
+//    if(!init_agent_connections(agents)) {
+//        SPDLOG_CRITICAL("[ERROR Server] not all agents connected to server_id: {}! Exiting...");
+//        exit(EXIT_FAILURE);
+//    }
+
+//    run_quota_update();
+//    join_grpc_threads();
+
+
 #ifndef NDEBUG
     hotos_logs = std::unordered_map<SubContainer::ContainerId, std::ofstream *>();
 #endif
@@ -616,6 +626,56 @@ std::string ec::Manager::get_current_dir() {
     getcwd(buff, FILENAME_MAX);
     std::string current_working_dir(buff);
     return current_working_dir;
+}
+
+void ec::Manager::join_grpc_threads() {
+    SPDLOG_DEBUG("here");
+
+    AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
+    SPDLOG_DEBUG("here");
+
+    auto db_map = agent_clients_db->get_db_map();
+    SPDLOG_DEBUG("here");
+
+    for(auto const& [ip, client] : *db_map) {
+        SPDLOG_DEBUG("here");
+        client->get_thread()->join();
+    }
+}
+
+void ec::Manager::run_quota_update() {
+    AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
+    auto db_map = agent_clients_db->get_db_map();
+    SPDLOG_DEBUG("here");
+
+    for(auto const& [ip, client] : *db_map) {
+        SPDLOG_DEBUG("here");
+        client->updateContainerQuota(12, 10000000, "decr", 4);
+//        client->get_thread()->join();
+    }
+}
+
+bool ec::Manager::init_agent_connections(std::vector<Agent *> &agents) {
+    int sockfd, i;
+    struct sockaddr_in servaddr;
+    uint32_t num_connections = 0;
+
+    AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
+    for(const auto &ag : agents) {
+        auto grpc_addr = ag->get_ip().to_string() + ":" + std::to_string(ag->get_port());
+        auto* ac = new rpc::AgentClient(ag, grpc::CreateChannel(
+                grpc_addr, grpc::InsecureChannelCredentials()));
+//        if(ac->connectAgentGrpc()) {
+//            SPDLOG_ERROR("Are the agents up?");
+//            std::exit(EXIT_FAILURE);
+//        }
+        ac->updateContainerQuota(51, 10000000, "decr", 3);
+
+        SPDLOG_DEBUG("suhhh");
+        num_connections++;
+        agent_clients_db->add_agent_client(ac);
+    }
+    return num_connections == agent_clients_db->get_agent_clients_db_size();
 }
 
 

@@ -107,7 +107,7 @@ int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, u
 //        std::cout << "itr incr on sc inserted" << std::endl;
     }
     SPDLOG_DEBUG("here");
-    auto agent = _ec->get_corres_agent(*sc->get_c_id());
+    auto agent = _ec->get_corres_agent_client(*sc->get_c_id());
     if(!agent) {
         SPDLOG_CRITICAL("agent for container == NULL. cg_id: {}", *sc->get_c_id());
         std::exit(EXIT_FAILURE);
@@ -120,7 +120,7 @@ int64_t ec::ECAPI::set_sc_quota_syscall(ec::SubContainer *sc, uint64_t _quota, u
 }
 
 int64_t ec::ECAPI::sc_resize_memory_limit_in_pages(const ec::SubContainer::ContainerId& container_id, uint64_t new_mem_limit) {
-    auto agent = _ec->get_corres_agent(container_id);
+    auto agent = _ec->get_corres_agent_client(container_id);
     if(!agent) {
         SPDLOG_CRITICAL("agent is NULL");
         std::exit(EXIT_FAILURE);
@@ -172,7 +172,7 @@ void ec::ECAPI::sc_set_memory_limit_in_pages(ec::SubContainer::ContainerId sc_id
 
 uint64_t ec::ECAPI::__syscall_get_memory_usage_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
     SPDLOG_TRACE("getting memory usage in bytes from sc_id: {}", sc_id);
-    auto agent = _ec->get_corres_agent(sc_id);
+    auto agent = _ec->get_corres_agent_client(sc_id);
     if(!agent) {
         std::cerr << "[dbg] agent is NULL" << std::endl;
         std::exit(EXIT_FAILURE);
@@ -182,7 +182,7 @@ uint64_t ec::ECAPI::__syscall_get_memory_usage_in_bytes(const ec::SubContainer::
 
 
 uint64_t ec::ECAPI::__syscall_get_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
-    auto agent = _ec->get_corres_agent(sc_id);
+    auto agent = _ec->get_corres_agent_client(sc_id);
     if(!agent) {
         std::cerr << "[dbg] agent is NULL" << std::endl;
         std::exit(EXIT_FAILURE);

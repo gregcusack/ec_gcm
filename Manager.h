@@ -62,6 +62,10 @@ namespace ec {
         void serveGrpcDeployExport();
         ec::rpc::DeployerExportServiceImpl* getGrpcServer() {return grpcServer; }
 
+        bool init_agent_connections(std::vector<Agent *> &agents);
+        void join_grpc_threads();
+        void run_quota_update();
+
 
     private:
         int manager_id;

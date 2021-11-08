@@ -110,7 +110,7 @@ int ec::ElasticContainer::ec_delete_from_subcontainers_map(const SubContainer::C
 
 uint64_t ec::ElasticContainer::get_sc_memory_limit_in_bytes(const ec::SubContainer::ContainerId &sc_id) {
     uint64_t ret = 0;
-    auto *ac = get_corres_agent(sc_id);
+    auto *ac = get_corres_agent_client(sc_id);
     if(!ac) {
         SPDLOG_ERROR("NO AgentClient found for container id: {}. get_mem_limit_in_bytes()", sc_id);
         return 0;
@@ -131,7 +131,7 @@ uint64_t ec::ElasticContainer::get_sc_memory_limit_in_bytes(const ec::SubContain
 uint64_t ec::ElasticContainer::get_sc_memory_usage_in_bytes(const ec::SubContainer::ContainerId &sc_id,
                                                             const std::string &docker_id) {
     uint64_t ret = 0;
-    auto *ac = get_corres_agent(sc_id);
+    auto *ac = get_corres_agent_client(sc_id);
     if(!ac) {
         SPDLOG_ERROR("NO AgentClient found for container id: {}", sc_id);
         return 0;
@@ -165,8 +165,8 @@ ec::SubContainer &ec::ElasticContainer::get_subcontainer_back(const ec::SubConta
     return *itr->second->back();
 }
 
-ec::rpc::AgentClient *ec::ElasticContainer::get_corres_agent(const ec::SubContainer::ContainerId &container_id) {
-//    SPDLOG_DEBUG("in get_corres_agent");
+ec::rpc::AgentClient *ec::ElasticContainer::get_corres_agent_client(const ec::SubContainer::ContainerId &container_id) {
+//    SPDLOG_DEBUG("in get_corres_agent_client");
 //    if(sc_ac_map.empty()) {
 //        SPDLOG_ERROR("sc_ac_map is empty! badddd");
 //    }

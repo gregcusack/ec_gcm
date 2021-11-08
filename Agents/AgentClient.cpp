@@ -53,7 +53,6 @@ int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_
 //    SPDLOG_DEBUG("suh");
 //    return 0;
 ////    return call->reply.errorcode();
-    sleep(1);
 
     ec::rpc::containerUpdate::ContainerQuotaRequest request;
     request.set_cgroupid(int32_t(cgroup_id));
