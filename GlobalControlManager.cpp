@@ -115,16 +115,3 @@ void ec::GlobalControlManager::join_grpc_threads() {
 
 
 }
-
-void ec::GlobalControlManager::run_quota_update(uint32_t cgid, uint64_t new_quota, const std::string &change, uint32_t seq_num) {
-    AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
-    auto db_map = agent_clients_db->get_db_map();
-    SPDLOG_DEBUG("here");
-
-    for(auto const& [ip, client] : *db_map) {
-        SPDLOG_DEBUG("here");
-        client->updateContainerQuota(cgid, new_quota, change, seq_num);
-//        client->updateContainerQuota(12, 10000000, "decr", 4);
-//        client->get_thread()->join();
-    }}
-
