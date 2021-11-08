@@ -28,12 +28,12 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     sleep(30);
 
     std::cerr<<"[dbg] manager::just before running the app thread\n";
-//    std::thread application_thread(&ec::Manager::run, this);
+    std::thread application_thread(&ec::Manager::run, this);
     
     grpc_handler_thread.join();
     event_handler_thread_tcp.join();
     event_handler_thread_udp.join();
-//    application_thread.join();
+    application_thread.join();
 
     delete getGrpcServer();
 }
@@ -481,7 +481,7 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
 //    std::thread update_mem_limit_thread(&ec::Manager::determine_mem_limit_for_new_pod, this, sc, fd);
 //    update_mem_limit_thread.detach();
 
-//    determine_mem_limit_for_new_pod(sc, fd);
+    determine_mem_limit_for_new_pod(sc, fd);
 
     SPDLOG_INFO("total pods added to map: {}", ec_get_num_subcontainers());
     res->request += 1; //giveback (or send back)

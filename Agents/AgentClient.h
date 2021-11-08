@@ -53,7 +53,7 @@ namespace ec {
             void AsyncCompleteRpcGetMemUsageBytes();
             void AsyncCompleteRpcGetMemLimitBytes();
 
-            std::thread *get_thread() {return &thread_test;}
+            std::thread *get_thread() {return &thr_quota_;}
 
             void incr_test_cc() {
                 std::unique_lock<std::mutex> lk(test_cc_lock);
@@ -64,7 +64,7 @@ namespace ec {
 
             /// COPY CONSTRUCTOR
 //            AgentClient(const AgentClient &p1) {
-//                thread_test = p1.thread_test;
+//                thr_quota_ = p1.thr_quota_;
 //            }
 
 
@@ -75,7 +75,7 @@ namespace ec {
             std::mutex sendlock;
 
             struct AsyncClientCallQuota {
-//                ContainerQuotaRequest request;
+                ContainerQuotaRequest request;
                 ContainerQuotaReply reply;
                 grpc::ClientContext context;
                 grpc::Status status;
@@ -109,7 +109,7 @@ namespace ec {
 
             grpc::CompletionQueue cq_quota_, cq_resize_mem_, cq_get_mem_lim_, cq_get_mem_usage_;
 
-            std::thread thread_test;
+            std::thread thr_quota_, thr_resize_mem_, thr_get_mem_usage, thr_get_mem_limit;
             int test_cc;
             std::mutex test_cc_lock;
         };

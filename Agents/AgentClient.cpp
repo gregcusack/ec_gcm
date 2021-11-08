@@ -11,7 +11,11 @@ ec::rpc::AgentClient::AgentClient(const ec::Agent *_agent, const std::shared_ptr
     incr_test_cc();
     auto grpc_addr = agent->get_ip().to_string() + ":" + std::to_string(agent->get_port());
     SPDLOG_DEBUG("agentclient connection ip:port: {}", grpc_addr);
-    thread_test = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcQuota, this);
+    thr_quota_ = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcQuota, this);
+    thr_resize_mem_ = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcResizeMemLimitPages, this);
+    thr_get_mem_usage = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcGetMemUsageBytes, this);
+    thr_get_mem_limit = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcGetMemLimitBytes, this);
+
 }
 
 
@@ -23,55 +27,45 @@ int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_
     request.set_sequencenum(int32_t(seq_num));
 
     auto *call = new AsyncClientCallQuota;
+    call->request.set_sequencenum(int32_t(seq_num));
     call->response_reader =
             stub_->PrepareAsyncReqQuotaUpdate(&call->context, request, &cq_quota_);
     call->response_reader->StartCall();
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
-    return 0;
+
+    return call->status.error_code(); //always zero
+//    return 0;
 
 }
 
-
+/* TODO: Error handling here not great. updateContainerQuota() will always return 0 even if thread below
+ * fails since it's async. not exactly sure how to handle this
+ */
 void ec::rpc::AgentClient::AsyncCompleteRpcQuota() {
     void *got_tag;
     bool ok = false;
-    std::cout << "suh1" << std::endl;
     incr_test_cc();
     while(cq_quota_.Next(&got_tag, &ok)) {
         incr_test_cc();
-        std::cout << "suh2" << std::endl;
         auto *call = static_cast<AsyncClientCallQuota*>(got_tag);
-        std::cout << "suh3" << std::endl;
 
 //        GPR_ASSERT(ok);
 
         if(call->status.ok()) {
-//            SPDLOG_DEBUG("suh");
-//            SPDLOG_DEBUG("rx: {}", call->reply.cgroupid());
-            std::cout << "rx msg: " << call->reply.cgroupid() << ", " << call->reply.updatequota() << ", "
-                      << call->reply.errorcode() << ", " << call->reply.sequencenum() << std::endl;
-//            if(call->reply.sequencenum() != call->request.sequencenum()) {
-//                SPDLOG_ERROR("seq nums don't match in updateConatiner quota! tx, rx: {}, {}",
-//                             call->request.sequencenum(), call->reply.sequencenum());
-//            }
-
+            if(call->reply.sequencenum() != call->request.sequencenum()) {
+                SPDLOG_ERROR("seq nums don't match in updateConatiner quota! tx, rx: {}, {}",
+                             call->request.sequencenum(), call->reply.sequencenum());
+            }
         }
         else {
-            std::cout << "RPC failed" << std::endl;
+            SPDLOG_ERROR("RPC failed");
+            SPDLOG_ERROR("status: {}", call->status.error_message());
+            SPDLOG_ERROR("error code: {}", call->status.error_code());
+            SPDLOG_ERROR("details: {}", call->status.error_details());
         }
-//        else {
-//            SPDLOG_ERROR("RPC failed");
-//            SPDLOG_ERROR("status: {}", call->status.error_message());
-//            SPDLOG_ERROR("error code: {}", call->status.error_code());
-//            SPDLOG_ERROR("details: {}", call->status.error_details());
-//        }
-        std::cout << "suh4" << std::endl;
-
         delete call;
     }
 }
-
-
 
 int64_t ec::rpc::AgentClient::resizeMemoryLimitPages(uint32_t cgroup_id, uint64_t new_mem_limit) {
     ec::rpc::containerUpdate::ResizeMaxMemRequest txMsg;
@@ -82,8 +76,8 @@ int64_t ec::rpc::AgentClient::resizeMemoryLimitPages(uint32_t cgroup_id, uint64_
     call->response_reader = stub_->PrepareAsyncReqResizeMaxMem(&call->context, txMsg, &cq_resize_mem_);
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
-    return 0;
-//    return call->reply.errorcode();
+//    return 0;
+    return call->reply.errorcode();
 }
 
 int64_t ec::rpc::AgentClient::getMemoryUsageBytes(uint32_t cgroup_id) {
@@ -99,8 +93,8 @@ int64_t ec::rpc::AgentClient::getMemoryUsageBytes(uint32_t cgroup_id) {
     call->response_reader = stub_->PrepareAsyncReadMemUsage(&call->context, txMsg, &cq_get_mem_usage_);
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
-    return 0;
-//    return call->reply.memusage();
+//    return 0;
+    return call->reply.memusage();
 }
 
 int64_t ec::rpc::AgentClient::getMemoryLimitBytes(uint32_t cgroup_id) {
@@ -112,8 +106,8 @@ int64_t ec::rpc::AgentClient::getMemoryLimitBytes(uint32_t cgroup_id) {
     call->response_reader = stub_->PrepareAsyncReadMemLimit(&call->context, txMsg, &cq_get_mem_lim_);
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
-    return 0;
-//    return call->reply.memlimit();
+//    return 0;
+    return call->reply.memlimit();
 }
 
 
