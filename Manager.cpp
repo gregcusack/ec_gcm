@@ -12,15 +12,6 @@ ec::Manager::Manager(int _manager_id, ec::ip4_addr gcm_ip, ec::ports_t controlle
     initialize_tcp();
     initialize_udp();
 
-//    if(!init_agent_connections(agents)) {
-//        SPDLOG_CRITICAL("[ERROR Server] not all agents connected to server_id: {}! Exiting...");
-//        exit(EXIT_FAILURE);
-//    }
-
-//    run_quota_update();
-//    join_grpc_threads();
-
-
 #ifndef NDEBUG
     hotos_logs = std::unordered_map<SubContainer::ContainerId, std::ofstream *>();
 #endif
@@ -643,14 +634,14 @@ void ec::Manager::join_grpc_threads() {
     }
 }
 
-void ec::Manager::run_quota_update() {
+void ec::Manager::run_quota_update(uint32_t cgid, uint64_t new_quota, const std::string &change, uint32_t seq_num) {
     AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
     auto db_map = agent_clients_db->get_db_map();
     SPDLOG_DEBUG("here");
 
     for(auto const& [ip, client] : *db_map) {
         SPDLOG_DEBUG("here");
-        client->updateContainerQuota(12, 10000000, "decr", 4);
+        client->updateContainerQuota(cgid, new_quota, change, seq_num);
 //        client->get_thread()->join();
     }
 }
