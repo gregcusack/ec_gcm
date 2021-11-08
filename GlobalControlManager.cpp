@@ -97,30 +97,9 @@ bool ec::GlobalControlManager::init_agent_connections() {
         auto* ac = new rpc::AgentClient(ag, grpc::CreateChannel(
                 grpc_addr, grpc::InsecureChannelCredentials()));
 
-//        run_quota_update(53, 10000000, "decr", 3);
-//        ac->updateContainerQuota(53, 10000000, "decr", 3);
-//        auto m = managers.find(1)->second;
-//        m->run_quota_update();
-//        m->join_grpc_threads();
-
-//        SPDLOG_DEBUG("jeah1");
-//        ac->incr_test_cc();
-//        SPDLOG_DEBUG("jeah2");
-//        grpc_thread = std::thread(&rpc::AgentClient::AsyncCompleteRpcQuota, ac);
-//        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcQuota, ac);
-//        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcResizeMemLimitPages, ac);
-//        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcGetMemLimitBytes, ac);
-//        grpc_thread_vec.emplace_back(&rpc::AgentClient::AsyncCompleteRpcGetMemUsageBytes, ac);
-//        thr_quota_ = std::thread(&rpc::AgentClient::AsyncCompleteRpcQuota, ac);
-//        thr_resize_mem_ = std::thread(&rpc::AgentClient::AsyncCompleteRpcResizeMemLimitPages, ac);
-//        thr_get_mem_lim_ = std::thread(&rpc::AgentClient::AsyncCompleteRpcGetMemLimitBytes, ac);
-//        thr_get_mem_usage_ = std::thread(&rpc::AgentClient::AsyncCompleteRpcGetMemUsageBytes, ac);
-
-        SPDLOG_DEBUG("suhhh");
         num_connections++;
         agent_clients_db->add_agent_client(ac);
     }
-//    run_quota_update(53, 10000000, "decr", 3);
     return num_connections == agent_clients_db->get_agent_clients_db_size();
 
 }

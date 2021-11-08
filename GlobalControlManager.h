@@ -49,8 +49,6 @@ namespace ec {
         };
 
         bool init_agent_connections();
-        void run_quota_update(uint32_t cgid, uint64_t new_quota, const std::string &change, uint32_t seq_num);
-
         void join_grpc_threads();
 
     private:

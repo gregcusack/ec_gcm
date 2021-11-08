@@ -8,7 +8,6 @@ ec::rpc::AgentClient::AgentClient(const ec::Agent *_agent, const std::shared_ptr
     : stub_(ec::rpc::containerUpdate::ContainerUpdateHandler::NewStub(channel)), agent(_agent), test_cc(0) {
 
     SPDLOG_DEBUG("agentclient constructor");
-    incr_test_cc();
     auto grpc_addr = agent->get_ip().to_string() + ":" + std::to_string(agent->get_port());
     SPDLOG_DEBUG("agentclient connection ip:port: {}", grpc_addr);
     thr_quota_ = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcQuota, this);
@@ -44,9 +43,7 @@ int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_
 void ec::rpc::AgentClient::AsyncCompleteRpcQuota() {
     void *got_tag;
     bool ok = false;
-    incr_test_cc();
     while(cq_quota_.Next(&got_tag, &ok)) {
-        incr_test_cc();
         auto *call = static_cast<AsyncClientCallQuota*>(got_tag);
 
 //        GPR_ASSERT(ok);
