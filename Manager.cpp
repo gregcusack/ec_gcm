@@ -619,57 +619,6 @@ std::string ec::Manager::get_current_dir() {
     return current_working_dir;
 }
 
-void ec::Manager::join_grpc_threads() {
-    SPDLOG_DEBUG("here");
-
-    AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
-    SPDLOG_DEBUG("here");
-
-    auto db_map = agent_clients_db->get_db_map();
-    SPDLOG_DEBUG("here");
-
-    for(auto const& [ip, client] : *db_map) {
-        SPDLOG_DEBUG("here");
-        client->get_thread()->join();
-    }
-}
-
-void ec::Manager::run_quota_update(uint32_t cgid, uint64_t new_quota, const std::string &change, uint32_t seq_num) {
-    AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
-    auto db_map = agent_clients_db->get_db_map();
-    SPDLOG_DEBUG("here");
-
-    for(auto const& [ip, client] : *db_map) {
-        SPDLOG_DEBUG("here");
-        client->updateContainerQuota(cgid, new_quota, change, seq_num);
-//        client->get_thread()->join();
-    }
-}
-
-bool ec::Manager::init_agent_connections(std::vector<Agent *> &agents) {
-    int sockfd, i;
-    struct sockaddr_in servaddr;
-    uint32_t num_connections = 0;
-
-    AgentClientDB* agent_clients_db = AgentClientDB::get_agent_client_db_instance();
-    for(const auto &ag : agents) {
-        auto grpc_addr = ag->get_ip().to_string() + ":" + std::to_string(ag->get_port());
-        auto* ac = new rpc::AgentClient(ag, grpc::CreateChannel(
-                grpc_addr, grpc::InsecureChannelCredentials()));
-//        if(ac->connectAgentGrpc()) {
-//            SPDLOG_ERROR("Are the agents up?");
-//            std::exit(EXIT_FAILURE);
-//        }
-        ac->updateContainerQuota(51, 10000000, "decr", 3);
-
-        SPDLOG_DEBUG("suhhh");
-        num_connections++;
-        agent_clients_db->add_agent_client(ac);
-    }
-    return num_connections == agent_clients_db->get_agent_clients_db_size();
-}
-
-
 #endif
 
 

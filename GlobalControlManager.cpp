@@ -96,10 +96,7 @@ bool ec::GlobalControlManager::init_agent_connections() {
         auto grpc_addr = ag->get_ip().to_string() + ":" + std::to_string(ag->get_port());
         auto* ac = new rpc::AgentClient(ag, grpc::CreateChannel(
                 grpc_addr, grpc::InsecureChannelCredentials()));
-        if(ac->connectAgentGrpc()) {
-            SPDLOG_ERROR("Are the agents up?");
-            std::exit(EXIT_FAILURE);
-        }
+
 //        run_quota_update(53, 10000000, "decr", 3);
 //        ac->updateContainerQuota(53, 10000000, "decr", 3);
 //        auto m = managers.find(1)->second;
