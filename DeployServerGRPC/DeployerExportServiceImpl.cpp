@@ -259,7 +259,7 @@ int ec::rpc::DeployerExportServiceImpl::deleteFromDeployedPodsMap(const ec::SubC
         return -1;
     }
     return 0;
-}
+} 
 
 int ec::rpc::DeployerExportServiceImpl::deleteFromDockerIdScMap(const std::string &docker_id) {
     std::unique_lock<std::mutex> lk(dockId_sc_lock);
