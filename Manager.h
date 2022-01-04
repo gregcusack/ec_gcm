@@ -29,13 +29,13 @@
 #define _SAFE_MARGIN_BYTES_ 52428800 //50MiB = 20 * 1024 * 1024 = 12800 pages
 #define _MAX_CPU_LOSS_IN_NS_ 1000
 #define _MAX_UNUSED_RT_IN_NS_ 5000000
-#define BASE_GRPC_PORT 4447
+//#define BASE_GRPC_PORT 4447
 
 namespace ec {
     class Manager : public ECAPI, public Server {
     public:
         //TODO: initialize_tcp ECAPI and SERVER here?
-        Manager(int server_counts, ip4_addr gcm_ip, ports_t controller_ports, std::vector<Agent *> &agents);
+        Manager(int server_counts, ip4_addr gcm_ip, ports_t controller_ports, std::vector<Agent *> &agents, int _grpc_port);
 
         int handle_cpu_usage_report(const msg_t *req, msg_t *res) override;
 
@@ -72,7 +72,7 @@ namespace ec {
 
         ec::rpc::DeployerExportServiceImpl *grpcServer;
         std::string deploy_service_ip;
-        int grpc_port;
+        const int grpc_port;
 
         void determine_mem_limit_for_new_pod(SubContainer *sc, int clifd);
 

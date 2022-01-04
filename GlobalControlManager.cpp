@@ -31,14 +31,14 @@ ec::GlobalControlManager::GlobalControlManager(std::string ip_addr, uint16_t por
 }
 
 
-uint32_t ec::GlobalControlManager::create_manager() {
+uint32_t ec::GlobalControlManager::create_manager(int grpc_port) {
     if(managers.find(manager_counts) != managers.end()) {
         SPDLOG_ERROR("Error allocating new Server. Server IDs not correct");
         return 0;
     }
 
     auto ports = controller_ports[manager_counts - 1];
-    mngr = new Manager(manager_counts, gcm_ip, ports, agents);
+    mngr = new Manager(manager_counts, gcm_ip, ports, agents, grpc_port);
     managers.insert({manager_counts, mngr});
 
     manager_counts++;

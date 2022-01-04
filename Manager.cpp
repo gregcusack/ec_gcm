@@ -4,10 +4,10 @@
 
 #include "Manager.h"
 
-ec::Manager::Manager(int _manager_id, ec::ip4_addr gcm_ip, ec::ports_t controller_ports, std::vector<Agent *> &agents)
+ec::Manager::Manager(int _manager_id, ec::ip4_addr gcm_ip, ec::ports_t controller_ports, std::vector<Agent *> &agents, int _grpc_port)
         : Server(_manager_id, gcm_ip, controller_ports, agents), ECAPI(_manager_id), manager_id(_manager_id),
-          syscall_sequence_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {
-    grpc_port = BASE_GRPC_PORT + _manager_id - 1; //4447 for manager_id 1, 4448 for manager_id, etc
+          syscall_sequence_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr), grpc_port(_grpc_port) {
+//    grpc_port = BASE_GRPC_PORT + _manager_id - 1; //4447 for manager_id 1, 4448 for manager_id, etc
     //init server
     initialize_tcp();
     initialize_udp();

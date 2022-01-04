@@ -36,7 +36,7 @@ namespace ec {
 
         void run(const std::string &app_name, const std::string &_gcm_ip);
 
-        uint32_t create_manager();
+        uint32_t create_manager(int grpc_port);
 
         const manager_map& get_managers() {return managers;}
         const Manager& get_manager(int manager_id) const;

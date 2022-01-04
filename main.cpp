@@ -15,6 +15,7 @@
 #define GCM_PORT        8888             //Not sure if we need a port here tbh
 #define BASE_TCP_PORT   5000
 #define BASE_UDP_PORT   6000
+//#define BASE_GRPC_PORT  4447
 
 /* LOG LEVELS
  *  SPDLOG_TRACE("Some trace message with param {}", 42);
@@ -37,12 +38,17 @@ int main(int argc, char* argv[]){
 #endif
 
     // Check the number of parameters
-    if (argc < 2) {
+    if (argc < 6) {
         // Tell the user how to run the program
-        SPDLOG_ERROR("Usage: {} <path-to-json-file>", argv[0]);
+        SPDLOG_ERROR("Usage: {} <path-to-json-file> <gcm_port> <tcp_port> <udp_port> <grpc_port>", argv[0]);
         return 1;
     }
     const std::string &jsonFile = argv[1];
+    auto gcm_port = std::stoi(argv[2]);
+    auto tcp_port =std::stoi(argv[3]);
+    auto udp_port = std::stoi(argv[4]);
+    auto grpc_port = std::stoi(argv[5]);
+
 
     int status;
     ec::Facade::JSONFacade::json jsonFacade;
@@ -58,16 +64,12 @@ int main(int argc, char* argv[]){
     auto num_tenants = jsonFacade.getNumTenants();
     std::vector<ec::ports_t> controller_ports;
 
-    for(int i=0; i < num_tenants; i++) {
-        auto tcp_port = BASE_TCP_PORT + i;
-        auto udp_port = BASE_UDP_PORT + i;
-        controller_ports.emplace_back(tcp_port, udp_port);
-    }
+    controller_ports.emplace_back(tcp_port, udp_port);
 
-    auto *gcm = new ec::GlobalControlManager(gcm_ip, GCM_PORT, agent_ips, controller_ports);
+    auto *gcm = new ec::GlobalControlManager(gcm_ip, gcm_port, agent_ips, controller_ports);
 
     for(const auto &i : controller_ports) {
-        gcm->create_manager();
+        gcm->create_manager(grpc_port);
     }
     SPDLOG_INFO("[dbg] num managers: {}", gcm->get_managers().size());
 
