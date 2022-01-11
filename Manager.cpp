@@ -211,7 +211,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     }
     else if(thr_mean >= 0.1 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
 //        std::cout << "here5. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
-        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(10 * thr_mean * ec_get_cpu_slice()));
+        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(20 * thr_mean * ec_get_cpu_slice()));
         if(extra_rt > 0) {
             updated_quota = rx_quota + extra_rt;
             ret = set_sc_quota_syscall(sc, updated_quota, syscall_seq_num);
@@ -581,7 +581,7 @@ void ec::Manager::serveGrpcDeployExport() {
 //TODO: this should be separated out into own file
 [[noreturn]] void ec::Manager::run() {
 
-    while(ec_get_num_subcontainers() < 32) {
+    while(ec_get_num_subcontainers() < 68) {
         sleep(5);
     }
 
