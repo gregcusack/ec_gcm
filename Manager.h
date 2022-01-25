@@ -19,6 +19,7 @@
 #include <thread>
 #include <unistd.h>
 #include "types/ports.h"
+#include <unordered_map>
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
@@ -73,6 +74,9 @@ namespace ec {
         ec::rpc::DeployerExportServiceImpl *grpcServer;
         std::string deploy_service_ip;
         int grpc_port;
+
+        void check_for_idle_containers();
+
 
         void determine_mem_limit_for_new_pod(SubContainer *sc, int clifd);
 

@@ -25,6 +25,8 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     ec::ECAPI::create_ec();
     grpcServer = new rpc::DeployerExportServiceImpl(_ec, cv, cv_dock, cv_mtx, cv_mtx_dock,sc_map_lock);
     std::thread grpc_handler_thread(&ec::Manager::serveGrpcDeployExport, this);
+    std::thread idle_pod_handler(&ec::Manager::check_for_idle_containers, this);
+
     sleep(30);
 
     std::cerr<<"[dbg] manager::just before running the app thread\n";
@@ -37,6 +39,18 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
 
     delete getGrpcServer();
 }
+
+void ec::Manager::check_for_idle_containers() {
+    while(true) {
+        auto now = std::chrono::high_resolution_clock::now();
+        auto sc_map = _ec->get_subcontainers_map_for_update();
+        for(auto &[sc_id, sc] : *sc_map) {
+            auto idle = sc->back()->check_if_idle(now);
+            std::cout << "sc_id in idle check. (sc_id, idle?) (" << sc_id << ", " << idle << ")" << std::endl;
+        }
+    }
+}
+
 
 int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     if (req == nullptr || res == nullptr) {
@@ -52,6 +66,8 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         SPDLOG_ERROR("sc is NULL!");
         return __ALLOC_SUCCESS__;
     }
+    auto now = std::chrono::high_resolution_clock::now();
+    sc->update_last_seen_ts(now);
     sc->incr_cpustat_seq_num();
     auto rx_cpustat_seq_num = req->cpustat_seq_num;
     auto rx_quota = req->rsrc_amnt;
@@ -614,6 +630,7 @@ void ec::Manager::serveGrpcDeployExport() {
         
     }
 }
+
 
 #ifndef NDEBUG
 std::string ec::Manager::get_current_dir() {
