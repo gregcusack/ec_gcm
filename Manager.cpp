@@ -130,6 +130,11 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
     auto percent_decr = (double)((int64_t)rx_quota-((int64_t)rx_quota - (int64_t)rt_remaining)) / (double)rx_quota;
 
+    if(percent_decr == (double)1) {
+        std::cout << "percent decr == 1" << std::endl;
+        std::cout << "(rx_quota, rt_remaining): (" << rx_quota << ", " << rt_remaining << ")" << std::endl;
+    }
+
     if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
 //        std::cout << "here1. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
         uint64_t to_sub;
@@ -211,7 +216,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     }
     else if(thr_mean >= 0.1 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
 //        std::cout << "here5. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
-        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(20 * thr_mean * ec_get_cpu_slice()));
+        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(10 * thr_mean * ec_get_cpu_slice()));
         if(extra_rt > 0) {
             updated_quota = rx_quota + extra_rt;
             ret = set_sc_quota_syscall(sc, updated_quota, syscall_seq_num);
