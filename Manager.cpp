@@ -194,8 +194,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
         }
     }
-
-    if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
+    else if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
 //        std::cout << "here1. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
         uint64_t to_sub;
         uint64_t amnt_share_over = rx_quota - ec_get_fair_cpu_share();
