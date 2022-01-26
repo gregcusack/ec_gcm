@@ -41,18 +41,38 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
 }
 
 void ec::Manager::check_for_idle_containers() {
+//    int i=0;
+    uint64_t min_quota = 30000000;
+    uint32_t idle_container_syscall_seq_num = 0;
+
     while(true) {
         auto now = std::chrono::high_resolution_clock::now();
         auto sc_map = _ec->get_subcontainers_map_for_update();
         for(auto &[sc_id, sc] : *sc_map) {
             auto idle = sc->back()->check_if_idle(now);
             if(idle) {
+                uint64_t idle_quota = sc->back()->get_quota();
                 std::cout << "sc_id in idle check. (sc_id, idle?) (" << sc_id << ", " << idle << ")" << std::endl;
-                std::cout << "container quota: " << sc->back()->get_quota() / 1000 / 1000 << "% of core" << std::endl;
+                std::cout << "container quota: " << idle_quota / 1000 / 1000 << "% of core" << std::endl;
+                if (idle_quota != min_quota) { // only update containers that have > 30% of core
+                    int ret = set_sc_quota_syscall(sc->back(), min_quota,
+                                                   idle_container_syscall_seq_num); //give back what was used + 5ms
+                    if (ret) {
+                        SPDLOG_ERROR("Can't read from socket to resize quota (decr). ret: {}", ret);
+                    } else {
+                        sc->back()->set_quota_flag(true);
+                        ec_incr_unallocated_rt(idle_quota - min_quota); //unalloc_rt <-- old quota - new quota
+                        sc->back()->set_quota(min_quota);
+                        sc->back()->get_cpu_stats()->flush();
+                        ec_decr_alloc_rt(idle_quota - min_quota);
+                    }
+                    idle_container_syscall_seq_num++;
+                }
             }
         }
         std::cout << "------------------" << std::endl;
-        sleep(5);
+        sleep(2);
+//        i++;
     }
 }
 
