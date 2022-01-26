@@ -54,7 +54,7 @@ void ec::Manager::check_for_idle_containers() {
                 uint64_t idle_quota = sc->back()->get_quota();
                 std::cout << "sc_id in idle check. (sc_id, idle?) (" << sc_id << ", " << idle << ")" << std::endl;
                 std::cout << "container quota: " << idle_quota / 1000 / 1000 << "% of core" << std::endl;
-                if (idle_quota != min_quota and false) { // only update containers that have > 30% of core
+                if (idle_quota != min_quota) { // only update containers that have > 30% of core
                     int ret = set_sc_quota_syscall(sc->back(), min_quota,
                                                    idle_container_syscall_seq_num); //give back what was used + 5ms
                     if (ret) {
@@ -87,11 +87,15 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //    cpulock.lock();
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
     auto sc = ec_get_sc_for_update(sc_id);
+    bool idle_flag = false;
     if (!sc) {
         SPDLOG_ERROR("sc is NULL!");
         return __ALLOC_SUCCESS__;
     }
     auto now = std::chrono::high_resolution_clock::now();
+    if(sc->check_if_idle(now)) {
+        idle_flag = true;
+    }
     sc->update_last_seen_ts(now);
 //    std::cout << "rx update from sc_id: " << sc_id << std::endl;
 
@@ -173,9 +177,22 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
     auto percent_decr = (double)((int64_t)rx_quota-((int64_t)rx_quota - (int64_t)rt_remaining)) / (double)rx_quota;
 
-    if(percent_decr == (double)1) {
-        std::cout << "percent decr == 1" << std::endl;
-        std::cout << "(rx_quota, rt_remaining): (" << rx_quota << ", " << rt_remaining << ")" << std::endl;
+    if(idle_flag) {
+        uint64_t new_quota = 100000000; //1 core
+        auto extra_rt = new_quota - rx_quota;
+        if(extra_rt > 0) {
+            ret = set_sc_quota_syscall(sc, new_quota, syscall_seq_num);
+            if(ret) {
+                SPDLOG_ERROR("Can't read from socket to resize quota (incr). ret: {}", ret);
+            }
+            else {
+                sc->set_quota_flag(true);
+                ec_decr_unallocated_rt(extra_rt);
+                sc->set_quota(new_quota);
+                sc->get_cpu_stats()->flush();
+                ec_incr_alloc_rt(extra_rt);
+            }
+        }
     }
 
     if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
