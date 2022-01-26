@@ -177,8 +177,9 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
     auto percent_decr = (double)((int64_t)rx_quota-((int64_t)rx_quota - (int64_t)rt_remaining)) / (double)rx_quota;
 
-    if(idle_flag) {
-        uint64_t new_quota = 100000000; //1 core
+    if(idle_flag && ec_get_cpu_unallocated_rt() > 0) {
+        uint64_t one_core = 100000000;         //1 core
+        uint64_t new_quota = std::min(ec_get_cpu_unallocated_rt(), one_core);
         auto extra_rt = new_quota - rx_quota;
         if(extra_rt > 0) {
             ret = set_sc_quota_syscall(sc, new_quota, syscall_seq_num);
