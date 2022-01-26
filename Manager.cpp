@@ -48,7 +48,7 @@ void ec::Manager::check_for_idle_containers() {
             auto idle = sc->back()->check_if_idle(now);
             if(idle) {
                 std::cout << "sc_id in idle check. (sc_id, idle?) (" << sc_id << ", " << idle << ")" << std::endl;
-                std::cout << "container quota: " << sc->back()->get_quota() << std::endl;
+                std::cout << "container quota: " << sc->back()->get_quota() / 1000 << std::endl;
             }
         }
         std::cout << "------------------" << std::endl;
