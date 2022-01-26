@@ -54,7 +54,7 @@ void ec::Manager::check_for_idle_containers() {
                 uint64_t idle_quota = sc->back()->get_quota();
                 std::cout << "sc_id in idle check. (sc_id, idle?) (" << sc_id << ", " << idle << ")" << std::endl;
                 std::cout << "container quota: " << idle_quota / 1000 / 1000 << "% of core" << std::endl;
-                if (idle_quota != min_quota) { // only update containers that have > 30% of core
+                if (idle_quota != min_quota and false) { // only update containers that have > 30% of core
                     int ret = set_sc_quota_syscall(sc->back(), min_quota,
                                                    idle_container_syscall_seq_num); //give back what was used + 5ms
                     if (ret) {
