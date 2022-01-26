@@ -46,8 +46,8 @@ void ec::Manager::check_for_idle_containers() {
         auto sc_map = _ec->get_subcontainers_map_for_update();
         for(auto &[sc_id, sc] : *sc_map) {
             auto idle = sc->back()->check_if_idle(now);
-            std::cout << "sc_id in idle check. (sc_id, idle?) (" << sc_id << ", " << idle << ")" << std::endl;
             if(idle) {
+                std::cout << "sc_id in idle check. (sc_id, idle?) (" << sc_id << ", " << idle << ")" << std::endl;
                 std::cout << "container quota: " << sc->back()->get_quota() << std::endl;
             }
         }
