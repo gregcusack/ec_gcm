@@ -47,6 +47,9 @@ void ec::Manager::check_for_idle_containers() {
         for(auto &[sc_id, sc] : *sc_map) {
             auto idle = sc->back()->check_if_idle(now);
             std::cout << "sc_id in idle check. (sc_id, idle?) (" << sc_id << ", " << idle << ")" << std::endl;
+            if(idle) {
+                std::cout << "container quota: " << sc->back()->get_quota() << std::endl;
+            }
         }
         std::cout << "------------------" << std::endl;
         sleep(5);
@@ -70,7 +73,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     }
     auto now = std::chrono::high_resolution_clock::now();
     sc->update_last_seen_ts(now);
-    std::cout << "rx update from sc_id: " << sc_id << std::endl;
+//    std::cout << "rx update from sc_id: " << sc_id << std::endl;
 
     sc->incr_cpustat_seq_num();
     auto rx_cpustat_seq_num = req->cpustat_seq_num;
