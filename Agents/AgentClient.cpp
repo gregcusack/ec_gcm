@@ -10,7 +10,7 @@ ec::rpc::AgentClient::AgentClient(const ec::Agent *_agent, const std::shared_ptr
     auto grpc_addr = agent->get_ip().to_string() + ":" + std::to_string(agent->get_port());
     SPDLOG_DEBUG("agentclient connection ip:port: {}", grpc_addr);
     thr_quota_ = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcQuota, this);
-    thr_resize_mem_ = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcResizeMemLimitPages, this);
+//    thr_resize_mem_ = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcResizeMemLimitPages, this);
     thr_get_mem_usage = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcGetMemUsageBytes, this);
     thr_get_mem_limit = std::thread(&ec::rpc::AgentClient::AsyncCompleteRpcGetMemLimitBytes, this);
 
@@ -31,6 +31,9 @@ int ec::rpc::AgentClient::updateContainerQuota(uint32_t cgroup_id, uint64_t new_
     call->response_reader->StartCall();
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
+
+//    SPDLOG_INFO("error code resize quota: {}", call->reply.errorcode());
+//    SPDLOG_INFO("cgroup_id for resize quota: {}", call->reply.cgroupid());
     return call->status.error_code(); //always zero
 //    return 0;
 
@@ -74,7 +77,37 @@ int64_t ec::rpc::AgentClient::resizeMemoryLimitPages(uint32_t cgroup_id, uint64_
     call->response_reader->StartCall();
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
-//    return 0;
+
+    void *got_tag;
+    bool ok = false;
+    while(cq_resize_mem_.Next(&got_tag, &ok)) {
+//        auto *call = static_cast<AsyncClientCallResizeMemLimitPages*>(got_tag);
+
+//        GPR_ASSERT(ok);
+
+        if(call->status.ok()) {
+//            SPDLOG_DEBUG("rx: {}", call->reply.message());
+            SPDLOG_INFO("resizeMemoryLimitPages rx (new): {}, {}", call->reply.cgroupid(), call->reply.errorcode());
+            int32_t ret = call->reply.errorcode();
+            delete call;
+            return ret;
+        } else {
+            SPDLOG_ERROR("RPC failed");
+            SPDLOG_ERROR("status: {}", call->status.error_message());
+            SPDLOG_ERROR("error code: {}", call->status.error_code());
+            SPDLOG_ERROR("details: {}", call->status.error_details());
+        }
+        delete call;
+    }
+
+//    GPR_ASSERT(cq_resize_mem_.Next(&got_tag, &ok));
+//
+//    // Verify that the result from "cq" corresponds, by its tag, our previous
+//    // request.
+//    GPR_ASSERT(got_tag == (void*)call);
+    SPDLOG_INFO("error code resize max mem: {}", call->reply.errorcode());
+    SPDLOG_INFO("cgroup_id for resizemaxmem: {}", call->reply.cgroupid());
+
     return call->reply.errorcode();
 }
 
@@ -108,32 +141,33 @@ int64_t ec::rpc::AgentClient::getMemoryLimitBytes(uint32_t cgroup_id) {
     call->response_reader->StartCall();
     call->response_reader->Finish(&call->reply, &call->status, (void*)call);
 
-//    return 0;
+
     return call->reply.memlimit();
 }
 
 
-void ec::rpc::AgentClient::AsyncCompleteRpcResizeMemLimitPages() {
-    void *got_tag;
-    bool ok = false;
-
-    while(cq_resize_mem_.Next(&got_tag, &ok)) {
-        auto *call = static_cast<AsyncClientCallResizeMemLimitPages*>(got_tag);
-
-//        GPR_ASSERT(ok);
-
-        if(call->status.ok()) {
-//            SPDLOG_DEBUG("rx: {}", call->reply.message());
-            SPDLOG_DEBUG("resizeMemoryLimitPages rx: {}, {}", call->reply.cgroupid(), call->reply.errorcode());
-        } else {
-            SPDLOG_ERROR("RPC failed");
-            SPDLOG_ERROR("status: {}", call->status.error_message());
-            SPDLOG_ERROR("error code: {}", call->status.error_code());
-            SPDLOG_ERROR("details: {}", call->status.error_details());
-        }
-        delete call;
-    }
-}
+//void ec::rpc::AgentClient::AsyncCompleteRpcResizeMemLimitPages() {
+//    void *got_tag;
+//    bool ok = false;
+//
+//    while(cq_resize_mem_.Next(&got_tag, &ok)) {
+//        auto *call = static_cast<AsyncClientCallResizeMemLimitPages*>(got_tag);
+//
+////        GPR_ASSERT(ok);
+//
+//        if(call->status.ok()) {
+////            SPDLOG_DEBUG("rx: {}", call->reply.message());
+//            SPDLOG_INFO("resizeMemoryLimitPages rx (old): {}, {}", call->reply.cgroupid(), call->reply.errorcode());
+////            return call->reply.errorcode();
+//        } else {
+//            SPDLOG_ERROR("RPC failed");
+//            SPDLOG_ERROR("status: {}", call->status.error_message());
+//            SPDLOG_ERROR("error code: {}", call->status.error_code());
+//            SPDLOG_ERROR("details: {}", call->status.error_details());
+//        }
+//        delete call;
+//    }
+//}
 
 void ec::rpc::AgentClient::AsyncCompleteRpcGetMemUsageBytes() {
     void *got_tag;
