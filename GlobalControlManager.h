@@ -40,6 +40,7 @@ namespace ec {
 
         const manager_map& get_managers() {return managers;}
         const Manager& get_manager(int manager_id) const;
+        std::thread* get_thread() {return &grpc_thread;}
 
         struct app_thread_args {
             app_thread_args()              = default;
@@ -48,6 +49,7 @@ namespace ec {
         };
 
         bool init_agent_connections();
+        void join_grpc_threads();
 
     private:
         ip4_addr                gcm_ip;
@@ -63,6 +65,10 @@ namespace ec {
 
         //API
         Manager* mngr;
+//        std::vector<std::thread> grpc_thread_vec;
+        std::thread grpc_thread;
+
+//        std::thread thr_quota_, thr_resize_mem_, thr_get_mem_lim_, thr_get_mem_usage_;
 
     };
 

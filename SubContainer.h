@@ -12,6 +12,7 @@
 #include "stats/local/cpu_l.h"
 #include "stats/local/mem_l.h"
 #include "spdlog/spdlog.h"
+#include <chrono>
 
 namespace ec {
     /*!
@@ -38,7 +39,7 @@ namespace ec {
             friend std::ostream& operator<<(std::ostream& os, const ContainerId& rhs) {
                 os  << "cgroup_id: " << rhs.cgroup_id << ", "
                     << "server_ip: " << rhs.server_ip << ", "
-                    << "dock_id: " << rhs.docker_id;// << ", "
+                    << "dock_id: " << rhs.docker_id;
                 return os;
             };
         };
@@ -84,6 +85,10 @@ namespace ec {
         int get_quota_mismatch_counter();
         void reset_quota_mismatch_counter();
 
+        bool check_if_idle(std::chrono::system_clock::time_point now);
+        void update_last_seen_ts(std::chrono::system_clock::time_point now);
+
+
     private:
         ContainerId c_id;
         int fd;
@@ -93,10 +98,9 @@ namespace ec {
         local::stats::mem mem;
         std::mutex lockcpu, lock_seqnum, lock_mismatch;
         int quota_mismatch_counter;
-
         int counter;
 
-
+        std::chrono::system_clock::time_point last_seen_ts;
     };
 
 

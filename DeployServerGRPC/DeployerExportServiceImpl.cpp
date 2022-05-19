@@ -196,8 +196,9 @@ void ec::rpc::DeployerExportServiceImpl::spinUpDockerIdThread(const ec::SubConta
 
     //todo: delete this after we match
     auto *args = new matchingThreadArgs(sc_id, docker_id);
-    std::thread match_sc_id_thread(&DeployerExportServiceImpl::scIdToDockerIdMatcherThread, this, (void*)args);
-    match_sc_id_thread.detach();
+    scIdToDockerIdMatcherThread(args);
+//    std::thread match_sc_id_thread(&DeployerExportServiceImpl::scIdToDockerIdMatcherThread, this, (void*)args);
+//    match_sc_id_thread.detach();
 }
 
 void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* arguments) {

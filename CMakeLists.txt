@@ -107,8 +107,12 @@ set(GCM_CORE
 add_executable(ec_gcm main.cpp
         ${GCM_CORE} types/ports.h)
 
+add_executable(grpc_async_test tests/grpc_test_async.cpp
+        ${GCM_CORE} )
+
 add_executable(deploy_test tests/grpc_test.cpp
         ${GCM_CORE})
+
 
 add_executable(tester tests/run_test.cpp
         types/msg.cpp                   types/msg.h
@@ -119,8 +123,10 @@ add_executable(loop_test tests/run_continuous.cpp
         types/msg.cpp                   types/msg.h
         om.h)
 
+
 target_link_libraries(ec_gcm PRIVATE ${PTHREAD_LIB} -lssl -lcrypto cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB} spdlog::spdlog)
 target_link_libraries(deploy_test PRIVATE ${PTHREAD_LIB} -lssl -lcrypto  cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB} spdlog::spdlog)
+target_link_libraries(grpc_async_test PRIVATE ${PTHREAD_LIB} -lssl -lcrypto -lgrpc cpprestsdk::cpprest ${Boost_SYSTEM_LIBRARY} proto ${PROTOBUF_LIBRARY} ${GRPC_LIB} spdlog::spdlog)
 
 if(DEFINED WITH_DEBUG)
     if(WITH_DEBUG MATCHES DEBUG OR WITH_DEBUG MATCHES debug)

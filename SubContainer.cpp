@@ -6,13 +6,15 @@
 
 
 ec::SubContainer::SubContainer(uint32_t cgroup_id, uint32_t ip, int _fd)
-    : fd(_fd), cpu(local::stats::cpu()), mem(local::stats::mem()), inserted(false), quota_mismatch_counter(0) {
+    : fd(_fd), cpu(local::stats::cpu()), mem(local::stats::mem()), inserted(false), quota_mismatch_counter(0),
+      last_seen_ts(std::chrono::high_resolution_clock::now())  {
     c_id = ContainerId(cgroup_id, ip4_addr::from_net(ip));
     counter = 0;
 }
 
 ec::SubContainer::SubContainer(uint32_t cgroup_id, uint32_t ip, int _fd, uint64_t _quota, uint32_t _nr_throttled)
-    : fd(_fd), mem(local::stats::mem()), inserted(false), quota_mismatch_counter(0) {
+    : fd(_fd), mem(local::stats::mem()), inserted(false), quota_mismatch_counter(0),
+      last_seen_ts(std::chrono::high_resolution_clock::now())  {
 
     SPDLOG_TRACE("creating sc with cg_id, quota, throttle: {}, {}, {}", cgroup_id, _quota, _nr_throttled);
     c_id = ContainerId(cgroup_id, ip4_addr::from_net(ip));
@@ -73,7 +75,21 @@ void ec::SubContainer::reset_quota_mismatch_counter() {
     quota_mismatch_counter = 0;
 }
 
+bool ec::SubContainer::check_if_idle(std::chrono::system_clock::time_point now) {
+    auto time_diff = std::chrono::duration_cast<std::chrono::microseconds>(now - last_seen_ts).count();
+    if (time_diff > 2000000) { //# 2 seconds
+        return true;
+    }
+    return false;
+}
+
+void ec::SubContainer::update_last_seen_ts(std::chrono::system_clock::time_point now) {
+    last_seen_ts = now;
+}
+
+
 bool ec::SubContainer::ContainerId::operator==(const ec::SubContainer::ContainerId &other_) const {
     return  cgroup_id   == other_.cgroup_id
             && server_ip == other_.server_ip;
 }
+

@@ -19,9 +19,11 @@
 #include "containerUpdateGrpc.pb.h"
 #include "containerUpdateGrpc.grpc.pb.h"
 #include <exception>
+#include <grpc/support/log.h>
 
 
 using namespace google::protobuf::io;
+using namespace ec::rpc::containerUpdate;
 
 
 #define __BUFFSIZE__ 1024
@@ -30,7 +32,7 @@ namespace ec {
     namespace rpc {
         class AgentClient {
         public:
-            AgentClient(const Agent *_agent);
+            AgentClient(const Agent *_agent, const std::shared_ptr<grpc::Channel>& channel);
 
             int connectAgentGrpc();
 
@@ -45,18 +47,71 @@ namespace ec {
             int64_t getMemoryUsageBytes(uint32_t cgroup_id);
             int64_t getMemoryLimitBytes(uint32_t cgroup_id);
 
+            //TODO: this should be template class or whatever
+            void AsyncCompleteRpcQuota();
+            void AsyncCompleteRpcResizeMemLimitPages();
+            void AsyncCompleteRpcGetMemUsageBytes();
+            void AsyncCompleteRpcGetMemLimitBytes();
+
+            std::thread *get_thread() {return &thr_quota_;}
+
+            void incr_test_cc() {
+                std::unique_lock<std::mutex> lk(test_cc_lock);
+                int old = test_cc;
+                test_cc++;
+                SPDLOG_DEBUG("test_cc: ({},{})", old, test_cc);
+            }
+
+            /// COPY CONSTRUCTOR
+//            AgentClient(const AgentClient &p1) {
+//                thr_quota_ = p1.thr_quota_;
+//            }
+
+
 
         private:
             const Agent *agent;
 //            int sockfd_new;
             std::mutex sendlock;
 
+            struct AsyncClientCallQuota {
+                ContainerQuotaRequest request;
+                ContainerQuotaReply reply;
+                grpc::ClientContext context;
+                grpc::Status status;
+                std::unique_ptr<grpc::ClientAsyncResponseReader<ContainerQuotaReply>> response_reader;
+            };
+
+            struct AsyncClientCallResizeMemLimitPages {
+                ResizeMaxMemReply reply;
+                grpc::ClientContext context;
+                grpc::Status status;
+                std::unique_ptr<grpc::ClientAsyncResponseReader<ResizeMaxMemReply>> response_reader;
+            };
+
+            struct AsyncClientCallGetMemUsageBytes {
+                ReadMemUsageReply reply;
+                grpc::ClientContext context;
+                grpc::Status status;
+                std::unique_ptr<grpc::ClientAsyncResponseReader<ReadMemUsageReply>> response_reader;
+            };
+
+            struct AsyncClientCallGetMemLimitBytes {
+                ReadMemLimitReply reply;
+                grpc::ClientContext context;
+                grpc::Status status;
+                std::unique_ptr<grpc::ClientAsyncResponseReader<ReadMemLimitReply>> response_reader;
+            };
 
 
+            std::unique_ptr<ContainerUpdateHandler::Stub> stub_;
+//            std::shared_ptr<grpc_impl::Channel> channel_;
 
-            std::unique_ptr<ec::rpc::containerUpdate::ContainerUpdateHandler::Stub> stub_;
-            std::shared_ptr<grpc_impl::Channel> channel_;
+            grpc::CompletionQueue cq_quota_, cq_resize_mem_, cq_get_mem_lim_, cq_get_mem_usage_;
 
+            std::thread thr_quota_, thr_resize_mem_, thr_get_mem_usage, thr_get_mem_limit;
+            int test_cc;
+            std::mutex test_cc_lock;
         };
     }
 }

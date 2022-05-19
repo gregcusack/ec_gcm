@@ -30,7 +30,9 @@ ec::AgentClientDB* ec::AgentClientDB::agent_clients_db_instance = nullptr;
 int main(int argc, char* argv[]){
 #if(SPDLOG_ACTIVE_LEVEL == SPDLOG_LEVEL_DEBUG)
     spdlog::set_level(spdlog::level::debug);
+    spdlog::set_pattern("[%Y:%m:%d %T.%f] %^[%l]%$ [%s:%#] [%t] %v");
 #elif(SPDLOG_ACTIVE_LEVEL == SPDLOG_LEVEL_TRACE)
+
     spdlog::set_level(spdlog::level::trace);
 #endif
 
@@ -76,6 +78,13 @@ int main(int argc, char* argv[]){
     }
     
     gcm->run(app_name, gcm_ip);
+//    gcm->join_grpc_threads();
+//    gcm->get_thread()->join();
+
+//    gcm->thr_quota_.join();
+//    gcm->thr_resize_mem_.join();
+//    gcm->thr_get_mem_usage_.join();
+//    gcm->thr_get_mem_lim_.join();
 
     delete gcm;
 

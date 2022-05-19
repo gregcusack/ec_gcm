@@ -16,8 +16,10 @@
 #include <vector>
 #include <fstream> //For HotOS Logging
 #include <chrono>
+#include <thread>
 #include <unistd.h>
 #include "types/ports.h"
+#include <unordered_map>
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
@@ -61,7 +63,6 @@ namespace ec {
         void serveGrpcDeployExport();
         ec::rpc::DeployerExportServiceImpl* getGrpcServer() {return grpcServer; }
 
-
     private:
         int manager_id;
         std::mutex cpulock;
@@ -73,6 +74,9 @@ namespace ec {
         ec::rpc::DeployerExportServiceImpl *grpcServer;
         std::string deploy_service_ip;
         int grpc_port;
+
+        void check_for_idle_containers();
+
 
         void determine_mem_limit_for_new_pod(SubContainer *sc, int clifd);
 

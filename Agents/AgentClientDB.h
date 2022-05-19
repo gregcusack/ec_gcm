@@ -36,6 +36,8 @@ namespace ec{
 
         uint32_t get_agent_clients_db_size() {return agents_db.size();}
 
+        std::unordered_map<om::net::ip4_addr, rpc::AgentClient*> *get_db_map() { return &agents_db; }
+
     };
 }
 

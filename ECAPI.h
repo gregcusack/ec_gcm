@@ -173,6 +173,8 @@ namespace ec {
 
         int determine_quota_for_new_pod(uint64_t req_quota, uint64_t &quota);
 
+        std::thread thr_quota_;
+
 //        ec::rpc::DeployerExportServiceImpl *grpcServer;
 //        std::string deploy_service_ip;
 

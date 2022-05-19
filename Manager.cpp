@@ -11,6 +11,7 @@ ec::Manager::Manager(int _manager_id, ec::ip4_addr gcm_ip, ec::ports_t controlle
     //init server
     initialize_tcp();
     initialize_udp();
+
 #ifndef NDEBUG
     hotos_logs = std::unordered_map<SubContainer::ContainerId, std::ofstream *>();
 #endif
@@ -24,6 +25,8 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     ec::ECAPI::create_ec();
     grpcServer = new rpc::DeployerExportServiceImpl(_ec, cv, cv_dock, cv_mtx, cv_mtx_dock,sc_map_lock);
     std::thread grpc_handler_thread(&ec::Manager::serveGrpcDeployExport, this);
+    std::thread idle_pod_handler(&ec::Manager::check_for_idle_containers, this);
+
     sleep(30);
 
     std::cerr<<"[dbg] manager::just before running the app thread\n";
@@ -37,6 +40,43 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     delete getGrpcServer();
 }
 
+void ec::Manager::check_for_idle_containers() {
+//    int i=0;
+    uint64_t min_quota = 30000000;
+    uint32_t idle_container_syscall_seq_num = 0;
+
+    while(true) {
+        auto now = std::chrono::high_resolution_clock::now();
+        auto sc_map = _ec->get_subcontainers_map_for_update();
+        for(auto &[sc_id, sc] : *sc_map) {
+            auto idle = sc->back()->check_if_idle(now);
+            if(idle) {
+                uint64_t idle_quota = sc->back()->get_quota();
+                std::cout << "sc_id in idle check. (sc_id, idle?) (" << sc_id << ", " << idle << ")" << std::endl;
+                std::cout << "container quota: " << idle_quota / 1000 / 1000 << "% of core" << std::endl;
+                if (idle_quota != min_quota) { // only update containers that have > 30% of core
+                    int ret = set_sc_quota_syscall(sc->back(), min_quota,
+                                                   idle_container_syscall_seq_num); //give back what was used + 5ms
+                    if (ret) {
+                        SPDLOG_ERROR("Can't read from socket to resize quota (decr). ret: {}", ret);
+                    } else {
+                        sc->back()->set_quota_flag(true);
+                        ec_incr_unallocated_rt(idle_quota - min_quota); //unalloc_rt <-- old quota - new quota
+                        sc->back()->set_quota(min_quota);
+                        sc->back()->get_cpu_stats()->flush();
+                        ec_decr_alloc_rt(idle_quota - min_quota);
+                    }
+                    idle_container_syscall_seq_num++;
+                }
+            }
+        }
+        std::cout << "------------------" << std::endl;
+        sleep(2);
+//        i++;
+    }
+}
+
+
 int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     if (req == nullptr || res == nullptr) {
         SPDLOG_CRITICAL("req or res == null in handle_cpu_usage_report()");
@@ -47,10 +87,18 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
 //    cpulock.lock();
     auto sc_id = SubContainer::ContainerId(req->cgroup_id, req->client_ip);
     auto sc = ec_get_sc_for_update(sc_id);
+    bool idle_flag = false;
     if (!sc) {
         SPDLOG_ERROR("sc is NULL!");
         return __ALLOC_SUCCESS__;
     }
+    auto now = std::chrono::high_resolution_clock::now();
+    if(sc->check_if_idle(now)) {
+        idle_flag = true;
+    }
+    sc->update_last_seen_ts(now);
+//    std::cout << "rx update from sc_id: " << sc_id << std::endl;
+
     sc->incr_cpustat_seq_num();
     auto rx_cpustat_seq_num = req->cpustat_seq_num;
     auto rx_quota = req->rsrc_amnt;
@@ -105,31 +153,49 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
      * Quota (this is what we have set)
      * quota - rt_remaining = usage
      */
-#ifndef NDEBUG
-    auto logger = hotos_logs.find(sc_id);
-    if(logger != hotos_logs.end()) {
-        auto fp = logger->second;
-        fp->open(get_current_dir() + "/logs/logger_node_" + req->client_ip.to_string() + "_cgid_" + std::to_string(req->cgroup_id) + ".txt", std::ios_base::app);
-        auto runtime = rx_quota - rt_remaining;
-
-        auto us = std::chrono::duration_cast<std::chrono::microseconds>(
-                std::chrono::system_clock::now().time_since_epoch()
-        ).count();
-
-        *fp << std::to_string(rx_quota) + "," + std::to_string(runtime) + "," + std::to_string(us) + "\n";
-        fp->close();
-    }
-    else {
-        std::cout << "can't find file pointed for sc_id: " << sc_id << std::endl;
-    }
-#endif
+//#ifndef NDEBUG
+//    auto logger = hotos_logs.find(sc_id);
+//    if(logger != hotos_logs.end()) {
+//        auto fp = logger->second;
+//        fp->open(get_current_dir() + "/logs/logger_node_" + req->client_ip.to_string() + "_cgid_" + std::to_string(req->cgroup_id) + ".txt", std::ios_base::app);
+//        auto runtime = rx_quota - rt_remaining;
+//
+//        auto us = std::chrono::duration_cast<std::chrono::microseconds>(
+//                std::chrono::system_clock::now().time_since_epoch()
+//        ).count();
+//
+//        *fp << std::to_string(rx_quota) + "," + std::to_string(runtime) + "," + std::to_string(us) + "\n";
+//        fp->close();
+//    }
+//    else {
+//        std::cout << "can't find file pointed for sc_id: " << sc_id << std::endl;
+//    }
+//#endif
 //    std::cout << "diving into control loop for cpu alloc" << std::endl;
 
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
     auto percent_decr = (double)((int64_t)rx_quota-((int64_t)rx_quota - (int64_t)rt_remaining)) / (double)rx_quota;
 
-    if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
+    if(idle_flag && ec_get_cpu_unallocated_rt() > 0) {
+        uint64_t one_core = 100000000;         //1 core
+        uint64_t new_quota = std::min(ec_get_cpu_unallocated_rt(), one_core);
+        auto extra_rt = new_quota - rx_quota;
+        if(extra_rt > 0) {
+            ret = set_sc_quota_syscall(sc, new_quota, syscall_seq_num);
+            if(ret) {
+                SPDLOG_ERROR("Can't read from socket to resize quota (incr). ret: {}", ret);
+            }
+            else {
+                sc->set_quota_flag(true);
+                ec_decr_unallocated_rt(extra_rt);
+                sc->set_quota(new_quota);
+                sc->get_cpu_stats()->flush();
+                ec_incr_alloc_rt(extra_rt);
+            }
+        }
+    }
+    else if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
 //        std::cout << "here1. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
         uint64_t to_sub;
         uint64_t amnt_share_over = rx_quota - ec_get_fair_cpu_share();
@@ -210,7 +276,7 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     }
     else if(thr_mean >= 0.1 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
 //        std::cout << "here5. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
-        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(4 * thr_mean * ec_get_cpu_slice()));
+        auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(20 * thr_mean * ec_get_cpu_slice()));
         if(extra_rt > 0) {
             updated_quota = rx_quota + extra_rt;
             ret = set_sc_quota_syscall(sc, updated_quota, syscall_seq_num);
@@ -401,6 +467,8 @@ int ec::Manager::handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int 
     }
     uint64_t ret = __FAILED__;
 
+    SPDLOG_TRACE("rx: {}", *req);
+
     switch(req -> req_type) {
         case _MEM_:
             ret = handle_mem_req(req, res, clifd);
@@ -437,11 +505,11 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
         return __ALLOC_FAILED__;
     }
 
-#ifndef NDEBUG
-    /* HOTOS LOGGING */
-    auto *f = new std::ofstream();
-    hotos_logs.insert({*sc->get_c_id(), f});
-#endif
+//#ifndef NDEBUG
+//    /* HOTOS LOGGING */
+//    auto *f = new std::ofstream();
+//    hotos_logs.insert({*sc->get_c_id(), f});
+//#endif
 
     //todo: possibly lock subcontainers map here
     int ret = _ec->insert_sc(*sc);
@@ -466,15 +534,18 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
         SPDLOG_ERROR("SubContainer's node IP or Agent IP not found!");
     }
 
+    SPDLOG_DEBUG("update_quota_flag: {}", update_quota);
     //Update pod quota
     if(update_quota) {
-        std::thread update_quota_thread(&ec::Manager::set_sc_quota_syscall, this, sc, quota, 13);
-        update_quota_thread.detach();
+        set_sc_quota_syscall(sc, quota, 13);
+//        std::thread update_quota_thread(&ec::Manager::set_sc_quota_syscall, this, sc, quota, 13);
+//        update_quota_thread.detach();
     }
 
     //update pod mem limit
     std::thread update_mem_limit_thread(&ec::Manager::determine_mem_limit_for_new_pod, this, sc, fd);
     update_mem_limit_thread.detach();
+
 
     SPDLOG_INFO("total pods added to map: {}", ec_get_num_subcontainers());
     res->request += 1; //giveback (or send back)
@@ -488,15 +559,33 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
     }
 
     int count = 0;
-    SPDLOG_TRACE("in determine_new_limit_for_new_pod. sc_id: {}", *sc->get_c_id());
-    std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
-    cv_dock.wait(lk_dock, [this, sc] {
-        SPDLOG_TRACE("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
-        return !sc->get_c_id()->docker_id.empty();
-//        return !sc->get_docker_id().empty();
-    });
+    SPDLOG_DEBUG("in determine_new_limit_for_new_pod. sc_id: {}", *sc->get_c_id());
+    while(sc->get_docker_id().empty()) {
+//        SPDLOG_DEBUG("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
+        count++;
+        if(count % 1000 == 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            SPDLOG_DEBUG("count for waiting for dockid to not be empty: {}, sc_id: {}", count, *sc->get_c_id());
+        }
+
+    }
+    SPDLOG_DEBUG("docker_id not empty! count: {}, sc_id: {}", count, *sc->get_c_id());
+
+//    std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
+//    cv_dock.wait(lk_dock, [this, sc] {
+//        if(!sc) {
+//            SPDLOG_DEBUG("sc not right here!");
+//        }
+//        else {
+//            SPDLOG_DEBUG("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
+//            return !sc->get_c_id()->docker_id.empty();
+//        }
+////        return !sc->get_docker_id().empty();
+//    });
 //    auto mem_lim_bytes = __syscall_get_memory_limit_in_bytes(*sc->get_c_id());
+
     auto mem_lim_bytes = sc_get_memory_limit_in_bytes_cadvisor(*sc->get_c_id());
+    SPDLOG_DEBUG("post sc_get mem limit bytes cadvisor");
     auto sc_mem_limit_in_pages = byte_to_page(mem_lim_bytes);
     SPDLOG_INFO("mem_lim_bytes, pages: {}, {}", mem_lim_bytes, sc_mem_limit_in_pages);
 
@@ -504,6 +593,7 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
     SPDLOG_DEBUG("sc_mem_limit_in_pages on deploy: {}", sc_mem_limit_in_pages);
 
     if(sc_mem_limit_in_pages <= ec_get_unalloc_memory_in_pages()) {
+        SPDLOG_DEBUG("mem lim in pages <= unalloc mem limit. let's update alloc mem");
         ec_update_alloc_memory_in_pages(sc_mem_limit_in_pages);
     }
     else if(!ec_get_unalloc_memory_in_pages()) {
@@ -532,8 +622,12 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
             }
         }
     }
-    SPDLOG_TRACE("ec_get_unalloc_mem after mem alloc: {}", ec_get_unalloc_memory_in_pages());
+    SPDLOG_DEBUG("ec_get_unalloc_mem after mem alloc: {}", ec_get_unalloc_memory_in_pages());
+    if(!sc) {
+        SPDLOG_ERROR("ahhh sc is bad! in memory!");
+    }
     sc->set_mem_limit_in_pages(sc_mem_limit_in_pages);
+    SPDLOG_DEBUG("post set_mem_limit_in_pages() in memory on startup");
 }
 
 
@@ -552,7 +646,7 @@ void ec::Manager::serveGrpcDeployExport() {
 //TODO: this should be separated out into own file
 [[noreturn]] void ec::Manager::run() {
 
-    while(ec_get_num_subcontainers() < 32) {
+    while(ec_get_num_subcontainers() < 68) {
         sleep(5);
     }
 
@@ -581,6 +675,7 @@ void ec::Manager::serveGrpcDeployExport() {
     }
 }
 
+
 #ifndef NDEBUG
 std::string ec::Manager::get_current_dir() {
     char buff[FILENAME_MAX];
@@ -588,7 +683,6 @@ std::string ec::Manager::get_current_dir() {
     std::string current_working_dir(buff);
     return current_working_dir;
 }
-
 
 #endif
 
