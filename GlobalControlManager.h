@@ -34,7 +34,7 @@ namespace ec {
         GlobalControlManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<ports_t> &_server_ports);
         ~GlobalControlManager();
 
-        void run(const std::string &app_name, const std::string &_gcm_ip);
+        void run(const std::string &app_name, const std::string &_gcm_ip, const int num_containers);
 
         uint32_t create_manager();
 
