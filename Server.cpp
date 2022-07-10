@@ -5,16 +5,9 @@
 #include "Server.h"
 #include "Agents/AgentClientDB.h"
 
-//ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents)
-//    : server_id(_server_id), ip_address(_ip_address), port(_port), agents(_agents), server_initialized(false),
-//    num_of_cli(0) {}
-
 ec::Server::Server(uint32_t _server_id, ec::ip4_addr _ip_address, ec::ports_t _ports, std::vector<Agent *> &_agents)
     : server_id(_server_id), ip_address(_ip_address), ports(_ports), agents(_agents), server_initialized(0),
       num_of_cli(0) {}
-
-
-
 
 void ec::Server::initialize_tcp() {
     int32_t addrlen, opt = 1;
@@ -45,20 +38,13 @@ void ec::Server::initialize_tcp() {
     }
     SPDLOG_DEBUG("EC Server id: {}. socket successfully created!", server_id);
 
-////    Create AgentClients
-//    if(!init_agent_connections()) {
-//        SPDLOG_CRITICAL("[ERROR Server] not all agents connected to server_id: {}! Exiting...", server_id);
-//        exit(EXIT_FAILURE);
-//    }
-
     server_initialized += 1; //server setup can run now
     
 }
 
 void ec::Server::initialize_udp() {
     int32_t addrlen, opt = 1;
-//    num_of_cli = 0;
-//    if((server_sock_tcp.sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+
     if((server_sock_udp.sock_fd = socket(AF_INET, SOCK_DGRAM, 0)) == 0) {
         SPDLOG_CRITICAL("[ERROR]: Server socket creation failed in server: {}", server_id);
         std::exit(EXIT_FAILURE);

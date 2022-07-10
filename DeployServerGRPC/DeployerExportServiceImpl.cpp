@@ -76,12 +76,6 @@ ec::rpc::DeployerExportServiceImpl::DeletePod(grpc::ServerContext *context, cons
     std::cout << "sc_id to delete: " << sc_id << std::endl;
     std::string s1, s2, s3, s4, status;
 
-//    for(const auto &q : ec->get_subcontainers()) {
-//        std::cout << "sc_id: " << q.first << std::endl;
-//        std::cout << "q.back, q.front: " << *q.second->back()->get_c_id() << ", " << *q.second->front()->get_c_id() << std::endl;
-//    }
-
-//    std::cout << "getting pod to delete's mem and cpu vals" << std::endl;
     uint64_t sc_mem_limit = ec->get_subcontainer_front(sc_id).get_mem_limit_in_pages();
     uint64_t quota = ec->get_subcontainer_front(sc_id).get_cpu_stats()->get_quota(); //todo: race condition
 
@@ -147,7 +141,6 @@ int ec::rpc::DeployerExportServiceImpl::insertPodSpec(const ec::rpc::ExportPodSp
     if(!pod) { SPDLOG_ERROR("ExportPodSpec *pod is NULL"); }
 
     SPDLOG_DEBUG("sc_id to insertPodSpec: {}", SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip()));
-//    std::cout << "inserting pod cgid, nodeip: " << pod->cgroup_id() << ", " << pod->node_ip() << std::endl;
 
     dep_pod_lock.lock();
     auto sc_id = SubContainer::ContainerId(pod->cgroup_id(), pod->node_ip());
@@ -197,16 +190,12 @@ void ec::rpc::DeployerExportServiceImpl::spinUpDockerIdThread(const ec::SubConta
     //todo: delete this after we match
     auto *args = new matchingThreadArgs(sc_id, docker_id);
     scIdToDockerIdMatcherThread(args);
-//    std::thread match_sc_id_thread(&DeployerExportServiceImpl::scIdToDockerIdMatcherThread, this, (void*)args);
-//    match_sc_id_thread.detach();
 }
 
 void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* arguments) {
     auto threadArgs = reinterpret_cast<matchingThreadArgs*>(arguments);
     std::unique_lock<std::mutex> lk(cv_mtx);
     cv.wait(lk, [this, threadArgs] {
-//        SPDLOG_DEBUG("wait for sc_id to exist in sc_ac_map: {}, d_id: {}", threadArgs->sc_id, threadArgs->docker_id);
-//        return ec->get_sc_ac_map_for_update()->end() != ec->get_sc_ac_map_for_update()->find(threadArgs->sc_id);
         auto itr = ec->get_sc_ac_map_for_update()->find(threadArgs->sc_id);
         SPDLOG_DEBUG("Deployerthread: map for update, ref sizes: {}, {}",
                      ec->get_sc_ac_map_for_update()->size(), ec->get_sc_ac_map().size());
@@ -221,7 +210,6 @@ void ec::rpc::DeployerExportServiceImpl::scIdToDockerIdMatcherThread(void* argum
     }
     cv_dock.notify_one();
     SPDLOG_DEBUG("successfuly matched scId to DockerId. sc_id {}, d_id: {}", threadArgs->sc_id, threadArgs->docker_id);
-//    delete (matchingThreadArgs*)arguments;
     delete threadArgs;
 }
 

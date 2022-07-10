@@ -20,23 +20,11 @@ template<typename T, typename K>
 K ec::Window<T,K>::update_stats(K element) {
     if(unlikely(periods_elapsed <= winsize)) {
         mean = ((K)(periods_elapsed - 1) * (K) mean + element) / ((K) periods_elapsed);
-//        K inc = ((K) element - (K) mean) / ((K) periods_elapsed);
-//        mean += inc;
     }
     else {
-//        std::cout << "prev mean: " << (T) mean << std::endl;
         K meanInc = ((K) element - (K) popped) / ((K) winsize);
         mean += meanInc;
-//        std::cout << "p_elapsed, winsize, mean, element, popped: (" << periods_elapsed << "," << winsize << "," << (T)mean
-//                  << "," << (T)element << "," << (T)popped << ")" << std::endl;
-//        for(const auto &i : winstat) {
-//            std::cout << (T)i << ", ";
-//        }
-//        std::cout << std::endl;
     }
-//    if(periods_elapsed % winsize == 0) {
-//        update_trend();
-//    }
     periods_elapsed++;
     if(mean < 0.001) {
         mean = 0;

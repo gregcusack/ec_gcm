@@ -46,7 +46,6 @@ namespace ec {
      */
 //    struct Server;
     class ElasticContainer {
-//    using subcontainer_map = std::unordered_map<SubContainer::ContainerId, SubContainer *>;
     using subcontainer_map = std::unordered_map<SubContainer::ContainerId, std::queue<SubContainer *>*>;
     using subcontainer_agentclient_map = std::unordered_map<SubContainer::ContainerId, rpc::AgentClient*>;
     public:

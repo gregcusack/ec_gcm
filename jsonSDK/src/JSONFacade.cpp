@@ -103,20 +103,6 @@ int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
         return __ERROR__;
     }
 
-//    if(_pod_names.size() != _app_images.size()) {
-//        std::cerr << "[ERROR]: # pod names != # app images" << std::endl;
-//        return __ERROR__;
-//    }
-//
-//    if(_specs.find("mem") ==  _specs.end()) {
-//        std::cerr << "[ERROR]: no application mem limit set" << std::endl;
-//        return __ERROR__;
-//    }
-//    if(_specs.find("cpu") == _specs.end()) {
-//        std::cerr << "[ERROR]: no application cpu limit set" << std::endl;
-//        return __ERROR__;
-//    }
-
     return 0;
 }
 

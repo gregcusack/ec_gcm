@@ -8,13 +8,10 @@ ec::Manager::Manager(int _manager_id, ec::ip4_addr gcm_ip, ec::ports_t controlle
         : Server(_manager_id, gcm_ip, controller_ports, agents), ECAPI(_manager_id), manager_id(_manager_id),
           syscall_sequence_number(0), cpuleak(0), deploy_service_ip(gcm_ip.to_string()), grpcServer(nullptr) {
     grpc_port = BASE_GRPC_PORT + _manager_id - 1; //4447 for manager_id 1, 4448 for manager_id, etc
+
     //init server
     initialize_tcp();
     initialize_udp();
-
-#ifndef NDEBUG
-    hotos_logs = std::unordered_map<SubContainer::ContainerId, std::ofstream *>();
-#endif
 }
 
 
@@ -40,8 +37,8 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip,
     delete getGrpcServer();
 }
 
+// Check for idle containers and reclaim memory from them
 void ec::Manager::check_for_idle_containers() {
-//    int i=0;
     uint64_t min_quota = 30000000;
     uint32_t idle_container_syscall_seq_num = 0;
 
@@ -72,10 +69,8 @@ void ec::Manager::check_for_idle_containers() {
         }
         std::cout << "------------------" << std::endl;
         sleep(2);
-//        i++;
     }
 }
-
 
 int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     if (req == nullptr || res == nullptr) {
@@ -148,31 +143,6 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         cpuleak = 0;
     }
 
-    /***
-     * HotOS Logging. Per-container metrics
-     * Quota (this is what we have set)
-     * quota - rt_remaining = usage
-     */
-//#ifndef NDEBUG
-//    auto logger = hotos_logs.find(sc_id);
-//    if(logger != hotos_logs.end()) {
-//        auto fp = logger->second;
-//        fp->open(get_current_dir() + "/logs/logger_node_" + req->client_ip.to_string() + "_cgid_" + std::to_string(req->cgroup_id) + ".txt", std::ios_base::app);
-//        auto runtime = rx_quota - rt_remaining;
-//
-//        auto us = std::chrono::duration_cast<std::chrono::microseconds>(
-//                std::chrono::system_clock::now().time_since_epoch()
-//        ).count();
-//
-//        *fp << std::to_string(rx_quota) + "," + std::to_string(runtime) + "," + std::to_string(us) + "\n";
-//        fp->close();
-//    }
-//    else {
-//        std::cout << "can't find file pointed for sc_id: " << sc_id << std::endl;
-//    }
-//#endif
-//    std::cout << "diving into control loop for cpu alloc" << std::endl;
-
     rt_mean = sc->get_cpu_stats()->insert_rt_stats(rt_remaining);
     thr_mean = sc->get_cpu_stats()->insert_th_stats(throttled);
     auto percent_decr = (double)((int64_t)rx_quota-((int64_t)rx_quota - (int64_t)rt_remaining)) / (double)rx_quota;
@@ -196,7 +166,6 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(ec_get_overrun() > 0 && rx_quota > ec_get_fair_cpu_share()) {
-//        std::cout << "here1. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
         uint64_t to_sub;
         uint64_t amnt_share_over = rx_quota - ec_get_fair_cpu_share();
         uint64_t overrun = ec_get_overrun();
@@ -228,7 +197,6 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
     else if(rx_quota < ec_get_fair_cpu_share() && thr_mean > 0.5) {   //throttled but don't have fair share
         uint64_t amnt_share_lacking = ec_get_fair_cpu_share() - rx_quota;
         if (ec_get_cpu_unallocated_rt() > 0) {
-//            std::cout << "here3. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
             //TODO: take min of to_Add and slice. don't full reset
             double percent_under = ((double)ec_get_fair_cpu_share() - (double)rx_quota) / (double)ec_get_fair_cpu_share();
             if(amnt_share_lacking > ec_get_cpu_slice() / 2) {   //ensure we eventually converge
@@ -251,7 +219,6 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
             }
         }
         else { //not enough in unalloc_rt to get back to fair share, even out
-//            std::cout << "here4. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
             uint64_t overrun;
             double percent_under = ((double)ec_get_fair_cpu_share() - (double)rx_quota) / (double)ec_get_fair_cpu_share();
             if(amnt_share_lacking > ec_get_cpu_slice() / 2) { //ensure we eventualyl converge
@@ -275,7 +242,6 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(thr_mean >= 0.1 && ec_get_cpu_unallocated_rt() > 0) {  //sc_quota > fair share and container got throttled during the last period. need rt
-//        std::cout << "here5. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
         auto extra_rt = std::min(ec_get_cpu_unallocated_rt(), (uint64_t)(20 * thr_mean * ec_get_cpu_slice()));
         if(extra_rt > 0) {
             updated_quota = rx_quota + extra_rt;
@@ -293,7 +259,6 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(percent_decr > 0.2 && rx_quota >= ec_get_cpu_slice()) { //greater than 20% of quota unused
-//        std::cout << "here6. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
         uint64_t new_quota = rx_quota * (1 - 0.2); //sc_quota - sc_rt_remaining + ec_get_cpu_slice();
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
         if(new_quota != rx_quota) {
@@ -311,7 +276,6 @@ int ec::Manager::handle_cpu_usage_report(const ec::msg_t *req, ec::msg_t *res) {
         }
     }
     else if(rt_mean > _MAX_UNUSED_RT_IN_NS_ && rx_quota > ec_get_cpu_slice()) {
-//        std::cout << "here7. ip,cgid: " << sc->get_c_id()->server_ip << "," << sc->get_c_id()->cgroup_id << std::endl;
         uint64_t new_quota = rx_quota - _MAX_UNUSED_RT_IN_NS_;
         new_quota = std::max(ec_get_cpu_slice(), new_quota);
         if(new_quota != rx_quota) {
@@ -504,12 +468,6 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
         return __ALLOC_FAILED__;
     }
 
-//#ifndef NDEBUG
-//    /* HOTOS LOGGING */
-//    auto *f = new std::ofstream();
-//    hotos_logs.insert({*sc->get_c_id(), f});
-//#endif
-
     //todo: possibly lock subcontainers map here
     int ret = _ec->insert_sc(*sc);
 
@@ -658,14 +616,6 @@ void ec::Manager::serveGrpcDeployExport() {
     }
 }
 
-
-#ifndef NDEBUG
-std::string ec::Manager::get_current_dir() {
-    char buff[FILENAME_MAX];
-    getcwd(buff, FILENAME_MAX);
-    std::string current_working_dir(buff);
-    return current_working_dir;
-}
 
 #endif
 

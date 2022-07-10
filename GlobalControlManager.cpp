@@ -69,21 +69,6 @@ ec::GlobalControlManager::~GlobalControlManager() {
 void ec::GlobalControlManager::run(const std::string &app_name, const std::string &_gcm_ip, const int num_containers) {
     auto m = managers.find(1)->second;
     m->start(app_name, _gcm_ip, num_containers);
-
-//    for(const auto &s : managers) {
-//        if(fork() == 0) {
-//            SPDLOG_TRACE("New Server with ID: {}", s.second->get_server_id());
-////            run_quota_update(53, 10000000, "decr", 4);
-//            s.second->start(app_name, _gcm_ip);
-//        }
-//        else {
-//            continue;
-//        }
-//        break;
-//    }
-//    for(const auto &i : managers) {
-//        wait(nullptr);
-//    }
 }
 
 bool ec::GlobalControlManager::init_agent_connections() {

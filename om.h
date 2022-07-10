@@ -1,4 +1,5 @@
-
+//Created by Oliver Michel
+//https://github.com/olivermichel/libom2
 #ifndef LIBOM2_H
 #define LIBOM2_H
 
