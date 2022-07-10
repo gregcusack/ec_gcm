@@ -398,11 +398,10 @@ int ec::Manager::handle_mem_req(const ec::msg_t *req, ec::msg_t *res, int clifd)
 
 uint64_t ec::Manager::reclaim(const SubContainer::ContainerId& containerId, SubContainer* subContainer){
 
-//    SPDLOG_TRACE("docker id: {}, {}, {}", containerId.docker_id, subContainer->get_docker_id(), subContainer->get_c_id()->docker_id);
+    SPDLOG_TRACE("docker id: {}, {}, {}", containerId.docker_id, subContainer->get_docker_id(), subContainer->get_c_id()->docker_id);
 	uint64_t pages_reclaimed = 0;
 	auto mem_limit_pages = subContainer->get_mem_limit_in_pages();
     auto mem_limit_bytes = page_to_byte(mem_limit_pages);
-//    auto mem_usage_bytes = __syscall_get_memory_usage_in_bytes(containerId);
     auto mem_usage_bytes = sc_get_memory_usage_in_bytes_cadvisor(containerId, subContainer->get_docker_id());
 
     if(mem_usage_bytes == (unsigned long)-1 * __PAGE_SIZE__) {
@@ -538,14 +537,11 @@ int ec::Manager::handle_add_cgroup_to_ec(const ec::msg_t *req, ec::msg_t *res, u
     //Update pod quota
     if(update_quota) {
         set_sc_quota_syscall(sc, quota, 13);
-//        std::thread update_quota_thread(&ec::Manager::set_sc_quota_syscall, this, sc, quota, 13);
-//        update_quota_thread.detach();
     }
 
     //update pod mem limit
     std::thread update_mem_limit_thread(&ec::Manager::determine_mem_limit_for_new_pod, this, sc, fd);
     update_mem_limit_thread.detach();
-
 
     SPDLOG_INFO("total pods added to map: {}", ec_get_num_subcontainers());
     res->request += 1; //giveback (or send back)
@@ -570,19 +566,6 @@ void ec::Manager::determine_mem_limit_for_new_pod(ec::SubContainer *sc, int clif
 
     }
     SPDLOG_DEBUG("docker_id not empty! count: {}, sc_id: {}", count, *sc->get_c_id());
-
-//    std::unique_lock<std::mutex> lk_dock(cv_mtx_dock);
-//    cv_dock.wait(lk_dock, [this, sc] {
-//        if(!sc) {
-//            SPDLOG_DEBUG("sc not right here!");
-//        }
-//        else {
-//            SPDLOG_DEBUG("waiting for docker_id to not be empty. sc_id: {}", *sc->get_c_id());
-//            return !sc->get_c_id()->docker_id.empty();
-//        }
-////        return !sc->get_docker_id().empty();
-//    });
-//    auto mem_lim_bytes = __syscall_get_memory_limit_in_bytes(*sc->get_c_id());
 
     auto mem_lim_bytes = sc_get_memory_limit_in_bytes_cadvisor(*sc->get_c_id());
     SPDLOG_DEBUG("post sc_get mem limit bytes cadvisor");

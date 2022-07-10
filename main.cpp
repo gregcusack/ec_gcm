@@ -58,6 +58,8 @@ int main(int argc, char* argv[]){
     auto num_containers = jsonFacade.getNumContainers();
     std::vector<ec::ports_t> controller_ports;
 
+    SPDLOG_INFO("Deploying application with {} containers", num_containers);
+
     for(int i=0; i < num_tenants; i++) {
         auto tcp_port = BASE_TCP_PORT + i;
         auto udp_port = BASE_UDP_PORT + i;
@@ -77,7 +79,7 @@ int main(int argc, char* argv[]){
         SPDLOG_CRITICAL("[ERROR Server] not all agents connected to server_id: {}! Exiting...");
         exit(EXIT_FAILURE);
     }
-    
+
     gcm->run(app_name, gcm_ip, num_containers);
     delete gcm;
 
