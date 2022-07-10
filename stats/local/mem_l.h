@@ -23,10 +23,6 @@ namespace ec {
             private:
                 uint64_t mem_limit_in_pages;
                 uint64_t current_usage;
-
-//                std::mutex mem_limit_lock;
-
-
             };
         }
     }

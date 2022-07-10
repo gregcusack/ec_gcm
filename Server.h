@@ -55,8 +55,6 @@ namespace ec {
         [[noreturn]] void serve_tcp();
         [[noreturn]] void serve_udp();
 
-//        virtual void serveGrpcDeployExport() = 0;
-
         void handle_client_reqs_tcp(void *clifd);
         void handle_client_reqs_udp(void *clifd);
         virtual int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) = 0;
@@ -66,8 +64,6 @@ namespace ec {
         uint32_t get_server_id() const { return server_id; }
         std::mutex mtx;
 
-//        bool init_agent_connections();
-    
     private:
 
         ip4_addr ip_address;

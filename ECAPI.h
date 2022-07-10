@@ -30,7 +30,6 @@ namespace ec {
     using subcontainer_agent_map = std::unordered_map<SubContainer::ContainerId, rpc::AgentClient*>;
 
     public:
-//        ECAPI(uint32_t _ec_id, ip4_addr _ip_address, uint16_t _port, std::vector<Agent *> &_agents);
         ECAPI(){}
         ECAPI(int _ec_id) //, ip4_addr _deploy_service_ip)
             : ecapi_id(_ec_id) {}//, deploy_service_ip(_deploy_service_ip.to_string()) {}

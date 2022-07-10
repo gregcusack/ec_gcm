@@ -21,7 +21,6 @@
 #include "types/ports.h"
 #include <unordered_map>
 
-#define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
 #define byte_to_page(x) ceil((x)/4096)
 #define page_to_byte(x) (x*4096)
@@ -44,9 +43,9 @@ namespace ec {
         uint64_t handle_reclaim_memory(int client_fd) override;
 
         int handle_req(const msg_t *req, msg_t *res, uint32_t host_ip, int clifd) override;
-        void start(const std::string &app_name, const std::string &gcm_ip);
+        void start(const std::string &app_name, const std::string &gcm_ip, const int num_containers);
 
-        [[noreturn]] virtual void run();
+        [[noreturn]] virtual void run(const int num_containers);
         int handle_add_cgroup_to_ec(const msg_t *req, msg_t *res, uint32_t ip, int fd) override;
 
 	    uint64_t reclaim(const SubContainer::ContainerId& containerId, SubContainer* subContainer);

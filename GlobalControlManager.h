@@ -29,12 +29,11 @@ namespace ec {
         using agents_ip_list = std::vector<std::string>;
         using manager_map = std::unordered_map<int, ec::Manager*>;
     public:
-//        GlobalControlManager();
         GlobalControlManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<uint16_t> &_server_ports);
         GlobalControlManager(std::string ip_addr, uint16_t port, agents_ip_list &agents, std::vector<ports_t> &_server_ports);
         ~GlobalControlManager();
 
-        void run(const std::string &app_name, const std::string &_gcm_ip);
+        void run(const std::string &app_name, const std::string &_gcm_ip, const int num_containers);
 
         uint32_t create_manager();
 
@@ -65,10 +64,7 @@ namespace ec {
 
         //API
         Manager* mngr;
-//        std::vector<std::thread> grpc_thread_vec;
         std::thread grpc_thread;
-
-//        std::thread thr_quota_, thr_resize_mem_, thr_get_mem_lim_, thr_get_mem_usage_;
 
     };
 

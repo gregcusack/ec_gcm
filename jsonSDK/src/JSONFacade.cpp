@@ -36,6 +36,13 @@ void ec::Facade::JSONFacade::json::parseNumTenants() {
     _num_tenants = _val.at(U("tenants")).as_integer();
 }
 
+void ec::Facade::JSONFacade::json::parseNumContainers() {
+    if(_val.is_null()) {
+        return;
+    }
+    _num_containers = _val.at(U("num_containers")).as_integer();
+}
+
 
 void ec::Facade::JSONFacade::json::parsePodNames() {
     if(_val.is_null()){
@@ -70,12 +77,10 @@ int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
         }
         _val = web::json::value::parse(stream);
         parseAppName();
-//        parseAppImages();
         parseIPAddresses();
-//        parsePodNames();
         parseGCMIPAddress();
-//        parseSpecs();
         parseNumTenants();
+        parseNumContainers();
     }
     catch (const web::json::json_exception& excep) {
         SPDLOG_ERROR("ERROR Parsing JSON file: {}", excep.what());
@@ -97,20 +102,6 @@ int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
         SPDLOG_ERROR("Unknown failure occurred. Possible memory corruption");
         return __ERROR__;
     }
-
-//    if(_pod_names.size() != _app_images.size()) {
-//        std::cerr << "[ERROR]: # pod names != # app images" << std::endl;
-//        return __ERROR__;
-//    }
-//
-//    if(_specs.find("mem") ==  _specs.end()) {
-//        std::cerr << "[ERROR]: no application mem limit set" << std::endl;
-//        return __ERROR__;
-//    }
-//    if(_specs.find("cpu") == _specs.end()) {
-//        std::cerr << "[ERROR]: no application cpu limit set" << std::endl;
-//        return __ERROR__;
-//    }
 
     return 0;
 }
