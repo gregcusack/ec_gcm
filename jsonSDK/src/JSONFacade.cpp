@@ -36,6 +36,13 @@ void ec::Facade::JSONFacade::json::parseNumTenants() {
     _num_tenants = _val.at(U("tenants")).as_integer();
 }
 
+void ec::Facade::JSONFacade::json::parseNumContainers() {
+    if(_val.is_null()) {
+        return;
+    }
+    _num_containers = _val.at(U("num_containers")).as_integer();
+}
+
 
 void ec::Facade::JSONFacade::json::parsePodNames() {
     if(_val.is_null()){

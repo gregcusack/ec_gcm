@@ -66,9 +66,9 @@ ec::GlobalControlManager::~GlobalControlManager() {
     managers.clear();
 }
 
-void ec::GlobalControlManager::run(const std::string &app_name, const std::string &_gcm_ip) {
+void ec::GlobalControlManager::run(const std::string &app_name, const std::string &_gcm_ip, const int num_containers) {
     auto m = managers.find(1)->second;
-    m->start(app_name, _gcm_ip);
+    m->start(app_name, _gcm_ip, num_containers);
 
 //    for(const auto &s : managers) {
 //        if(fork() == 0) {

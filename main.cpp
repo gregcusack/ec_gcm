@@ -32,7 +32,6 @@ int main(int argc, char* argv[]){
     spdlog::set_level(spdlog::level::debug);
     spdlog::set_pattern("[%Y:%m:%d %T.%f] %^[%l]%$ [%s:%#] [%t] %v");
 #elif(SPDLOG_ACTIVE_LEVEL == SPDLOG_LEVEL_TRACE)
-
     spdlog::set_level(spdlog::level::trace);
 #endif
 
@@ -56,6 +55,7 @@ int main(int argc, char* argv[]){
     auto agent_ips = jsonFacade.getAgentIPs();
     auto gcm_ip = jsonFacade.getGCMIP();
     auto num_tenants = jsonFacade.getNumTenants();
+    auto num_containers = jsonFacade.getNumContainers();
     std::vector<ec::ports_t> controller_ports;
 
     for(int i=0; i < num_tenants; i++) {
@@ -64,6 +64,7 @@ int main(int argc, char* argv[]){
         controller_ports.emplace_back(tcp_port, udp_port);
     }
 
+    // Create GCM (controller)
     auto *gcm = new ec::GlobalControlManager(gcm_ip, GCM_PORT, agent_ips, controller_ports);
 
     for(const auto &i : controller_ports) {
@@ -71,21 +72,13 @@ int main(int argc, char* argv[]){
     }
     SPDLOG_INFO("[dbg] num managers: {}", gcm->get_managers().size());
 
-    //    Create AgentClients
+    // Create AgentClients
     if(!gcm->init_agent_connections()) {
         SPDLOG_CRITICAL("[ERROR Server] not all agents connected to server_id: {}! Exiting...");
         exit(EXIT_FAILURE);
     }
     
-    gcm->run(app_name, gcm_ip);
-//    gcm->join_grpc_threads();
-//    gcm->get_thread()->join();
-
-//    gcm->thr_quota_.join();
-//    gcm->thr_resize_mem_.join();
-//    gcm->thr_get_mem_usage_.join();
-//    gcm->thr_get_mem_lim_.join();
-
+    gcm->run(app_name, gcm_ip, num_containers);
     delete gcm;
 
     return 0;

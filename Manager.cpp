@@ -18,7 +18,7 @@ ec::Manager::Manager(int _manager_id, ec::ip4_addr gcm_ip, ec::ports_t controlle
 }
 
 
-void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip) {
+void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip, const int num_containers) {
     //A thread to listen for subcontainers' events
     std::thread event_handler_thread_tcp(&ec::Server::serve_tcp, this);
     std::thread event_handler_thread_udp(&ec::Server::serve_udp, this);
@@ -30,7 +30,7 @@ void ec::Manager::start(const std::string &app_name,  const std::string &gcm_ip)
     sleep(30);
 
     std::cerr<<"[dbg] manager::just before running the app thread\n";
-    std::thread application_thread(&ec::Manager::run, this);
+    std::thread application_thread(&ec::Manager::run, this, num_containers);
     
     grpc_handler_thread.join();
     event_handler_thread_tcp.join();
@@ -644,9 +644,9 @@ void ec::Manager::serveGrpcDeployExport() {
 }
 
 //TODO: this should be separated out into own file
-[[noreturn]] void ec::Manager::run() {
+[[noreturn]] void ec::Manager::run(const int num_containers) {
 
-    while(ec_get_num_subcontainers() < 68) {
+    while(ec_get_num_subcontainers() < num_containers) {
         sleep(5);
     }
 
