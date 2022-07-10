@@ -77,12 +77,10 @@ int ec::Facade::JSONFacade::json::parseFile(const std::string &fileName) {
         }
         _val = web::json::value::parse(stream);
         parseAppName();
-//        parseAppImages();
         parseIPAddresses();
-//        parsePodNames();
         parseGCMIPAddress();
-//        parseSpecs();
         parseNumTenants();
+        parseNumContainers();
     }
     catch (const web::json::json_exception& excep) {
         SPDLOG_ERROR("ERROR Parsing JSON file: {}", excep.what());
